@@ -47,42 +47,39 @@ between `specs/functional-design.md` (what the customer needs) and the per-featu
 
 ## Searching the BC base source efficiently (read this first)
 
-The BC base application is enormous (thousands of `.al` files). A careless search will
-**time out**, and repeated timeouts make the chat look frozen even though the agent is
-still churning. Follow these rules when inspecting `external/MSDyn365BC`:
+The BC base application is enormous (thousands of `.al` files) and is added as a submodule
+in `external/MSDyn365BC`. **`grep_search` does not work on it** — VS Code search treats
+the submodule tree as ignored, so a normal text search returns **nothing**, while forcing
+`includeIgnoredFiles: true` makes it **walk the whole tree and time out**. Repeated failed
+or timed-out searches are what make the chat look frozen. So do not search text in the BC
+source at all — locate files by name and read them.
 
-- **Know the filename convention.** BC source files are named in PascalCase with **no
-  spaces**, even though the object names contain spaces. The "Dimension Set Entry" table
-  is `DimensionSetEntry.Table.al`, the "Dimension Value" table is `DimensionValue.Table.al`,
-  codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Do **not** search
-  for the spaced object name (`Dimension Set Entry.Table.al`) — it never matches and wastes
-  several attempts. Strip the spaces and append the type suffix.
-- **Find the file first, then read it.** Use file search by name
-  (e.g. `**/DimensionSetEntry.Table.al`) to locate the object, then open it directly.
-  Do not grep the whole tree to find content you can reach by filename.
-- **Never set `includeIgnoredFiles: true` for BC source.** It is a registered workspace
-  folder and is searchable without it; that flag forces a full walk of the tree and is
-  the most common cause of timeouts.
-- **Scope every search to a narrow `includePattern`, and end folder patterns with `/**`.**
-  A folder path without a trailing `/**` matches the folder itself, not its contents, so
-  it silently returns nothing (e.g. use
-  `external/MSDyn365BC/Base Application/Finance/Dimension/**`, not
-  `…/Finance/Dimension`). Never use `**/*.al`.
-- **Prefer literal searches over regex.** Avoid regex with alternation
-  (`a|b|c`) across many files — it is dramatically slower. Search one literal term at a
-  time, scoped to one file or one small folder.
-- **Read targeted ranges, not whole files.** Core codeunits like `DimensionManagement`
-  are thousands of lines. Locate the procedure by name first, then read around it — do
-  not load the entire file into context.
-- **For "how does BC do X" questions, prefer `semantic_search` or the BC Code
-  Intelligence MCP** over grepping the raw source. Reserve grep for confirming a specific,
-  known symbol in a specific file.
-- If a search times out or returns nothing, **do not retry the same query.** Narrow the
-  pattern, fix the filename, or switch to locating the file by name and reading it.
+Follow these rules when inspecting `external/MSDyn365BC`:
 
-> The single worst pattern — and the one that hangs this skill — is a regex grep with
-> `includeIgnoredFiles: true` and a broad `includePattern` across the whole BC source.
-> Avoid that combination entirely.
+- **Do not use `grep_search` (text search) on the BC source.** Without
+  `includeIgnoredFiles` it silently returns no results (the tree is treated as ignored);
+  with it, a regex/broad search times out and hangs the turn. Neither is acceptable —
+  reach the content a different way.
+- **Locate objects with `file_search` by name.** BC source files are PascalCase with **no
+  spaces**, even though object names contain spaces: the "Dimension Set Entry" table is
+  `DimensionSetEntry.Table.al`, "Dimension Value" is `DimensionValue.Table.al`,
+  codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Strip spaces from
+  the object name and append the type suffix — never search the spaced form, it never
+  matches.
+- **Read the located file with `read_file`, in targeted ranges.** This is how you inspect
+  fields and procedures — not by grepping. Core codeunits like `DimensionManagement` are
+  thousands of lines: read it in successive ranges (e.g. 1–200, 200–400) to find the
+  field number or procedure you need. Do not try to jump to a symbol with text search.
+- **For "how does BC do X" or "where is feature Y" questions, use `semantic_search` or
+  the BC Code Intelligence MCP** — these work on the BC source where `grep_search` does
+  not.
+- If something is hard to find by name, widen the `file_search` name pattern (e.g.
+  `**/Dimension*.al`) rather than reaching for text search.
+
+> The two patterns that hang or stall this skill: (1) a text search on the BC source with
+> no `includeIgnoredFiles` (returns nothing, agent retries forever), and (2) a regex text
+> search with `includeIgnoredFiles: true` across the tree (times out). Avoid text search
+> on the BC source entirely; use file name search + read.
 
 ---
 
@@ -117,15 +114,13 @@ Ground rules:
 - Do not guess. If you are unsure whether BC covers something, say so and explain what
   you looked for.
 
-When you inspect the BC source in external/MSDyn365BC, search efficiently or you will
-time out: BC source filenames are PascalCase with no spaces (the "Dimension Set Entry"
-table is DimensionSetEntry.Table.al), so strip spaces from object names when searching by
-file. Locate objects by file name and read targeted ranges directly. Scope every search
-to a specific file or subfolder and end folder patterns with /** (a bare folder path
-matches nothing). Prefer literal searches over regex, and never set includeIgnoredFiles
-for the BC source. For "how does BC do X" questions prefer semantic_search or the BC Code
-Intelligence MCP over grepping raw source. If a search times out or returns nothing,
-narrow or fix it rather than retrying the same query.
+When you inspect the BC source in external/MSDyn365BC, do NOT use text search (grep) on
+it: the submodule tree is treated as ignored, so a normal text search returns nothing,
+and forcing includeIgnoredFiles makes it time out and hang. Instead, locate objects with
+file-name search — BC files are PascalCase with no spaces (the "Dimension Set Entry" table
+is DimensionSetEntry.Table.al) — then open them with read_file and read targeted ranges to
+find fields and procedures. For "how does BC do X" questions, use semantic_search or the
+BC Code Intelligence MCP, which work on the BC source where grep does not.
 
 End the document with a section called "Key design decisions" — a short list of the most
 important choices made, one sentence each.
