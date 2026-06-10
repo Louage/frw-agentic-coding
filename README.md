@@ -45,9 +45,8 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 Set the repository clients check in settings:
 
 ```jsonc
-"frwAgenticCoding.update.repository": "your-org/frw-agentic-coding",
+"frwAgenticCoding.update.repository": "Louage/frw-agentic-coding",
 "frwAgenticCoding.update.checkOnStartup": true
 ```
 
-> Replace the `publisher` (`frw`) and `your-org/...` repository placeholders with
-> your real values before first release.
+> Replace the `publisher` (`frw`) placeholder with your real value before first release.
