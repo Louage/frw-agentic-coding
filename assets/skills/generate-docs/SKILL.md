@@ -1,6 +1,6 @@
 ---
 name: generate-docs
-description: "Generate and maintain docs/user-guide.md for a completed rental car management feature. Use when: a feature branch has been implemented and tested; the user asks to document a feature; updating the user guide after merge; writing user documentation after tests pass. Produces the correct user-guide section (What it does / Setup / How to use / Related features), runs a Taylor Docs + Uma UX accuracy and clarity review, applies fixes, and marks the feature as done in roadmap.md."
+description: "Generate and maintain docs/user-guide.md for a completed Business Central feature. Use when: a feature branch has been implemented and tested; the user asks to document a feature; updating the user guide after merge; writing user documentation after tests pass. Produces the correct user-guide section (What it does / Setup / How to use / Related features), runs a Taylor Docs + Uma UX accuracy and clarity review, applies fixes, and marks the feature as done in roadmap.md."
 argument-hint: "Feature number and name, e.g. '3 Customer Records'"
 ---
 
@@ -45,7 +45,7 @@ Append a new `## N. Feature Name` section to `docs/user-guide.md` following the 
 
 - **Only document what was actually built.** Cross-check every claim against `plan.md` (objects, field names, pages). If a field, page, or behaviour is not in `plan.md`, do not mention it.
 - **No AL jargon in user-facing text.** Never expose raw field captions (e.g. `Gen. Prod. Posting Group`) without a plain-English explanation. Never write "TableExtension", "codeunit", "OnValidate", or similar AL terms.
-- **"Coming soon" references** for features not yet implemented must never include a feature number — write the feature name instead (e.g. "see *Live Car Tracking* (coming soon)").
+- **"Coming soon" references** for features not yet implemented must never include a feature number — write the feature name instead (e.g. "see *<Feature Name>* (coming soon)").
 - **Mandatory-field error messages** — only list fields that are genuinely hard-blocked by code (checked in `CheckSetupForRelease` or equivalent). Do not claim all fields are required if the code only checks a subset.
 - **MinValue / MaxValue enforcement** — if the spec uses `OnValidate` triggers (not just AL field properties) to enforce numeric bounds, describe the rule in the user guide (e.g. "must be 0 or greater"). If only the AL `MinValue` property is set without an `OnValidate`, note it is enforced on the page only and omit it from the guide unless the UX makes it visible.
 - Update the **Table of Contents** to link the new section; change the corresponding *(coming soon)* entry to a proper anchor.
@@ -175,4 +175,4 @@ Then add `docs` to the workspace `.code-workspace` file if not already present.
 
 ## Notes on the camera / TestPage constraint
 
-When FM-08-style tests (GPS field editability) cannot use `TestPage` due to DotNet calls on factbox open (e.g. `CameraProvider.IsAvailable()`), the user guide should document the field as read-only based on the `Editable = false` property in the page extension source — no runtime test is needed to verify a static property.
+When tests for a field's editability cannot use `TestPage` due to DotNet calls on factbox open (e.g. `CameraProvider.IsAvailable()`), the user guide should document the field as read-only based on the `Editable = false` property in the page extension source — no runtime test is needed to verify a static property.

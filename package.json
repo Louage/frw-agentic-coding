@@ -101,8 +101,59 @@
         "command": "frwAgenticCoding.checkForUpdates",
         "title": "The Framework: Check for extension updates",
         "category": "The Framework"
+      },
+      {
+        "command": "frwAgenticCoding.refreshSkills",
+        "title": "Refresh",
+        "category": "The Framework",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "frwAgenticCoding.refreshRules",
+        "title": "Refresh",
+        "category": "The Framework",
+        "icon": "$(refresh)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "frwAgenticCoding",
+          "title": "The Framework",
+          "icon": "images/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "frwAgenticCoding": [
+        {
+          "id": "frwSkills",
+          "name": "Skills",
+          "icon": "$(rocket)",
+          "contextualTitle": "The Framework"
+        },
+        {
+          "id": "frwRules",
+          "name": "Rules",
+          "icon": "$(law)",
+          "contextualTitle": "The Framework"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "frwAgenticCoding.refreshSkills",
+          "when": "view == frwSkills",
+          "group": "navigation"
+        },
+        {
+          "command": "frwAgenticCoding.refreshRules",
+          "when": "view == frwRules",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "The Framework Agentic Coding",
       "properties": {

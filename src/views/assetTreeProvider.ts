@@ -1,0 +1,160 @@
+import * as vscode from "vscode";
+
+/** Which kind of bundled asset a tree shows. */
+export type AssetKind = "skill" | "rule";
+
+/** A single skill or rule entry rendered in the sidebar. */
+interface IAssetItem {
+  /** Display label (the asset's name). */
+  label: string;
+  /** Short trailing text (e.g. a rule's `applyTo` glob). */
+  description?: string;
+  /** Markdown tooltip (the asset's full description). */
+  tooltip?: string;
+  /** The bundled file the item opens. */
+  resourceUri: vscode.Uri;
+}
+
+/**
+ * Tree provider that lists the extension's bundled skills (`assets/skills/<name>/SKILL.md`)
+ * or rules (`assets/instructions/*.instructions.md`). Items are read live from the
+ * installed extension and open the underlying Markdown file when clicked.
+ */
+export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
+  private readonly onDidChangeEmitter = new vscode.EventEmitter<void>();
+  readonly onDidChangeTreeData = this.onDidChangeEmitter.event;
+
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly kind: AssetKind
+  ) {}
+
+  refresh(): void {
+    this.onDidChangeEmitter.fire();
+  }
+
+  getTreeItem(element: IAssetItem): vscode.TreeItem {
+    const item = new vscode.TreeItem(
+      element.label,
+      vscode.TreeItemCollapsibleState.None
+    );
+    item.description = element.description;
+    if (element.tooltip) {
+      item.tooltip = new vscode.MarkdownString(element.tooltip);
+    }
+    item.resourceUri = element.resourceUri;
+    item.iconPath = new vscode.ThemeIcon(
+      this.kind === "skill" ? "rocket" : "law"
+    );
+    item.contextValue = this.kind;
+    item.command = {
+      command: "vscode.open",
+      title: "Open",
+      arguments: [element.resourceUri],
+    };
+    return item;
+  }
+
+  getChildren(): Promise<IAssetItem[]> {
+    return this.kind === "skill" ? this.getSkills() : this.getRules();
+  }
+
+  private get skillsDir(): vscode.Uri {
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "skills");
+  }
+
+  private get instructionsDir(): vscode.Uri {
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "instructions");
+  }
+
+  private async getSkills(): Promise<IAssetItem[]> {
+    let entries: [string, vscode.FileType][];
+    try {
+      entries = await vscode.workspace.fs.readDirectory(this.skillsDir);
+    } catch {
+      return [];
+    }
+
+    const items: IAssetItem[] = [];
+    for (const [name, type] of entries) {
+      if (type !== vscode.FileType.Directory) {
+        continue;
+      }
+      const fileUri = vscode.Uri.joinPath(this.skillsDir, name, "SKILL.md");
+      const meta = await this.readFrontmatter(fileUri);
+      if (!meta) {
+        continue;
+      }
+      items.push({
+        label: meta["name"] ?? name,
+        tooltip: meta["description"],
+        resourceUri: fileUri,
+      });
+    }
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private async getRules(): Promise<IAssetItem[]> {
+    let entries: [string, vscode.FileType][];
+    try {
+      entries = await vscode.workspace.fs.readDirectory(this.instructionsDir);
+    } catch {
+      return [];
+    }
+
+    const items: IAssetItem[] = [];
+    for (const [name, type] of entries) {
+      if (type !== vscode.FileType.File || !name.endsWith(".instructions.md")) {
+        continue;
+      }
+      const fileUri = vscode.Uri.joinPath(this.instructionsDir, name);
+      const meta = await this.readFrontmatter(fileUri);
+      const label = name
+        .replace(/\.instructions\.md$/i, "")
+        .replace(/^al-/i, "");
+      items.push({
+        label,
+        description: meta?.["applyTo"],
+        tooltip: meta?.["description"],
+        resourceUri: fileUri,
+      });
+    }
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  /**
+   * Reads the leading YAML frontmatter block of a Markdown file and returns its
+   * top-level scalar keys. Returns undefined if the file can't be read or has no
+   * frontmatter. This is a deliberately small parser for the simple `key: value`
+   * frontmatter used by these assets, not a full YAML implementation.
+   */
+  private async readFrontmatter(
+    uri: vscode.Uri
+  ): Promise<Record<string, string> | undefined> {
+    let text: string;
+    try {
+      const data = await vscode.workspace.fs.readFile(uri);
+      text = Buffer.from(data).toString("utf8");
+    } catch {
+      return undefined;
+    }
+
+    const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+    if (!match) {
+      return undefined;
+    }
+
+    const result: Record<string, string> = {};
+    for (const line of match[1].split(/\r?\n/)) {
+      const kv = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(line);
+      if (!kv) {
+        continue;
+      }
+      const value = kv[2].trim().replace(/^['"]|['"]$/g, "");
+      if (value) {
+        result[kv[1]] = value;
+      }
+    }
+    return result;
+  }
+}

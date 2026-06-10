@@ -7,19 +7,19 @@ All examples assume the working directory is the repo root. The scripts work fro
 Wildcards are accepted on `-TestCodeunit`:
 
 ```powershell
-pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -TestCodeunit 'Fleet Register Tests'
+pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -TestCodeunit 'Customer Records Tests'
 ```
 
 ```powershell
-pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -TestCodeunit 'Fleet*'
+pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -TestCodeunit 'Customer*'
 ```
 
 ## Run a single test procedure
 
 ```powershell
 pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 `
-    -TestCodeunit 'Fleet Register Tests' `
-    -TestFunction 'GivenNewItem_WhenAllVehicleFieldsPopulated_ThenRecordRoundTripsCorrectly'
+    -TestCodeunit 'Customer Records Tests' `
+    -TestFunction 'GivenNewRecord_WhenAllFieldsPopulated_ThenRecordRoundTripsCorrectly'
 ```
 
 ## Iterate fast — skip recompile and republish
@@ -48,8 +48,8 @@ pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -ContainerName 'bc-29' 
 ## Custom results path, then summarise
 
 ```powershell
-pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -ResultsFile 'artifacts\fleet-tests.xml'
-pwsh .cursor\skills\run-al-tests\scripts\Parse-TestResults.ps1 -ResultsFile 'artifacts\fleet-tests.xml'
+pwsh .cursor\skills\run-al-tests\scripts\Run-AlTests.ps1 -ResultsFile 'artifacts\feature-tests.xml'
+pwsh .cursor\skills\run-al-tests\scripts\Parse-TestResults.ps1 -ResultsFile 'artifacts\feature-tests.xml'
 ```
 
 ## Capture summary into a variable

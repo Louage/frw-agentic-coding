@@ -1,7 +1,7 @@
 ---
 name: finalise-feature
 description: "Close out a completed feature branch: append a CHANGELOG entry, sync any implementation decisions that diverged from specs, mark the feature done in roadmap.md, and optionally merge to main and prep the next feature. Use when: all tests pass; the user says 'finalise feature N', 'wrap up this feature', 'close out the branch', or 'merge and move on'."
-argument-hint: "Feature number and name, e.g. '2 Fleet Management'. Omit to auto-detect from the current git branch."
+argument-hint: "Feature number and name, e.g. '2 <Feature Name>'. Omit to auto-detect from the current git branch."
 ---
 
 # finalise-feature
@@ -70,9 +70,9 @@ In `CHANGELOG.md`, append immediately after the `---` separator (newest entry at
 ```
 
 **Good sentence patterns:**
-- "Added a vehicle register inside Business Central by extending the Item table and Item Card page with ten vehicle-specific fields."
-- "Structured driver's licence and passport data can now be stored per customer, with scanned copies attached."
-- "Rental orders can now be created with a start and end date, with automatic duplicate-booking prevention."
+- "Added a register inside Business Central by extending the Item table and Item Card page with several domain-specific fields."
+- "Structured identity-document data can now be stored per customer, with scanned copies attached."
+- "Orders can now be created with a start and end date, with automatic duplicate-entry prevention."
 
 **Avoid:**
 - "Implemented TableExtension 50102 on Item..." (AL jargon)
@@ -89,7 +89,7 @@ For each divergence found in Step 2 that affects a **design decision** (not just
 > **Implementation note (discovered during build):** [What the spec assumed.] [What actually happened and why.] [The rule to follow for future features.]
 ```
 
-**The MinValue/MaxValue precedent (from Feature 2):**
+**The MinValue/MaxValue precedent:**
 If any Decimal field used `MinValue`/`MaxValue` and the spec said no `OnValidate` was needed, add:
 
 > **Implementation note (discovered during build):** AL `MinValue` / `MaxValue` properties on `Decimal` table fields are enforced by the platform at **page level only**. `Record.Validate()` does not check them, so any code path that calls `Validate()` directly (including test code) bypasses the constraint. Fields with numeric bounds therefore carry explicit `OnValidate` triggers in addition to the field properties, ensuring the bounds are enforced regardless of how the field is set.
@@ -131,13 +131,13 @@ Then invoke the `create-feature-spec` skill for the next planned feature (auto-d
 
 ---
 
-## Divergence reference: Feature 2 precedent
+## Divergence reference: MinValue/MaxValue precedent
 
-Feature 2 (Fleet Management) produced the canonical example of a spec divergence:
+A common canonical example of a spec divergence:
 
 | Spec claimed | What code actually did | Fix applied |
 |---|---|---|
-| `plan.md`: "no `OnValidate` trigger code is required — BC enforces MinValue/MaxValue automatically" | `ItemVehicleExt.TableExt.al` added explicit `OnValidate` triggers on `Current Mileage` and `Fuel Level at Last Return` | `plan.md` field design note corrected; `tech-design.md §1` got an "Implementation note" callout |
+| `plan.md`: "no `OnValidate` trigger code is required — BC enforces MinValue/MaxValue automatically" | The table extension added explicit `OnValidate` triggers on the bounded `Decimal` fields | `plan.md` field design note corrected; `tech-design.md §1` got an "Implementation note" callout |
 
 **Root cause**: AL `MinValue`/`MaxValue` on Decimal table fields are a page-level constraint only. Tests call `Record.Validate()` directly, which bypasses the property. Any spec that says "MinValue/MaxValue is sufficient — no trigger needed" is wrong for programmatic code paths.
 

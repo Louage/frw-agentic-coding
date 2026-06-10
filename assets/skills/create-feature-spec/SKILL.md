@@ -1,6 +1,6 @@
 ---
 name: create-feature-spec
-description: "Bootstrap the full spec folder for the next planned feature in this rental car management project. Use when: starting a new feature; the user says 'start Feature N', 'create the spec for X', or 'begin the next feature'; after merging the previous feature branch. Reads the roadmap to identify the next planned feature, creates the git branch, and generates specs/YYYY-MM-DD-<slug>/requirements.md + plan.md + acceptance.md from the project constitution."
+description: "Bootstrap the full spec folder for the next planned feature in this Business Central project. Use when: starting a new feature; the user says 'start Feature N', 'create the spec for X', or 'begin the next feature'; after merging the previous feature branch. Reads the roadmap to identify the next planned feature, creates the git branch, and generates specs/YYYY-MM-DD-<slug>/requirements.md + plan.md + acceptance.md from the project constitution."
 argument-hint: "Optional: feature number or name to target, e.g. '3' or 'Customer Records'. Omit to auto-detect from roadmap."
 ---
 
@@ -63,11 +63,9 @@ Test codeunit IDs start at `60200` and increment by feature: Feature 1 → 60200
 
 **Acceptance scenario ID prefix:**
 Derive a 2–3-character uppercase prefix from the feature name initials:
-- Rental Setup → `RS`
-- Fleet Management → `FM`
 - Customer Records → `CR`
-- Rental Booking Core → `RB`
-- Day-Based Pricing → `DP`
+- Sales Setup → `SS`
+- Inventory Tracking → `IT`
 
 Use this prefix for all scenario IDs in `acceptance.md` (e.g. `CR-01`, `CR-02`).
 
@@ -89,7 +87,7 @@ Follow the [Requirements template](#requirements-template).
 
 **Key rules:**
 
-- **Purpose** (one paragraph): What problem does this feature solve for the rental company? Avoid AL object names; describe the capability.
+- **Purpose** (one paragraph): What problem does this feature solve for the customer? Avoid AL object names; describe the capability.
 - **In scope**: Everything that this feature delivers. Use attribute tables (with Notes column) for fields. Separate functional scope from administrator configuration (setup steps that are config, not code).
 - **Out of scope**: Explicitly name what is *not* included and which feature it defers to. Use the pattern: "No X — that belongs to Feature N (Feature Name)" or "Feature N (Feature Name)" in parentheses. Never leave an out-of-scope item without a named destination.
 - Cross-reference `specs/tech-design.md` to confirm every in-scope item has a tech-design backing. If something is in scope but not in tech-design, flag it before writing.
@@ -107,7 +105,7 @@ Follow the [Plan template](#plan-template).
 - **Design notes per object**: capture implementation decisions, patterns followed, and anything that could be confused later. If the tech-design made a "use X not Y" decision, restate it here with the short rationale.
 - **Pseudo-code for non-trivial codeunits**: show procedure signatures and the key logic steps as comments — not full AL but enough to guide implementation without ambiguity.
 - **"What this feature does NOT create" section**: list related objects that will exist eventually but are not created here. This prevents over-building.
-- **MinValue/MaxValue caveat**: if any Decimal field uses `MinValue` or `MaxValue`, note that BC enforces these at page level only. Explicit `OnValidate` triggers are required for programmatic enforcement (tests, integrations). See Feature 2 precedent.
+- **MinValue/MaxValue caveat**: if any Decimal field uses `MinValue` or `MaxValue`, note that BC enforces these at page level only. Explicit `OnValidate` triggers are required for programmatic enforcement (tests, integrations).
 
 ### Step 6 — Write `acceptance.md`
 
@@ -119,9 +117,9 @@ Follow the [Acceptance template](#acceptance-template).
 
 - Derive scenarios directly from the roadmap "Done when" statement — each clause becomes one or more scenarios.
 - Add **at least one negative test** per field with a constraint (MinValue, MaxValue, required, unique key, etc.).
-- Include a **non-triggering / bypass scenario** if the feature has conditional logic (e.g. the rental subscriber must not block a non-rental order — see RS-07 precedent).
-- Include a **page-structure scenario** for every page extension that adds UI elements (e.g. FM-07: Vehicle FastTab present with all expected fields).
-- If `TestPage` cannot be used for UI tests (e.g. camera DotNet crash on Item Card), write the scenario as a compile-time structural check and add a note explaining the constraint. See FM-08 precedent.
+- Include a **non-triggering / bypass scenario** if the feature has conditional logic (e.g. a subscriber must not block an unrelated order).
+- Include a **page-structure scenario** for every page extension that adds UI elements (e.g. a FastTab present with all expected fields).
+- If `TestPage` cannot be used for UI tests (e.g. a DotNet call that cannot be mocked), write the scenario as a compile-time structural check and add a note explaining the constraint.
 - Scenario IDs are **stable** — never renumber them once written. New scenarios added later get the next sequential number.
 - Number happy-path scenarios first, then constraints/negative tests, then structural/compile-time checks.
 
@@ -282,5 +280,3 @@ If the target page opens a factbox containing DotNet calls (e.g. `Item Card` →
 
 - Write the scenario as a **compile-time structural check** (read field properties from the record type in code; use `Assert.IsTrue(true, ...)` as the test body).
 - Add a `> Note:` in `acceptance.md` explaining the constraint so future engineers don't try to "fix" the test by opening the TestPage.
-
-See FM-08 in `specs/2026-06-10-fleet-register/acceptance.md` for a concrete example.

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
+import { AssetTreeProvider } from "./views/assetTreeProvider";
 import { checkForUpdates } from "./update/updateChecker";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -14,14 +15,28 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  // 2. Command: manual update check.
+  // 2. Sidebar: tree views listing the bundled skills and rules.
+  const skillsProvider = new AssetTreeProvider(context.extensionUri, "skill");
+  const rulesProvider = new AssetTreeProvider(context.extensionUri, "rule");
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider("frwSkills", skillsProvider),
+    vscode.window.registerTreeDataProvider("frwRules", rulesProvider),
+    vscode.commands.registerCommand("frwAgenticCoding.refreshSkills", () =>
+      skillsProvider.refresh()
+    ),
+    vscode.commands.registerCommand("frwAgenticCoding.refreshRules", () =>
+      rulesProvider.refresh()
+    )
+  );
+
+  // 3. Command: manual update check.
   context.subscriptions.push(
     vscode.commands.registerCommand("frwAgenticCoding.checkForUpdates", () =>
       checkForUpdates(context, true)
     )
   );
 
-  // 3. Startup update check (silent auth, opt-out via setting).
+  // 4. Startup update check (silent auth, opt-out via setting).
   const config = vscode.workspace.getConfiguration("frwAgenticCoding");
   if (config.get<boolean>("update.checkOnStartup", true)) {
     void checkForUpdates(context, false);
