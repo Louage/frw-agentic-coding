@@ -79,33 +79,42 @@ design must ultimately rest on something you read in the source or on Microsoft 
 
 ### Reading the source without freezing the chat
 
-The BC base application is enormous (thousands of `.al` files). **Text search
-(`grep_search`) does not work on the submodule and will hang the turn**, so the rule is
-absolute:
+The BC base application is enormous (thousands of `.al` files). **Almost every kind of
+*search* over the submodule hangs the turn** — text search always, and even file-name
+search when the pattern is not an exact file name. The freezes in this skill are search
+timeouts. So treat the submodule as something you **navigate and read**, never search
+broadly:
 
-> ⛔ **Never run a text or regex search against any path under `external/MSDyn365BC` —
-> not the whole tree, not a subfolder, and not even a single known file.** Empirically,
-> all of these fail: without `includeIgnoredFiles` the submodule is treated as ignored and
-> returns nothing (so the agent retries forever); with it, the search walks the tree and
-> times out; and a regex scoped to one file *still* hangs. There is no "safe" grep on the
-> BC source. Reach the content with file-name search + read instead.
+> ⛔ **Never run a text or regex search (`grep_search`) against any path under
+> `external/MSDyn365BC`** — not the whole tree, not a subfolder, not even a single known
+> file. Without `includeIgnoredFiles` it returns nothing (the submodule is ignored) so you
+> retry forever; with it, it times out; and a regex scoped to one file *still* hangs.
 
-- **Locate objects with `file_search` by name.** BC source files are PascalCase with **no
-  spaces**, even though object names contain spaces: the "Dimension Set Entry" table is
+> ⛔ **Never use a wildcard/partial `file_search` over the submodule** such as
+> `**/Master*.al` or `**/Dimension*.al`. The trailing wildcard forces a full-tree walk
+> and times out. This is confirmed: `**/MasterData*.al` and `**/DimensionCorrection*.al`
+> both hung the turn, while exact names returned instantly.
+
+Use only these three moves on the BC source:
+
+- **`file_search` with an EXACT file name.** BC files are PascalCase with **no spaces**
+  plus the object-type suffix: the "Dimension Set Entry" table is
   `DimensionSetEntry.Table.al`, "Dimension Value" is `DimensionValue.Table.al`,
-  codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Strip spaces from
-  the object name and append the type suffix — never search the spaced form, it never
-  matches. Widen the name pattern (e.g. `**/Dimension*.al`) if unsure.
-- **To find a field or procedure inside a located file, do NOT grep for it — read the
-  file in ranges with `read_file`.** Page through it (1–200, 200–400, …) until you reach
-  the field number or `procedure <Name>`. This is the only reliable way to jump to a
-  symbol in a BC file. Reading a few hundred extra lines is always faster than a search
-  that hangs the entire turn. Better still, let Layer 1 tell you roughly where to look so
-  you open fewer ranges.
+  codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Query the complete
+  name (`**/DimensionValue.Table.al`) — never a partial stem with `*`.
+- **`list_dir` to discover what exists** when you do not know the exact file name. Listing
+  one folder is fast and does not time out. Browse to the relevant area (e.g.
+  `external/MSDyn365BC/Base Application/Integration/SynchEngine/`) and read the file names,
+  then `file_search`/`read_file` the exact one you want. **Do this instead of a wildcard
+  search.**
+- **`read_file` in ranges** to inspect a located file. Page through it (1–200, 200–400, …)
+  to find a field number or `procedure <Name>` — do not grep for the symbol.
 
-If you ever feel the urge to "just grep this one file in the BC source to find the
-procedure", stop — that exact action is what freezes the chat. Ask the MCP or read it in
-ranges.
+**If you do not know where something lives, ask the BC Code Intelligence MCP (Layer 1)
+for the object name first, then look it up by exact name.** Never guess with a wildcard
+search and never fall back to grep — those are the actions that freeze the chat. If a
+single `file_search` or `read_file` ever times out, stop searching and switch to
+`list_dir` + exact name.
 
 ---
 
@@ -144,15 +153,17 @@ Ground rules:
 - Do not guess. If you are unsure whether BC covers something, say so and explain what
   you looked for.
 
-When you inspect the BC source in external/MSDyn365BC, NEVER run a text or regex search
-against any path under it — not the tree, not a subfolder, not even a single known file.
-All of these hang the turn (the submodule is treated as ignored: without includeIgnoredFiles
-they return nothing and you retry forever; with it they time out; and a regex scoped to one
-file still hangs). Instead, rely on Layer 1 (BC Code Intelligence MCP / semantic_search) to
-tell you which object matters, then locate it with file-name search — BC files are
-PascalCase with no spaces (the "Dimension Set Entry" table is DimensionSetEntry.Table.al) —
-and open it with read_file, paging through in ranges (1-200, 200-400, ...) to find fields
-and procedures. To jump to a procedure, read in ranges; do NOT grep for it.
+When you inspect the BC source in external/MSDyn365BC, treat it as something you navigate
+and read, never search broadly — searches over this huge submodule are what freeze the
+turn. RULES: (1) NEVER run a text/regex search (grep_search) on any path under it. (2)
+NEVER use a wildcard/partial file_search like **/Master*.al — only EXACT file names work
+(**/DimensionValue.Table.al); partial stems with * time out. (3) BC files are PascalCase
+with no spaces plus the type suffix (the "Dimension Set Entry" table is
+DimensionSetEntry.Table.al). (4) When you don't know the exact file name, use list_dir to
+browse the relevant folder (fast), or ask the BC Code Intelligence MCP for the object name
+— do NOT guess with a wildcard search. (5) Inspect a located file with read_file in ranges
+(1-200, 200-400, ...) to find fields and procedures; do NOT grep for the symbol. If any
+single file_search or read_file times out, stop and switch to list_dir + exact name.
 
 End the document with a section called "Key design decisions" — a short list of the most
 important choices made, one sentence each.
