@@ -1,0 +1,104 @@
+{
+  "name": "frw-agentic-coding",
+  "displayName": "The Framework Agentic Coding",
+  "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for use in VS Code chat/agent mode.",
+  "version": "0.1.0",
+  "publisher": "frw",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/frw-agentic-coding.git"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "languageModelTools": [
+      {
+        "name": "frw_get_coding_standard",
+        "displayName": "Get The Framework Coding Standard",
+        "modelDescription": "Returns the official coding standard, convention, or rule from The Framework for a given topic (for example: 'naming', 'error-handling', 'logging', 'testing', 'security'). Use this tool whenever the user asks how something should be done according to company standards, or before generating code that must follow company conventions. Returns Markdown guidance. If the requested topic is unknown, the tool returns the list of available topics.",
+        "toolReferenceName": "frwCodingStandard",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(book)",
+        "userDescription": "Look up a coding standard from The Framework by topic.",
+        "tags": [
+          "frw",
+          "standards"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "description": "The coding standard topic to look up, e.g. 'naming', 'error-handling', 'logging', 'testing', or 'security'."
+            }
+          },
+          "required": [
+            "topic"
+          ]
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "frwAgenticCoding.checkForUpdates",
+        "title": "The Framework: Check for extension updates",
+        "category": "The Framework"
+      },
+      {
+        "command": "frwAgenticCoding.installCustomizations",
+        "title": "The Framework: Install company skills & rules into this workspace",
+        "category": "The Framework"
+      }
+    ],
+    "configuration": {
+      "title": "The Framework Agentic Coding",
+      "properties": {
+        "frwAgenticCoding.update.repository": {
+          "type": "string",
+          "default": "your-org/frw-agentic-coding",
+          "markdownDescription": "The private GitHub repository (in `owner/repo` form) that publishes new `.vsix` releases of this extension. Used by the in-editor update check."
+        },
+        "frwAgenticCoding.update.checkOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check the configured GitHub repository for a newer release when VS Code starts."
+        },
+        "frwAgenticCoding.update.includePrereleases": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also consider GitHub pre-releases when checking for updates."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "lint": "eslint src",
+    "vsix": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.0"
+  }
+}

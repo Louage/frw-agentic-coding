@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "ms-vscode.extension-test-runner",
+    "connor4312.esbuild-problem-matchers",
+    "dbaeumer.vscode-eslint"
+  ]
+}
