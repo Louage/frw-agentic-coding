@@ -9,60 +9,79 @@ interface IGetCodingStandardInput {
 }
 
 /**
- * The company coding standards served by this tool.
+ * Serves the company's AL coding standards directly from the extension's bundled
+ * `assets/instructions/*.instructions.md` files. No copying into the workspace is
+ * required: the content is read live from the installed extension.
  *
- * In a real deployment you can replace this in-memory map with content loaded
- * from the bundled `assets/` folder, an internal API, or a Git-backed source.
+ * Topics are derived from the file names: `al-naming-conventions.instructions.md`
+ * is exposed as the topic `naming-conventions` (the leading `al-` is optional when
+ * querying, so both `naming-conventions` and `al-naming-conventions` resolve).
  */
-const CODING_STANDARDS: Record<string, string> = {
-  naming: [
-    "## FRW naming conventions",
-    "- Use descriptive, intention-revealing names.",
-    "- Types/classes: `PascalCase`. Functions/variables: `camelCase`. Constants: `UPPER_SNAKE_CASE`.",
-    "- Never use single-letter names except for loop indices.",
-  ].join("\n"),
-  "error-handling": [
-    "## FRW error handling",
-    "- Validate input only at system boundaries; do not add defensive checks for impossible states.",
-    "- Throw typed errors with actionable messages.",
-    "- Never swallow exceptions silently; log with context.",
-  ].join("\n"),
-  logging: [
-    "## FRW logging",
-    "- Use structured logging (key/value), not string concatenation.",
-    "- Never log secrets, tokens, or PII.",
-    "- Use levels consistently: error, warn, info, debug.",
-  ].join("\n"),
-  testing: [
-    "## FRW testing",
-    "- Every bug fix ships with a regression test.",
-    "- Prefer deterministic tests; no reliance on wall-clock time or network unless mocked.",
-    "- Name tests by behavior, not implementation.",
-  ].join("\n"),
-  security: [
-    "## FRW security",
-    "- Follow the OWASP Top 10; never trust external input.",
-    "- No secrets in source control; use the company secret store.",
-    "- Use parameterized queries; never build SQL via string concatenation.",
-  ].join("\n"),
-};
-
 export class GetCodingStandardTool
   implements vscode.LanguageModelTool<IGetCodingStandardInput>
 {
+  constructor(private readonly extensionUri: vscode.Uri) {}
+
+  private get instructionsDir(): vscode.Uri {
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "instructions");
+  }
+
+  /**
+   * Builds a map of normalized topic -> instruction file name. Each file is
+   * registered both under its full base name and an `al-` stripped alias.
+   */
+  private async getTopicMap(): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    let entries: [string, vscode.FileType][];
+    try {
+      entries = await vscode.workspace.fs.readDirectory(this.instructionsDir);
+    } catch {
+      return map;
+    }
+
+    for (const [name, type] of entries) {
+      if (type !== vscode.FileType.File || !name.endsWith(".instructions.md")) {
+        continue;
+      }
+      const base = name.replace(/\.instructions\.md$/i, "");
+      map.set(base.toLowerCase(), name);
+      map.set(base.replace(/^al-/i, "").toLowerCase(), name);
+    }
+    return map;
+  }
+
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<IGetCodingStandardInput>,
     _token: vscode.CancellationToken
   ): Promise<vscode.LanguageModelToolResult> {
     const requested = (options.input.topic ?? "").trim().toLowerCase();
-    const available = Object.keys(CODING_STANDARDS);
+    const topicMap = await this.getTopicMap();
 
-    const content = CODING_STANDARDS[requested];
-    if (!content) {
+    const availableTopics = [
+      ...new Set([...topicMap.keys()].map((k) => k.replace(/^al-/i, ""))),
+    ].sort();
+
+    const fileName = topicMap.get(requested);
+    if (!fileName) {
       return new vscode.LanguageModelToolResult([
         new vscode.LanguageModelTextPart(
-          `No FRW coding standard found for "${options.input.topic}". ` +
-            `Available topics: ${available.join(", ")}.`
+          `No coding standard found for "${options.input.topic}". ` +
+            `Available topics: ${availableTopics.join(", ")}.`
+        ),
+      ]);
+    }
+
+    let content: string;
+    try {
+      const data = await vscode.workspace.fs.readFile(
+        vscode.Uri.joinPath(this.instructionsDir, fileName)
+      );
+      content = Buffer.from(data).toString("utf8");
+    } catch (err) {
+      return new vscode.LanguageModelToolResult([
+        new vscode.LanguageModelTextPart(
+          `Failed to read coding standard "${options.input.topic}": ` +
+            (err instanceof Error ? err.message : String(err))
         ),
       ]);
     }
@@ -77,7 +96,7 @@ export class GetCodingStandardTool
     _token: vscode.CancellationToken
   ): Promise<vscode.PreparedToolInvocation> {
     return {
-      invocationMessage: `Looking up the FRW coding standard for "${options.input.topic}"`,
+      invocationMessage: `Looking up the coding standard for "${options.input.topic}"`,
     };
   }
 }

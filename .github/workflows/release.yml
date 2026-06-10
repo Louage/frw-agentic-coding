@@ -25,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set version from tag
+        # The pushed tag (e.g. v0.2.0) is the single source of truth for the
+        # version. Strip the leading "v" and write it into package.json without
+        # creating a commit/tag, so the .vsix is stamped with the tag version.
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
       - name: Lint
         run: npm run lint
 

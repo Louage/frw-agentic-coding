@@ -1,12 +1,22 @@
 # The Framework Agentic Coding
 
 Internal VS Code extension that distributes **AI agent customizations** across the
-company:
+company. For now it is focused on **Microsoft Dynamics 365 Business Central (AL)**
+development, but it can grow to cover other stacks.
 
 1. **Skills**
-   - _Executable tool_ — a [Language Model Tool](https://code.visualstudio.com/api/extension-guides/ai/tools) (`#frwCodingStandard`) that the agent can invoke automatically in agent mode.
-   - _Knowledge skill_ — a bundled `SKILL.md` installed into the workspace on demand.
-2. **Rules** — bundled custom instructions (`*.instructions.md`) installed into the workspace `.github/instructions/`.
+   - _Knowledge skills_ — bundled `SKILL.md` workflows (e.g. `create-feature-spec`,
+     `finalise-feature`, `generate-docs`, `run-al-tests`, `setup-al-vibe-rules`)
+     contributed via the `chatSkills` manifest point and served live from the
+     extension.
+   - _Executable tool_ — an optional [Language Model Tool](https://code.visualstudio.com/api/extension-guides/ai/tools)
+     (`#frwCodingStandard`) that the agent can invoke automatically in agent mode.
+2. **Rules** — bundled AL custom instructions (`*.instructions.md`) contributed via
+   the `chatInstructions` manifest point.
+
+Skills and rules are delivered **declaratively** through the extension manifest, so
+they are available in every workspace as soon as the extension is installed — no
+files are copied into `.github/`.
 
 This extension is **internal only** and is never published to the public Marketplace.
 
@@ -30,8 +40,6 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 
 ## Commands
 
-- **The Framework: Install company skills & rules into this workspace** — copies bundled
-  instructions/skills into `.github/`.
 - **The Framework: Check for extension updates** — manual update check.
 
 ## Release

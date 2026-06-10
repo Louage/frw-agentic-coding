@@ -1,33 +1,27 @@
 import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
-import { installCustomizations } from "./commands/installCustomizations";
 import { checkForUpdates } from "./update/updateChecker";
 
 export function activate(context: vscode.ExtensionContext): void {
   // 1. Skill (executable tool): registered so agent mode can invoke it.
+  //    Skills (SKILL.md) and rules (*.instructions.md) are contributed
+  //    declaratively via the chatSkills / chatInstructions manifest points
+  //    and served live from the extension — no workspace copy needed.
   context.subscriptions.push(
     vscode.lm.registerTool(
       "frw_get_coding_standard",
-      new GetCodingStandardTool()
+      new GetCodingStandardTool(context.extensionUri)
     )
   );
 
-  // 2. Command: install bundled skills & rules into the workspace .github/.
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "frwAgenticCoding.installCustomizations",
-      () => installCustomizations(context)
-    )
-  );
-
-  // 3. Command: manual update check.
+  // 2. Command: manual update check.
   context.subscriptions.push(
     vscode.commands.registerCommand("frwAgenticCoding.checkForUpdates", () =>
       checkForUpdates(context, true)
     )
   );
 
-  // 4. Startup update check (silent auth, opt-out via setting).
+  // 3. Startup update check (silent auth, opt-out via setting).
   const config = vscode.workspace.getConfiguration("frwAgenticCoding");
   if (config.get<boolean>("update.checkOnStartup", true)) {
     void checkForUpdates(context, false);

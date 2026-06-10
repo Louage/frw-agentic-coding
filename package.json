@@ -1,11 +1,12 @@
 {
   "name": "frw-agentic-coding",
   "displayName": "The Framework Agentic Coding",
-  "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for use in VS Code chat/agent mode.",
-  "version": "0.1.0",
+  "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
+  "version": "0.2.0",
   "publisher": "frw",
   "private": true,
   "license": "UNLICENSED",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -27,21 +28,23 @@
       {
         "name": "frw_get_coding_standard",
         "displayName": "Get The Framework Coding Standard",
-        "modelDescription": "Returns the official coding standard, convention, or rule from The Framework for a given topic (for example: 'naming', 'error-handling', 'logging', 'testing', 'security'). Use this tool whenever the user asks how something should be done according to company standards, or before generating code that must follow company conventions. Returns Markdown guidance. If the requested topic is unknown, the tool returns the list of available topics.",
+        "modelDescription": "Returns the official AL / Business Central coding standard from The Framework for a given topic. Available topics: code-style, naming-conventions, performance, error-handling, events, testing, upgrade, guidelines-rules. Use this tool whenever the user asks how something should be done according to company standards, or before generating or reviewing AL code that must follow company conventions. Returns the full Markdown rule file. If the requested topic is unknown, the tool returns the list of available topics.",
         "toolReferenceName": "frwCodingStandard",
         "canBeReferencedInPrompt": true,
         "icon": "$(book)",
-        "userDescription": "Look up a coding standard from The Framework by topic.",
+        "userDescription": "Look up an AL / Business Central coding standard from The Framework by topic.",
         "tags": [
           "frw",
-          "standards"
+          "standards",
+          "al",
+          "business-central"
         ],
         "inputSchema": {
           "type": "object",
           "properties": {
             "topic": {
               "type": "string",
-              "description": "The coding standard topic to look up, e.g. 'naming', 'error-handling', 'logging', 'testing', or 'security'."
+              "description": "The coding standard topic to look up, e.g. 'naming-conventions', 'code-style', 'performance', 'error-handling', 'events', 'testing', 'upgrade', or 'guidelines-rules'."
             }
           },
           "required": [
@@ -50,15 +53,53 @@
         }
       }
     ],
+    "chatSkills": [
+      {
+        "path": "./assets/skills/create-feature-spec/SKILL.md"
+      },
+      {
+        "path": "./assets/skills/finalise-feature/SKILL.md"
+      },
+      {
+        "path": "./assets/skills/generate-docs/SKILL.md"
+      },
+      {
+        "path": "./assets/skills/run-al-tests/SKILL.md"
+      },
+      {
+        "path": "./assets/skills/setup-al-vibe-rules/SKILL.md"
+      }
+    ],
+    "chatInstructions": [
+      {
+        "path": "./assets/instructions/al-code-style.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-naming-conventions.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-guidelines-rules.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-performance.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-error-handling.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-events.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-testing.instructions.md"
+      },
+      {
+        "path": "./assets/instructions/al-upgrade.instructions.md"
+      }
+    ],
     "commands": [
       {
         "command": "frwAgenticCoding.checkForUpdates",
         "title": "The Framework: Check for extension updates",
-        "category": "The Framework"
-      },
-      {
-        "command": "frwAgenticCoding.installCustomizations",
-        "title": "The Framework: Install company skills & rules into this workspace",
         "category": "The Framework"
       }
     ],
