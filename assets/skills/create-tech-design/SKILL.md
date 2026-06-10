@@ -45,6 +45,32 @@ between `specs/functional-design.md` (what the customer needs) and the per-featu
 
 ---
 
+## Searching the BC base source efficiently (read this first)
+
+The BC base application is enormous (thousands of `.al` files). A careless search will
+**time out**, and repeated timeouts make the chat look frozen even though the agent is
+still churning. Follow these rules when inspecting `external/MSDyn365BC`:
+
+- **Find the file first, then read it.** Use file search by name
+  (e.g. `**/DimensionSetEntry.Table.al`) to locate the object, then open it directly.
+  Do not grep the whole tree to find content you can reach by filename.
+- **Never set `includeIgnoredFiles: true` for BC source.** It is a registered workspace
+  folder and is searchable without it; that flag forces a full walk of the tree and is
+  the most common cause of timeouts.
+- **Scope every search to a narrow `includePattern`** — a specific file or a single
+  subfolder (e.g. `external/MSDyn365BC/.../Foundation/**`), never `**/*.al`.
+- **Prefer literal searches over regex.** Avoid regex with alternation
+  (`a|b|c`) across many files — it is dramatically slower. Search one literal term at a
+  time, scoped to one file.
+- If a search times out, **do not retry the same query.** Narrow the pattern or switch to
+  locating the file by name and reading it.
+
+> The single worst pattern — and the one that hangs this skill — is a regex grep with
+> `includeIgnoredFiles: true` and a broad `includePattern` across the whole BC source.
+> Avoid that combination entirely.
+
+---
+
 ## Step 2 — Produce `specs/tech-design.md`
 
 Run the following prompt against the functional design. Substitute the focus area from
@@ -75,6 +101,12 @@ Ground rules:
   existing objects over creating new ones.
 - Do not guess. If you are unsure whether BC covers something, say so and explain what
   you looked for.
+
+When you inspect the BC source in external/MSDyn365BC, search efficiently or you will
+time out: locate objects by file name and read them directly, scope every search to a
+specific file or subfolder (never **/*.al), prefer literal searches over regex, and never
+set includeIgnoredFiles for the BC source. If a search times out, narrow it rather than
+retrying the same query.
 
 End the document with a section called "Key design decisions" — a short list of the most
 important choices made, one sentence each.
