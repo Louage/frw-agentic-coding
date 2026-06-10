@@ -55,7 +55,13 @@
     ],
     "chatSkills": [
       {
+        "path": "./assets/skills/add-base-bc-code/SKILL.md"
+      },
+      {
         "path": "./assets/skills/create-feature-spec/SKILL.md"
+      },
+      {
+        "path": "./assets/skills/create-tech-design/SKILL.md"
       },
       {
         "path": "./assets/skills/finalise-feature/SKILL.md"
