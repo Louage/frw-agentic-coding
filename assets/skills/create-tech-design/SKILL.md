@@ -1,6 +1,6 @@
 ---
 name: create-tech-design
-description: "Produce specs/tech-design.md — the high-level implementation plan for a Business Central extension — from the functional requirement in specs/functional-design.md. Use when: the functional design is approved and you need the technical design; the user says 'create the tech design', 'produce tech-design.md', 'design how we implement this', or 'start the technical design'. This is the missing link between functional-design.md and the per-feature specs. Forces the agent to read the real BC source code and Microsoft Learn, favour standard BC over custom code, cite evidence, and optionally stress-test the result with a second (fresh) agent before committing."
+description: "Produce specs/tech-design.md — the high-level implementation plan for a Business Central extension — from the functional requirement in specs/functional-design.md. Use when: the functional design is approved and you need the technical design; the user says 'create the tech design', 'produce tech-design.md', 'design how we implement this', or 'start the technical design'. This is the missing link between functional-design.md and the per-feature specs. Forces the agent to research BC in two layers — the BC Code Intelligence MCP for how-does-BC questions, then the real BC source to confirm and cite — favour standard BC over custom code, cite evidence, and optionally stress-test the result with a second (fresh) agent before committing."
 argument-hint: "Optional: a specific requirement or area to focus the design on. Omit to design the whole functional requirement."
 disable-model-invocation: true
 ---
@@ -22,13 +22,26 @@ between `specs/functional-design.md` (what the customer needs) and the per-featu
 > BC base source is available in the workspace (see the `add-base-bc-code` skill) and that
 > Microsoft Learn is reachable via MCP.
 
+> **Two research layers, used together.** The **BC Code Intelligence MCP** (and
+> `semantic_search`) answer the conceptual questions — *"how does BC approach X"*, *"what
+> pattern fits here"*, *"what does this procedure do"* — cheaply and without trawling
+> source. The **`external/MSDyn365BC` submodule** is the ground truth you read to
+> **confirm and cite** the specifics (exact field numbers, procedure bodies, whether a
+> field validates or direct-assigns). Lead with the MCP to decide *where to look*, then
+> open the actual source file to verify. The MCP is knowledge and can be wrong; the source
+> cannot. Both are required — neither replaces the other.
+
 ---
 
 ## Prerequisites
 
 - `specs/functional-design.md` exists and is approved (the functional requirement).
 - The BC base application source is in the workspace at `external/MSDyn365BC`
-  (use the `add-base-bc-code` skill if it is missing).
+  (use the `add-base-bc-code` skill if it is missing). This is the ground-truth evidence
+  the design must cite — it is not optional.
+- The **BC Code Intelligence MCP** is installed and active
+  (`github.com/JeremyVyska/bc-code-intelligence-mcp`) — the primary layer for conceptual
+  "how does BC do X" questions.
 - Microsoft Learn MCP is available and active.
 - You are on `main` and git is available in the terminal.
 
@@ -45,41 +58,54 @@ between `specs/functional-design.md` (what the customer needs) and the per-featu
 
 ---
 
-## Searching the BC base source efficiently (read this first)
+## How to research BC (read this first)
 
-The BC base application is enormous (thousands of `.al` files) and is added as a submodule
-in `external/MSDyn365BC`. **`grep_search` does not work on it** — VS Code search treats
-the submodule tree as ignored, so a normal text search returns **nothing**, while forcing
-`includeIgnoredFiles: true` makes it **walk the whole tree and time out**. Repeated failed
-or timed-out searches are what make the chat look frozen. So do not search text in the BC
-source at all — locate files by name and read them.
+Research BC in two layers, in this order. Doing it in this order is what keeps the turn
+fast and stops it from freezing.
 
-Follow these rules when inspecting `external/MSDyn365BC`:
+**Layer 1 — Ask the knowledge layer first (cheap, no source trawling).**
+For any "how does BC approach X", "where does feature Y live", "what pattern fits", or
+"what does procedure Z do" question, use the **BC Code Intelligence MCP** (or
+`semantic_search`). This tells you *which objects and procedures matter* without reading
+thousands of lines, and it answers procedure-level questions directly. Start here — it
+narrows the problem before you ever open a source file.
 
-- **Do not use `grep_search` (text search) on the BC source.** Without
-  `includeIgnoredFiles` it silently returns no results (the tree is treated as ignored);
-  with it, a regex/broad search times out and hangs the turn. Neither is acceptable —
-  reach the content a different way.
+**Layer 2 — Confirm and cite against the real source.**
+Once Layer 1 has pointed you at the specific object, open the actual file in
+`external/MSDyn365BC` to verify the ground truth — the exact field number, the procedure
+body, whether a field validates or direct-assigns — and cite that file path as evidence.
+The MCP is knowledge and can be wrong; the source cannot. Every standard-BC claim in the
+design must ultimately rest on something you read in the source or on Microsoft Learn.
+
+### Reading the source without freezing the chat
+
+The BC base application is enormous (thousands of `.al` files). **Text search
+(`grep_search`) does not work on the submodule and will hang the turn**, so the rule is
+absolute:
+
+> ⛔ **Never run a text or regex search against any path under `external/MSDyn365BC` —
+> not the whole tree, not a subfolder, and not even a single known file.** Empirically,
+> all of these fail: without `includeIgnoredFiles` the submodule is treated as ignored and
+> returns nothing (so the agent retries forever); with it, the search walks the tree and
+> times out; and a regex scoped to one file *still* hangs. There is no "safe" grep on the
+> BC source. Reach the content with file-name search + read instead.
+
 - **Locate objects with `file_search` by name.** BC source files are PascalCase with **no
   spaces**, even though object names contain spaces: the "Dimension Set Entry" table is
   `DimensionSetEntry.Table.al`, "Dimension Value" is `DimensionValue.Table.al`,
   codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Strip spaces from
   the object name and append the type suffix — never search the spaced form, it never
-  matches.
-- **Read the located file with `read_file`, in targeted ranges.** This is how you inspect
-  fields and procedures — not by grepping. Core codeunits like `DimensionManagement` are
-  thousands of lines: read it in successive ranges (e.g. 1–200, 200–400) to find the
-  field number or procedure you need. Do not try to jump to a symbol with text search.
-- **For "how does BC do X" or "where is feature Y" questions, use `semantic_search` or
-  the BC Code Intelligence MCP** — these work on the BC source where `grep_search` does
-  not.
-- If something is hard to find by name, widen the `file_search` name pattern (e.g.
-  `**/Dimension*.al`) rather than reaching for text search.
+  matches. Widen the name pattern (e.g. `**/Dimension*.al`) if unsure.
+- **To find a field or procedure inside a located file, do NOT grep for it — read the
+  file in ranges with `read_file`.** Page through it (1–200, 200–400, …) until you reach
+  the field number or `procedure <Name>`. This is the only reliable way to jump to a
+  symbol in a BC file. Reading a few hundred extra lines is always faster than a search
+  that hangs the entire turn. Better still, let Layer 1 tell you roughly where to look so
+  you open fewer ranges.
 
-> The two patterns that hang or stall this skill: (1) a text search on the BC source with
-> no `includeIgnoredFiles` (returns nothing, agent retries forever), and (2) a regex text
-> search with `includeIgnoredFiles: true` across the tree (times out). Avoid text search
-> on the BC source entirely; use file name search + read.
+If you ever feel the urge to "just grep this one file in the BC source to find the
+procedure", stop — that exact action is what freezes the chat. Ask the MCP or read it in
+ranges.
 
 ---
 
@@ -91,8 +117,12 @@ the argument if one was provided; otherwise design the whole functional requirem
 ```text
 Read specs/functional-design.md carefully.
 
-You have access to the full Business Central source code in external/MSDyn365BC and to
-Microsoft Learn via MCP. Use both.
+Research BC in two layers. FIRST, use the BC Code Intelligence MCP (and semantic_search)
+to answer "how does BC approach this", "which objects/procedures matter", and "what does
+procedure Z do" — this narrows the problem cheaply. THEN open the actual source in
+external/MSDyn365BC to confirm the specifics (exact field numbers, procedure bodies,
+validate vs direct-assign) and cite the file path as evidence. The MCP is knowledge and
+can be wrong; the source is ground truth. Also use Microsoft Learn via MCP.
 
 Produce specs/tech-design.md with the following structure:
 
@@ -114,20 +144,23 @@ Ground rules:
 - Do not guess. If you are unsure whether BC covers something, say so and explain what
   you looked for.
 
-When you inspect the BC source in external/MSDyn365BC, do NOT use text search (grep) on
-it: the submodule tree is treated as ignored, so a normal text search returns nothing,
-and forcing includeIgnoredFiles makes it time out and hang. Instead, locate objects with
-file-name search — BC files are PascalCase with no spaces (the "Dimension Set Entry" table
-is DimensionSetEntry.Table.al) — then open them with read_file and read targeted ranges to
-find fields and procedures. For "how does BC do X" questions, use semantic_search or the
-BC Code Intelligence MCP, which work on the BC source where grep does not.
+When you inspect the BC source in external/MSDyn365BC, NEVER run a text or regex search
+against any path under it — not the tree, not a subfolder, not even a single known file.
+All of these hang the turn (the submodule is treated as ignored: without includeIgnoredFiles
+they return nothing and you retry forever; with it they time out; and a regex scoped to one
+file still hangs). Instead, rely on Layer 1 (BC Code Intelligence MCP / semantic_search) to
+tell you which object matters, then locate it with file-name search — BC files are
+PascalCase with no spaces (the "Dimension Set Entry" table is DimensionSetEntry.Table.al) —
+and open it with read_file, paging through in ranges (1-200, 200-400, ...) to find fields
+and procedures. To jump to a procedure, read in ranges; do NOT grep for it.
 
 End the document with a section called "Key design decisions" — a short list of the most
 important choices made, one sentence each.
 ```
 
-The agent will read the functional design, search the BC source, and pull Microsoft Learn
-docs. Let it run — it takes a few minutes.
+The agent will read the functional design, query the BC Code Intelligence MCP, confirm
+the specifics against the BC source, and pull Microsoft Learn docs. Let it run — it takes
+a few minutes.
 
 ---
 
