@@ -26,6 +26,16 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand("frwAgenticCoding.refreshRules", () =>
       rulesProvider.refresh()
+    ),
+    // Clicking a skill drops its `/slash` command into the chat input.
+    vscode.commands.registerCommand(
+      "frwAgenticCoding.useSkill",
+      (skillName: string) => openChatWith(`/${skillName} `)
+    ),
+    // Clicking a rule references the coding-standard tool for that topic.
+    vscode.commands.registerCommand(
+      "frwAgenticCoding.useRule",
+      (topic: string) => openChatWith(`#frwCodingStandard ${topic} `)
     )
   );
 
@@ -45,4 +55,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   // Nothing to clean up; all disposables are tracked in context.subscriptions.
+}
+
+/**
+ * Opens the Copilot Chat view and pre-fills its input with `text` without
+ * sending it, so the user can review or adjust before submitting.
+ */
+function openChatWith(text: string): void {
+  void vscode.commands.executeCommand("workbench.action.chat.open", {
+    query: text,
+    isPartialQuery: true,
+  });
 }

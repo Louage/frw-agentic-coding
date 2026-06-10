@@ -1,6 +1,6 @@
 ---
 name: create-feature-spec
-description: "Bootstrap the full spec folder for the next planned feature in this Business Central project. Use when: starting a new feature; the user says 'start Feature N', 'create the spec for X', or 'begin the next feature'; after merging the previous feature branch. Reads the roadmap to identify the next planned feature, creates the git branch, and generates specs/YYYY-MM-DD-<slug>/requirements.md + plan.md + acceptance.md from the project constitution."
+description: "Bootstrap the full spec folder for the next planned feature in this Business Central project. Use when: starting a new feature; the user says 'start Feature N', 'create the spec for X', or 'begin the next feature'; after merging the previous feature branch. Reads the roadmap to identify the next planned feature, creates the git branch, and generates specs/YYYY-MM-DD-<slug>/requirements.md + plan.md + acceptance.md from the project spec documents (functional-design.md, tech-design.md, roadmap.md)."
 argument-hint: "Optional: feature number or name to target, e.g. '3' or 'Customer Records'. Omit to auto-detect from roadmap."
 ---
 
@@ -8,7 +8,7 @@ argument-hint: "Optional: feature number or name to target, e.g. '3' or 'Custome
 
 Bootstraps the complete spec folder for one feature in a single invocation:
 
-1. Read the project constitution to understand scope and decisions
+1. Read the project spec documents to understand scope and decisions
 2. Identify the target feature (next planned, or the one named in the argument)
 3. Create the git branch
 4. Generate `requirements.md`, `plan.md`, and `acceptance.md`
@@ -17,19 +17,25 @@ Bootstraps the complete spec folder for one feature in a single invocation:
 
 ## Prerequisites
 
-- `specs/brief.md`, `specs/tech-design.md`, and `specs/roadmap.md` exist
+- `specs/functional-design.md`, `specs/tech-design.md`, and `specs/roadmap.md` exist
 - The previous feature branch is merged to `main` (you are on `main`)
 - Git is available in the terminal
+
+These three documents are produced earlier in the workflow, each by a different role:
+
+- `specs/functional-design.md` — the **functional requirement**, authored by a customer, key user, or consultant with little technical knowledge of Business Central. Describes the operational problem and desired capabilities in plain language.
+- `specs/tech-design.md` — the **technical design**, produced (typically via a prompt) by a technical architect or developer with mature Business Central knowledge. Translates the functional design into implementation decisions, object lists, and field design.
+- `specs/roadmap.md` — the **execution plan**, produced (via a prompt with the agent + developer) to sequence how the technical design is delivered as features.
 
 ---
 
 ## Workflow
 
-### Step 1 — Read the constitution
+### Step 1 — Read the spec documents
 
 Read in parallel:
 
-- `specs/brief.md` — customer problem, capabilities list, overall scope
+- `specs/functional-design.md` — customer problem, capabilities list, overall scope (the functional requirement)
 - `specs/roadmap.md` — all features, their status (`done` / `in-progress` / `planned`), their "How" paragraph, and their "Done when" statement
 - `specs/tech-design.md` — the `##` section that corresponds to this feature (contains implementation decision, object list, field design, and any "use standard X over custom Y" rationale)
 

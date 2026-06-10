@@ -7,6 +7,12 @@ export type AssetKind = "skill" | "rule";
 interface IAssetItem {
   /** Display label (the asset's name). */
   label: string;
+  /**
+   * Stable identifier used to reference the asset in chat: the skill name for
+   * skills (used as `/skill-name`) or the topic for rules (passed to the
+   * `#frwCodingStandard` tool).
+   */
+  id: string;
   /** Short trailing text (e.g. a rule's `applyTo` glob). */
   description?: string;
   /** Markdown tooltip (the asset's full description). */
@@ -48,9 +54,12 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
     );
     item.contextValue = this.kind;
     item.command = {
-      command: "vscode.open",
-      title: "Open",
-      arguments: [element.resourceUri],
+      command:
+        this.kind === "skill"
+          ? "frwAgenticCoding.useSkill"
+          : "frwAgenticCoding.useRule",
+      title: "Use in Chat",
+      arguments: [element.id],
     };
     return item;
   }
@@ -85,8 +94,10 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
       if (!meta) {
         continue;
       }
+      const skillName = meta["name"] ?? name;
       items.push({
-        label: meta["name"] ?? name,
+        label: skillName,
+        id: skillName,
         tooltip: meta["description"],
         resourceUri: fileUri,
       });
@@ -114,6 +125,7 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
         .replace(/^al-/i, "");
       items.push({
         label,
+        id: label,
         description: meta?.["applyTo"],
         tooltip: meta?.["description"],
         resourceUri: fileUri,

@@ -44,9 +44,9 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 
 ## Release
 
-1. Bump `version` in `package.json` and update `CHANGELOG.md`.
-2. `git tag v0.1.0 && git push origin v0.1.0`.
-3. The workflow packages the `.vsix` and creates the GitHub Release.
+1. Update `CHANGELOG.md`.
+2. `git tag v0.2.0 && git push origin v0.2.0`.
+3. The release workflow stamps the version from the tag, packages the `.vsix`, and creates the GitHub Release.
 
 ## Configure who can install / auto-update
 
@@ -56,5 +56,3 @@ Set the repository clients check in settings:
 "frwAgenticCoding.update.repository": "Louage/frw-agentic-coding",
 "frwAgenticCoding.update.checkOnStartup": true
 ```
-
-> Replace the `publisher` (`frw`) placeholder with your real value before first release.

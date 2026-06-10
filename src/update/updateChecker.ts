@@ -3,7 +3,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { promises as fs } from "fs";
 
-const EXTENSION_ID = "frw.frw-agentic-coding";
+const EXTENSION_ID = "theframework.frw-agentic-coding";
 
 interface GitHubReleaseAsset {
   id: number;
