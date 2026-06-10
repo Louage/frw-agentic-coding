@@ -51,19 +51,34 @@ The BC base application is enormous (thousands of `.al` files). A careless searc
 **time out**, and repeated timeouts make the chat look frozen even though the agent is
 still churning. Follow these rules when inspecting `external/MSDyn365BC`:
 
+- **Know the filename convention.** BC source files are named in PascalCase with **no
+  spaces**, even though the object names contain spaces. The "Dimension Set Entry" table
+  is `DimensionSetEntry.Table.al`, the "Dimension Value" table is `DimensionValue.Table.al`,
+  codeunit "DimensionManagement" is `DimensionManagement.Codeunit.al`. Do **not** search
+  for the spaced object name (`Dimension Set Entry.Table.al`) — it never matches and wastes
+  several attempts. Strip the spaces and append the type suffix.
 - **Find the file first, then read it.** Use file search by name
   (e.g. `**/DimensionSetEntry.Table.al`) to locate the object, then open it directly.
   Do not grep the whole tree to find content you can reach by filename.
 - **Never set `includeIgnoredFiles: true` for BC source.** It is a registered workspace
   folder and is searchable without it; that flag forces a full walk of the tree and is
   the most common cause of timeouts.
-- **Scope every search to a narrow `includePattern`** — a specific file or a single
-  subfolder (e.g. `external/MSDyn365BC/.../Foundation/**`), never `**/*.al`.
+- **Scope every search to a narrow `includePattern`, and end folder patterns with `/**`.**
+  A folder path without a trailing `/**` matches the folder itself, not its contents, so
+  it silently returns nothing (e.g. use
+  `external/MSDyn365BC/Base Application/Finance/Dimension/**`, not
+  `…/Finance/Dimension`). Never use `**/*.al`.
 - **Prefer literal searches over regex.** Avoid regex with alternation
   (`a|b|c`) across many files — it is dramatically slower. Search one literal term at a
-  time, scoped to one file.
-- If a search times out, **do not retry the same query.** Narrow the pattern or switch to
-  locating the file by name and reading it.
+  time, scoped to one file or one small folder.
+- **Read targeted ranges, not whole files.** Core codeunits like `DimensionManagement`
+  are thousands of lines. Locate the procedure by name first, then read around it — do
+  not load the entire file into context.
+- **For "how does BC do X" questions, prefer `semantic_search` or the BC Code
+  Intelligence MCP** over grepping the raw source. Reserve grep for confirming a specific,
+  known symbol in a specific file.
+- If a search times out or returns nothing, **do not retry the same query.** Narrow the
+  pattern, fix the filename, or switch to locating the file by name and reading it.
 
 > The single worst pattern — and the one that hangs this skill — is a regex grep with
 > `includeIgnoredFiles: true` and a broad `includePattern` across the whole BC source.
@@ -103,10 +118,14 @@ Ground rules:
   you looked for.
 
 When you inspect the BC source in external/MSDyn365BC, search efficiently or you will
-time out: locate objects by file name and read them directly, scope every search to a
-specific file or subfolder (never **/*.al), prefer literal searches over regex, and never
-set includeIgnoredFiles for the BC source. If a search times out, narrow it rather than
-retrying the same query.
+time out: BC source filenames are PascalCase with no spaces (the "Dimension Set Entry"
+table is DimensionSetEntry.Table.al), so strip spaces from object names when searching by
+file. Locate objects by file name and read targeted ranges directly. Scope every search
+to a specific file or subfolder and end folder patterns with /** (a bare folder path
+matches nothing). Prefer literal searches over regex, and never set includeIgnoredFiles
+for the BC source. For "how does BC do X" questions prefer semantic_search or the BC Code
+Intelligence MCP over grepping raw source. If a search times out or returns nothing,
+narrow or fix it rather than retrying the same query.
 
 End the document with a section called "Key design decisions" — a short list of the most
 important choices made, one sentence each.
