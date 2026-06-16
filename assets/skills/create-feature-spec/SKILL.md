@@ -25,8 +25,10 @@ Use today's date. Slug is lowercase-hyphenated feature name, e.g. `customer-iden
 
 ### 3. Read the source documents
 
+> `<ServiceDesk-ID>.md` — ServiceDesk-ID is the ServiceDesk or DevOps Workitem and the customer's intent (probably the opened file is a file in the current directory)
+
 Before writing anything, read:
-- `specs/brief.md` — customer intent
+- `<ServiceDesk-ID>.md` — customer intent and probably the opened file are a file in the current directory
 - `specs/tech-design.md` — the relevant `§N.1 What BC already provides`, `§N.2 Gaps`, `§N.3 Implementation decision` sections
 - `specs/roadmap.md` — the "Built by" and "Done when" cells for this feature
 

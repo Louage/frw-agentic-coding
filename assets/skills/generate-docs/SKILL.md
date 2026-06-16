@@ -28,9 +28,11 @@ Automates the end-to-end documentation workflow for one completed feature:
 
 ### Step 1 — Read source material
 
+> `<ServiceDesk-ID>.md` — ServiceDesk-ID is the ServiceDesk or DevOps Workitem and the customer's intent (probably the opened file is a file in the current directory)
+
 Read in parallel:
 
-- `specs/brief.md` — customer problem and overall scope
+- `<ServiceDesk-ID>.md` — customer problem and overall scope
 - `specs/roadmap.md` — feature status and "Done when" statement
 - `specs/tech-design.md` — the relevant `##` section for this feature
 - `specs/YYYY-MM-DD-<feature>/requirements.md` — in-scope / out-of-scope

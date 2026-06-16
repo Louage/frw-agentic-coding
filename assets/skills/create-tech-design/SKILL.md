@@ -1,5 +1,5 @@
 ---
-name: create-tech-spec
+name: create-tech-design
 description: Creates a technical spec document for the requirements found in the current markdown file. Generates a specs/tech-design.md
 ---
 
@@ -34,7 +34,10 @@ Take a fresh look at the suggested @specs/tech-design.md using subagent.
 
 Use the Alex Architect persona from BC Code Intelligence (bc-knowledge  mcp).
 
-Read specs/brief.md and specs/tech-design.md.
+> `<ServiceDesk-ID>.md` — ServiceDesk-ID is the ServiceDesk or DevOps Workitem and the customer's intent (probably the opened file is a file in the current directory)
+
+Read <ServiceDesk-ID>.md and specs/tech-design.md.
+
 
 Your job is to critique the tech design — not to be polite about it. Look for:
 
