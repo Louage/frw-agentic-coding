@@ -1,5 +1,5 @@
 ---
-name: generate-docs
+name: 06-generate-docs
 description: "Generate and maintain docs/user-guide.md for a completed Business Central feature. Use when: a feature branch has been implemented and tested; the user asks to document a feature; updating the user guide after merge; writing user documentation after tests pass. Produces the correct user-guide section (What it does / Setup / How to use / Related features), runs a Taylor Docs + Uma UX accuracy and clarity review, applies fixes, and marks the feature as done in roadmap.md."
 argument-hint: "Feature number and name, e.g. '3 Customer Records'"
 ---

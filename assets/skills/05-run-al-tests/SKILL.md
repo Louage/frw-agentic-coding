@@ -1,5 +1,5 @@
 ---
-name: run-al-tests
+name: 05-run-al-tests
 description: Compiles, publishes and runs AL test codeunits inside the local Business Central Docker container using BcContainerHelper. Use when the user asks to run tests, run AL tests, run test codeunits, verify the tests pass, run the test suite, or check test results in the BC container.
 ---
 

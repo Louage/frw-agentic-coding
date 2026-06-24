@@ -55,25 +55,22 @@
     ],
     "chatSkills": [
       {
-        "path": "./assets/skills/add-base-bc-code/SKILL.md"
+        "path": "./assets/skills/01-create-tech-design/SKILL.md"
       },
       {
-        "path": "./assets/skills/create-feature-spec/SKILL.md"
+        "path": "./assets/skills/02-create-roadmap/SKILL.md"
       },
       {
-        "path": "./assets/skills/create-tech-design/SKILL.md"
+        "path": "./assets/skills/03-create-feature-spec/SKILL.md"
       },
       {
-        "path": "./assets/skills/finalise-feature/SKILL.md"
+        "path": "./assets/skills/04-implement-feature-spec/SKILL.md"
       },
       {
-        "path": "./assets/skills/generate-docs/SKILL.md"
+        "path": "./assets/skills/05-run-al-tests/SKILL.md"
       },
       {
-        "path": "./assets/skills/run-al-tests/SKILL.md"
-      },
-      {
-        "path": "./assets/skills/setup-al-vibe-rules/SKILL.md"
+        "path": "./assets/skills/06-generate-docs/SKILL.md"
       }
     ],
     "chatInstructions": [

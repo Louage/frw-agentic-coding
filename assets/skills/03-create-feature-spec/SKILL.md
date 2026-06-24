@@ -1,5 +1,5 @@
 ---
-name: create-feature-spec
+name: 03-create-feature-spec
 description: Creates the three spec documents for the next planned feature in the SDD workflow. Use when starting a new feature, when the user asks to create a spec, write requirements, or begin a feature branch. Creates the spec/YYYY-MM-DD-feature-name branch and writes requirements.md, plan.md, and acceptance.md.
 ---
 

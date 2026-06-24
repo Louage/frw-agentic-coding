@@ -1,5 +1,5 @@
 ---
-name: create-tech-design
+name: 01-create-tech-design
 description: Creates a technical spec document for the requirements found in the current markdown file. Generates a specs/tech-design.md
 ---
 
