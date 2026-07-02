@@ -1,12 +1,15 @@
 name: Release
 
-# Triggers on either:
+# Triggers on:
 #  - pushing a version tag, e.g. `git tag v0.1.0 && git push origin v0.1.0`, or
+#  - pushing to main branch (merge), which auto-increments patch version, or
 #  - manually from the Actions tab ("Run workflow") where you type the version.
 on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
@@ -35,12 +38,22 @@ jobs:
 
       - name: Determine version
         id: version
-        # The version is the single source of truth for this release. For a tag
-        # push it comes from the tag name; for a manual run it comes from the
-        # "version" input. We normalise to a bare number plus a "v"-prefixed tag.
+        # The version is the single source of truth for this release.
+        # - For tag pushes: extract from tag name (v0.1.0)
+        # - For main branch pushes: auto-increment patch version from latest release tag
+        # - For manual dispatch: use the provided input
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             RAW="${{ inputs.version }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # Auto-increment patch version based on latest release tag
+            LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+            CURRENT="${LATEST_TAG#v}"
+            MAJOR=$(echo $CURRENT | cut -d. -f1)
+            MINOR=$(echo $CURRENT | cut -d. -f2)
+            PATCH=$(echo $CURRENT | cut -d. -f3)
+            PATCH=$((PATCH + 1))
+            RAW="${MAJOR}.${MINOR}.${PATCH}"
           else
             RAW="${GITHUB_REF_NAME}"
           fi
@@ -48,22 +61,45 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Check if version already released
+        id: check-tag
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️  Version ${{ steps.version.outputs.tag }} already released."
+          else
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set version from tag
+        if: steps.check-tag.outputs.skipped == 'false'
         # Strip the leading "v" and write the version into package.json without
         # creating a commit/tag, so the .vsix is stamped with the release version.
         run: |
           npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Lint
+        if: steps.check-tag.outputs.skipped == 'false'
         run: npm run lint
 
       - name: Validate generated contribution paths
+        if: steps.check-tag.outputs.skipped == 'false'
         run: npm run validate:contribution-paths
 
+      - name: Create git tag (for main branch releases)
+        if: steps.check-tag.outputs.skipped == 'false' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "GitHub Actions"
+          git tag "${{ steps.version.outputs.tag }}" || echo "Tag already exists"
+          git push origin "${{ steps.version.outputs.tag }}" || echo "Tag push failed or already exists"
+
       - name: Package VSIX
+        if: steps.check-tag.outputs.skipped == 'false'
         run: npx @vscode/vsce package --no-dependencies -o frw-agentic-coding-${{ steps.version.outputs.tag }}.vsix
 
       - name: Create GitHub Release
+        if: steps.check-tag.outputs.skipped == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
