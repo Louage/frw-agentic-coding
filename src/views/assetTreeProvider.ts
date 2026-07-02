@@ -22,9 +22,10 @@ interface IAssetItem {
 }
 
 /**
- * Tree provider that lists the extension's bundled skills (`assets/skills/<name>/SKILL.md`)
- * or rules (`assets/instructions/*.instructions.md`). Items are read live from the
- * installed extension and open the underlying Markdown file when clicked.
+ * Tree provider that lists the extension's bundled generated skills
+ * (under generated skill folders with `SKILL.md`) or generated rules
+ * (generated instruction files ending with `.instructions.md`). Items are read live
+ * from the installed extension and open the underlying Markdown file when clicked.
  */
 export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
   private readonly onDidChangeEmitter = new vscode.EventEmitter<void>();
@@ -69,32 +70,27 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
   }
 
   private get skillsDir(): vscode.Uri {
-    return vscode.Uri.joinPath(this.extensionUri, "assets", "skills");
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
   }
 
   private get instructionsDir(): vscode.Uri {
-    return vscode.Uri.joinPath(this.extensionUri, "assets", "instructions");
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
   }
 
   private async getSkills(): Promise<IAssetItem[]> {
-    let entries: [string, vscode.FileType][];
-    try {
-      entries = await vscode.workspace.fs.readDirectory(this.skillsDir);
-    } catch {
-      return [];
-    }
-
     const items: IAssetItem[] = [];
-    for (const [name, type] of entries) {
-      if (type !== vscode.FileType.Directory) {
-        continue;
-      }
-      const fileUri = vscode.Uri.joinPath(this.skillsDir, name, "SKILL.md");
+    const skillFiles = await this.findFilesRecursive(this.skillsDir, (name) =>
+      name.toLowerCase() === "skill.md"
+    );
+
+    for (const fileUri of skillFiles) {
       const meta = await this.readFrontmatter(fileUri);
       if (!meta) {
         continue;
       }
-      const skillName = meta["name"] ?? name;
+
+      const fallbackName = fileUri.path.split("/").slice(-2, -1)[0] ?? "skill";
+      const skillName = meta["name"] ?? fallbackName;
       items.push({
         label: skillName,
         id: skillName,
@@ -102,23 +98,19 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
         resourceUri: fileUri,
       });
     }
+
     return items.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   private async getRules(): Promise<IAssetItem[]> {
-    let entries: [string, vscode.FileType][];
-    try {
-      entries = await vscode.workspace.fs.readDirectory(this.instructionsDir);
-    } catch {
-      return [];
-    }
-
     const items: IAssetItem[] = [];
-    for (const [name, type] of entries) {
-      if (type !== vscode.FileType.File || !name.endsWith(".instructions.md")) {
-        continue;
-      }
-      const fileUri = vscode.Uri.joinPath(this.instructionsDir, name);
+    const instructionFiles = await this.findFilesRecursive(
+      this.instructionsDir,
+      (name) => name.toLowerCase().endsWith(".instructions.md")
+    );
+
+    for (const fileUri of instructionFiles) {
+      const name = fileUri.path.split("/").at(-1) ?? "";
       const meta = await this.readFrontmatter(fileUri);
       const label = name
         .replace(/\.instructions\.md$/i, "")
@@ -132,6 +124,37 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
       });
     }
     return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  /**
+   * Recursively finds files below `root` that satisfy `predicate`.
+   */
+  private async findFilesRecursive(
+    root: vscode.Uri,
+    predicate: (name: string) => boolean
+  ): Promise<vscode.Uri[]> {
+    const results: vscode.Uri[] = [];
+
+    const walk = async (dir: vscode.Uri): Promise<void> => {
+      let entries: [string, vscode.FileType][];
+      try {
+        entries = await vscode.workspace.fs.readDirectory(dir);
+      } catch {
+        return;
+      }
+
+      for (const [name, type] of entries) {
+        const child = vscode.Uri.joinPath(dir, name);
+        if (type === vscode.FileType.Directory) {
+          await walk(child);
+        } else if (type === vscode.FileType.File && predicate(name)) {
+          results.push(child);
+        }
+      }
+    };
+
+    await walk(root);
+    return results;
   }
 
   /**

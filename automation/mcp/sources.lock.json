@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-07-02T11:15:50.2451775+02:00",
+  "sources": [
+    {
+      "id": "bc-code-intelligence",
+      "owner": "JeremyVyska",
+      "repo": "bc-code-intelligence-mcp",
+      "branch": "main",
+      "commit": "4969838e71b86aaccd0aed921c8915525eb960ab",
+      "usage": "bc-code-intel-server"
+    },
+    {
+      "id": "microsoft-bcquality",
+      "owner": "microsoft",
+      "repo": "BCQuality",
+      "branch": "main",
+      "commit": "4119417ce4db7cd5423671fb726459c485549f6c",
+      "usage": "knowledge-layer"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
 import { checkForUpdates } from "./update/updateChecker";
+import { withRepositoryGuard } from "./workspaceRepoResolver";
 
 export function activate(context: vscode.ExtensionContext): void {
   // 1. Skill (executable tool): registered so agent mode can invoke it.
@@ -36,6 +37,20 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "frwAgenticCoding.useRule",
       (topic: string) => openChatWith(`#frwCodingStandard ${topic} `)
+    ),
+    vscode.commands.registerCommand(
+      "frwAgenticCoding.runRepoScopedAction",
+      async (explicitRepositoryName?: string) => {
+        await withRepositoryGuard(
+          "The Framework repository action",
+          async (folder) => {
+            vscode.window.showInformationMessage(
+              `Repository action target: ${folder.name} (${folder.uri.fsPath})`
+            );
+          },
+          explicitRepositoryName
+        );
+      }
     )
   );
 

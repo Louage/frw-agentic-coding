@@ -1,0 +1,23 @@
+{
+  "contractVersion": "1.0",
+  "sources": [
+    {
+      "id": "bc-code-intelligence",
+      "enabled": true,
+      "owner": "JeremyVyska",
+      "repo": "bc-code-intelligence-mcp",
+      "branch": "main",
+      "kind": "mcp-knowledge",
+      "usage": "bc-code-intel-server"
+    },
+    {
+      "id": "microsoft-bcquality",
+      "enabled": true,
+      "owner": "microsoft",
+      "repo": "BCQuality",
+      "branch": "main",
+      "kind": "mcp-knowledge",
+      "usage": "knowledge-layer"
+    }
+  ]
+}

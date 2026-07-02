@@ -1,0 +1,25 @@
+{
+  "contractVersion": "1.0",
+  "sourceId": "aldc-community",
+  "displayName": "ALDC AL Development Collection",
+  "defaultBranch": "main",
+  "license": "MIT",
+  "upstream": {
+    "owner": "javiarmesto",
+    "repo": "ALDC-AL-Development-Collection",
+    "url": "https://github.com/javiarmesto/ALDC-AL-Development-Collection"
+  },
+  "layers": [
+    {
+      "id": "community",
+      "priority": 20,
+      "path": "."
+    }
+  ],
+  "assets": {
+    "skills": "skills",
+    "instructions": "instructions",
+    "prompts": "prompts",
+    "agents": "agents"
+  }
+}

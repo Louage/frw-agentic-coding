@@ -1,0 +1,23 @@
+{
+  "contractVersion": "1.0",
+  "sourceId": "microsoft-bcquality-assets",
+  "displayName": "Microsoft BCQuality External Assets",
+  "defaultBranch": "main",
+  "license": "MIT",
+  "upstream": {
+    "owner": "microsoft",
+    "repo": "BCQuality",
+    "url": "https://github.com/microsoft/BCQuality"
+  },
+  "layers": [
+    {
+      "id": "microsoft",
+      "priority": 30,
+      "path": "."
+    }
+  ],
+  "assets": {
+    "skills": "microsoft/skills",
+    "instructions": "microsoft/knowledge"
+  }
+}

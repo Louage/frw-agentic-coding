@@ -20,6 +20,58 @@ files are copied into `.github/`.
 
 This extension is **internal only** and is never published to the public Marketplace.
 
+## External Asset Authority
+
+Skills and instructions are external-source driven.
+
+- External repositories are declared in `automation/sources/catalog.json`.
+- Generated artifacts are written to `assets/generated/<source>/...`.
+- Active extension assets in `assets/skills` and `assets/instructions` are published from generated content during sync.
+- Contribution entries in `package.json` are generated-authoritative and are applied from `assets/generated/contributions.generated.json`.
+
+Current source model:
+
+- `aldc-community` (external `extension-assets` source)
+- `microsoft-bcquality-assets` (external `extension-assets` source, normalized from BCQuality markdown content)
+- `microsoft-bcquality` (`mcp-knowledge` source for MCP knowledge syncing/locking)
+
+Operational commands:
+
+```pwsh
+npm run sync:sources
+npm run generate:contributions
+npm run apply:contributions
+npm run validate:source-contract:strict
+```
+
+Full local asset pipeline:
+
+```pwsh
+npm run pipeline:assets
+```
+
+Do not manually curate `assets/skills`, `assets/instructions`, or contribution entries in `package.json`; these are regenerated and reapplied from external sources.
+
+## MCP Knowledge Source Files
+
+This repository tracks MCP-related knowledge sources with two files:
+
+- [automation/mcp/sources.json](automation/mcp/sources.json): the declarative input file you edit.
+  It defines which repositories are enabled and which branch to track.
+- [automation/mcp/sources.lock.json](automation/mcp/sources.lock.json): the generated lock file.
+  It pins each source to an exact commit SHA for reproducibility.
+
+Contract expectations:
+
+- `sources.json` = desired state (editable configuration)
+- `sources.lock.json` = resolved state (generated artifact)
+
+Privacy guardrail:
+
+- `sources.lock.json` must remain environment-agnostic.
+- No absolute local file system paths (for example user home directories) are allowed.
+- CI validates this and will fail if machine-specific paths appear in generated artifacts.
+
 ## How it is delivered
 
 - Built and packaged to a `.vsix` by the GitHub Actions [release workflow](.github/workflows/release.yml) on every `v*` tag.
