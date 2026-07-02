@@ -1,10 +1,11 @@
 ---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/resolveMemoryFileUri, vscode/askQuestions, read/problems, read/readFile, read/skill, agent, edit, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, todo]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, vscode/resolveMemoryFileUri, read/problems, read/readFile, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/searchSubagent, search/usages, 'al-symbols-mcp/*', 'bc-code-intelligence-mcp/*', 'microsoft-learn/*', todo]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent']
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
+bc-review-specialist: sam-coder (Systematic development, code generation)
 handoffs:
   - label: Request Architecture Design
     agent: AL Architecture & Design Specialist

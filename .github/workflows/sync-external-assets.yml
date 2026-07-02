@@ -30,6 +30,11 @@ jobs:
         run: |
           ./automation/scripts/Sync-ExternalSources.ps1 -Clean
 
+      - name: Normalize agent tools
+        shell: pwsh
+        run: |
+          ./automation/scripts/Normalize-AgentTools.ps1
+
       - name: Validate source contracts
         run: npm run validate:source-contract:strict
 

@@ -1,6 +1,12 @@
 import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
+import { WorkflowPanel } from "./views/workflowPanel";
+import {
+  getAgentWorkflowViewModel,
+  type AgentWorkflowHandoff,
+  type AgentWorkflowViewModel,
+} from "./workflows/agentWorkflowService";
 import { checkForUpdates } from "./update/updateChecker";
 import { withRepositoryGuard } from "./workspaceRepoResolver";
 
@@ -47,21 +53,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "frwAgenticCoding.useAgent",
       async (displayName: string, stableId?: string) => {
-        await openChat();
-        const switched = await trySelectChatAgent(
+        await selectAgentInChat(displayName, stableId, context.extension.id);
+        await openAgentWorkflowVisualizer(
+          context.extensionUri,
           displayName,
           stableId,
           context.extension.id
         );
-        if (!switched) {
-          // Fallback to the selector UX instead of writing @mentions in chat.
-          const openedPicker = await tryOpenAgentPicker();
-          if (!openedPicker) {
-            vscode.window.showWarningMessage(
-              `Could not switch chat agent automatically for '${displayName}'. Please choose it from the agent selector.`
-            );
-          }
-        }
       }
     ),
     vscode.commands.registerCommand(
@@ -104,6 +102,17 @@ export function deactivate(): void {
   // Nothing to clean up; all disposables are tracked in context.subscriptions.
 }
 
+async function checkToolsAvailable(workflow: AgentWorkflowViewModel): Promise<void> {
+  if (!workflow.requiredTools || workflow.requiredTools.length === 0) {
+    return;
+  }
+
+  // Note: readTools() already filters and normalizes to only MCP tools.
+  // All MCP tools are configured via mcp.json and don't need extension checks.
+  // This function is a no-op but kept for future extensibility.
+  return;
+}
+
 /**
  * Opens the Copilot Chat view and pre-fills its input with `text` without
  * sending it, so the user can review or adjust before submitting.
@@ -112,6 +121,118 @@ function openChatWith(text: string): void {
   void vscode.commands.executeCommand("workbench.action.chat.open", {
     query: text,
     isPartialQuery: true,
+  });
+}
+
+async function selectAgentInChat(
+  displayName: string,
+  stableId: string | undefined,
+  extensionId: string
+): Promise<void> {
+  await openChat();
+  const switched = await trySelectChatAgent(displayName, stableId, extensionId);
+  if (!switched) {
+    const openedPicker = await tryOpenAgentPicker();
+    if (!openedPicker) {
+      vscode.window.showWarningMessage(
+        `Could not switch chat agent automatically for '${displayName}'. Please choose it from the agent selector.`
+      );
+    }
+  }
+}
+
+async function handleAgentFileDropped(
+  displayName: string,
+  stableId: string | undefined,
+  extensionId: string,
+  fileUri: string
+): Promise<void> {
+  await selectAgentInChat(displayName, stableId, extensionId);
+
+  let parsedUri: vscode.Uri | undefined;
+
+  try {
+    parsedUri = vscode.Uri.parse(fileUri);
+  } catch {
+    parsedUri = undefined;
+  }
+
+  if (parsedUri) {
+    try {
+      await vscode.commands.executeCommand(
+        "workbench.action.chat.attachFile",
+        parsedUri
+      );
+    } catch {
+      // If attachment fails, fall back to opening chat with message
+      openChatWith(`Use this file as workflow input for '${displayName}'.`);
+      return;
+    }
+  }
+
+  // Open chat with a simple instruction message
+  openChatWith(`Use this file as workflow input. Start with the active workflow for '${displayName}'.`);
+}
+
+async function openAgentWorkflowVisualizer(
+  extensionUri: vscode.Uri,
+  displayName: string,
+  stableId: string | undefined,
+  extensionId: string
+): Promise<void> {
+  const workflow = await getAgentWorkflowViewModel(
+    extensionUri,
+    displayName,
+    stableId
+  );
+
+  // Check if required tools are available
+  await checkToolsAvailable(workflow);
+
+  WorkflowPanel.show(workflow, {
+    onSelectCurrentAgent: async () => {
+      await selectAgentInChat(
+        workflow.currentAgent.displayName,
+        workflow.currentAgent.stableId,
+        extensionId
+      );
+    },
+    onSelectHandoff: async (handoff: AgentWorkflowHandoff) => {
+      await selectAgentInChat(
+        handoff.targetDisplayName,
+        handoff.targetStableId,
+        extensionId
+      );
+      await openAgentWorkflowVisualizer(
+        extensionUri,
+        handoff.targetDisplayName,
+        handoff.targetStableId,
+        extensionId
+      );
+    },
+    onFileDropped: async (fileUri: string) => {
+      await handleAgentFileDropped(
+        workflow.currentAgent.displayName,
+        workflow.currentAgent.stableId,
+        extensionId,
+        fileUri
+      );
+    },
+    onSelectFile: async () => {
+      const uris = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        openLabel: "Use as workflow input",
+        filters: { "All files": ["*"] },
+      });
+      if (uris && uris.length > 0) {
+        await handleAgentFileDropped(
+          workflow.currentAgent.displayName,
+          workflow.currentAgent.stableId,
+          extensionId,
+          uris[0].toString()
+        );
+      }
+    },
   });
 }
 
