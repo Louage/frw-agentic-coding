@@ -798,6 +798,11 @@
         "category": "The Framework"
       },
       {
+        "command": "frwAgenticCoding.diagnoseChatAgentCommands",
+        "title": "The Framework: Diagnose chat/agent commands (temporary)",
+        "category": "The Framework"
+      },
+      {
         "command": "frwAgenticCoding.refreshSkills",
         "title": "Refresh",
         "category": "The Framework",
@@ -828,6 +833,12 @@
     "views": {
       "frwAgenticCoding": [
         {
+          "id": "frwAgents",
+          "name": "Agents",
+          "icon": "$(hubot)",
+          "contextualTitle": "The Framework"
+        },
+        {
           "id": "frwSkills",
           "name": "Skills",
           "icon": "$(rocket)",
@@ -837,12 +848,6 @@
           "id": "frwRules",
           "name": "Rules",
           "icon": "$(law)",
-          "contextualTitle": "The Framework"
-        },
-        {
-          "id": "frwAgents",
-          "name": "Agents",
-          "icon": "$(hubot)",
           "contextualTitle": "The Framework"
         }
       ]

@@ -62,7 +62,10 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
             ? "frwAgenticCoding.useRule"
             : "frwAgenticCoding.useAgent",
       title: "Use in Chat",
-      arguments: [element.id],
+      arguments:
+        this.kind === "agent"
+          ? [element.label, element.id]
+          : [element.id],
     };
     return item;
   }
@@ -105,7 +108,9 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
       const skillName = meta["name"] ?? fallbackName;
       items.push({
         label: skillName,
-        id: skillName,
+        // Use the folder slug as command id; this matches how chat skill
+        // commands are resolved for contributed SKILL.md assets.
+        id: fallbackName,
         tooltip: meta["description"],
         resourceUri: fileUri,
       });
@@ -146,11 +151,18 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
 
     for (const fileUri of agentFiles) {
       const meta = await this.readFrontmatter(fileUri);
+      // Keep sidebar aligned with the chat selector: agents with
+      // user-invocable: false are subagents and should not be listed as selectable.
+      if ((meta?.["user-invocable"] ?? "true").toLowerCase() === "false") {
+        continue;
+      }
       const fileName = fileUri.path.split("/").at(-1) ?? "";
+      const agentId = fileName.replace(/\.agent\.md$/i, "");
       const label = meta?.["name"] ?? fileName.replace(/\.agent\.md$/i, "");
       items.push({
         label,
-        id: label,
+        // Use stable file slug for @mention resolution in chat.
+        id: agentId,
         tooltip: meta?.["description"],
         resourceUri: fileUri,
       });
