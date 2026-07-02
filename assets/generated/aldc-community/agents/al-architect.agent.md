@@ -1,10 +1,9 @@
 ---
 name: AL Architecture & Design Specialist
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development.'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput, read/readFile, read/problems, read/skill, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, agent, 'al-symbols-mcp/*', 'bc-code-intelligence-mcp/*', 'microsoft-learn/*', 'upstash/context7/*', vscode.mermaid-chat-features/renderMermaidDiagram, todo]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, al-symbols-mcp/*, bc-code-intelligence-mcp/*, microsoft-learn/*, todo, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput, upstash/context7/*, vscode.mermaid-chat-features/renderMermaidDiagram]
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
-bc-review-specialist: alex-architect (Solution design, requirements analysis)
 handoffs:
   - label: Implement with TDD
     agent: AL Development Conductor

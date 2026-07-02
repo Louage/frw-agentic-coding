@@ -97,7 +97,7 @@ function Merge-ToolArrays {
     
     # Add specialty tools (won't override core tools if duplicated)
     foreach ($tool in $SpecialtyTools) {
-        if ($tool -and -not $merged.ContainsKey($tool)) {
+        if ($tool -and -not ($merged.Keys -contains $tool)) {
             $merged[$tool] = $true
         }
     }

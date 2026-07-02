@@ -4,9 +4,8 @@ description: 'AL Code Review Subagent - Quality assurance for Business Central A
 user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Phase implementation to review with acceptance criteria and AL validation requirements'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/problems, read/readFile, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, 'al-symbols-mcp/*', 'bc-code-intelligence-mcp/*', 'microsoft-learn/*', ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, todo]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, al-symbols-mcp/*, bc-code-intelligence-mcp/*, microsoft-learn/*, todo, search, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations]
 model: Claude Sonnet 4.6 (copilot)
-bc-review-specialist: roger-reviewer (Code review, standards compliance)
 handoffs:
   - label: Return to Conductor
     agent: AL Development Conductor
