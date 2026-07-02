@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theframework.internal/schemas/source-contract.schema.json",
+  "title": "FRW Source Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "sourceId",
+    "displayName",
+    "defaultBranch",
+    "license",
+    "layers",
+    "assets"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 120
+    },
+    "defaultBranch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "repo"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "priority", "path"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._/-]+$"
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skills": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._/-]+$"
+        },
+        "instructions": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._/-]+$"
+        },
+        "prompts": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._/-]+$"
+        },
+        "agents": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._/-]+$"
+        },
+        "chatModes": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._/-]+$"
+        }
+      }
+    }
+  }
+}

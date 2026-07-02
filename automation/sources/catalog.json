@@ -1,0 +1,40 @@
+{
+  "contractVersion": "1.1",
+  "sources": [
+    {
+      "id": "aldc-community",
+      "enabled": true,
+      "kind": "extension-assets",
+      "owner": "javiarmesto",
+      "repo": "ALDC-AL-Development-Collection",
+      "branch": "main",
+      "priority": 20,
+      "contractFile": "source.contract.json",
+      "contractOverrideFile": "automation/sources/contracts/aldc-community.source.contract.json",
+      "adapterFile": "automation/sources/adapters/aldc-community.adapter.json"
+    },
+    {
+      "id": "microsoft-bcquality",
+      "enabled": true,
+      "kind": "mcp-knowledge",
+      "owner": "microsoft",
+      "repo": "BCQuality",
+      "branch": "main",
+      "priority": 10,
+      "contractFile": "source.contract.json"
+    },
+    {
+      "id": "microsoft-bcquality-assets",
+      "enabled": true,
+      "kind": "extension-assets",
+      "owner": "microsoft",
+      "repo": "BCQuality",
+      "branch": "main",
+      "priority": 30,
+      "contractFile": "source.contract.json",
+      "contractOverrideFile": "automation/sources/contracts/microsoft-bcquality-assets.source.contract.json",
+      "adapterFile": "automation/sources/adapters/microsoft-bcquality-assets.adapter.json",
+      "normalizationProfile": "bcquality"
+    }
+  ]
+}

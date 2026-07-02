@@ -9,4 +9,9 @@ src/**
 **/*.ts
 esbuild.js
 node_modules/**
-!assets/**
+assets/**
+!assets/generated/
+!assets/generated/**
+assets/instructions/**
+assets/skills/**
+tmp/**

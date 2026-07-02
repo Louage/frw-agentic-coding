@@ -57,6 +57,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Validate generated contribution paths
+        run: npm run validate:contribution-paths
+
       - name: Package VSIX
         run: npx @vscode/vsce package --no-dependencies -o frw-agentic-coding-${{ steps.version.outputs.tag }}.vsix
 

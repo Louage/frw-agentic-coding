@@ -1,0 +1,10 @@
+{
+  "adapterVersion": "1.0",
+  "sourceId": "aldc-community",
+  "assets": {
+    "skills": "skills",
+    "instructions": "instructions",
+    "prompts": "prompts",
+    "agents": "agents"
+  }
+}

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 /** Which kind of bundled asset a tree shows. */
-export type AssetKind = "skill" | "rule";
+export type AssetKind = "skill" | "rule" | "agent";
 
 /** A single skill or rule entry rendered in the sidebar. */
 interface IAssetItem {
@@ -22,9 +22,10 @@ interface IAssetItem {
 }
 
 /**
- * Tree provider that lists the extension's bundled skills (`assets/skills/<name>/SKILL.md`)
- * or rules (`assets/instructions/*.instructions.md`). Items are read live from the
- * installed extension and open the underlying Markdown file when clicked.
+ * Tree provider that lists the extension's bundled generated skills
+ * (under generated skill folders with `SKILL.md`) or generated rules
+ * (generated instruction files ending with `.instructions.md`). Items are read live
+ * from the installed extension and open the underlying Markdown file when clicked.
  */
 export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
   private readonly onDidChangeEmitter = new vscode.EventEmitter<void>();
@@ -50,75 +51,83 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
     }
     item.resourceUri = element.resourceUri;
     item.iconPath = new vscode.ThemeIcon(
-      this.kind === "skill" ? "rocket" : "law"
+      this.kind === "skill" ? "rocket" : this.kind === "rule" ? "law" : "hubot"
     );
     item.contextValue = this.kind;
     item.command = {
       command:
         this.kind === "skill"
           ? "frwAgenticCoding.useSkill"
-          : "frwAgenticCoding.useRule",
+          : this.kind === "rule"
+            ? "frwAgenticCoding.useRule"
+            : "frwAgenticCoding.useAgent",
       title: "Use in Chat",
-      arguments: [element.id],
+      arguments:
+        this.kind === "agent"
+          ? [element.label, element.id]
+          : [element.id],
     };
     return item;
   }
 
   getChildren(): Promise<IAssetItem[]> {
-    return this.kind === "skill" ? this.getSkills() : this.getRules();
+    if (this.kind === "skill") {
+      return this.getSkills();
+    }
+    if (this.kind === "rule") {
+      return this.getRules();
+    }
+    return this.getAgents();
   }
 
   private get skillsDir(): vscode.Uri {
-    return vscode.Uri.joinPath(this.extensionUri, "assets", "skills");
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
   }
 
   private get instructionsDir(): vscode.Uri {
-    return vscode.Uri.joinPath(this.extensionUri, "assets", "instructions");
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
+  }
+
+  private get agentsDir(): vscode.Uri {
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
   }
 
   private async getSkills(): Promise<IAssetItem[]> {
-    let entries: [string, vscode.FileType][];
-    try {
-      entries = await vscode.workspace.fs.readDirectory(this.skillsDir);
-    } catch {
-      return [];
-    }
-
     const items: IAssetItem[] = [];
-    for (const [name, type] of entries) {
-      if (type !== vscode.FileType.Directory) {
-        continue;
-      }
-      const fileUri = vscode.Uri.joinPath(this.skillsDir, name, "SKILL.md");
+    const skillFiles = await this.findFilesRecursive(this.skillsDir, (name) =>
+      name.toLowerCase() === "skill.md"
+    );
+
+    for (const fileUri of skillFiles) {
       const meta = await this.readFrontmatter(fileUri);
       if (!meta) {
         continue;
       }
-      const skillName = meta["name"] ?? name;
+
+      const fallbackName = fileUri.path.split("/").slice(-2, -1)[0] ?? "skill";
+      const skillName = meta["name"] ?? fallbackName;
       items.push({
         label: skillName,
-        id: skillName,
+        // Use the folder slug as command id; this matches how chat skill
+        // commands are resolved for contributed SKILL.md assets.
+        id: fallbackName,
         tooltip: meta["description"],
         resourceUri: fileUri,
       });
     }
+
     return items.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   private async getRules(): Promise<IAssetItem[]> {
-    let entries: [string, vscode.FileType][];
-    try {
-      entries = await vscode.workspace.fs.readDirectory(this.instructionsDir);
-    } catch {
-      return [];
-    }
-
     const items: IAssetItem[] = [];
-    for (const [name, type] of entries) {
-      if (type !== vscode.FileType.File || !name.endsWith(".instructions.md")) {
-        continue;
-      }
-      const fileUri = vscode.Uri.joinPath(this.instructionsDir, name);
+    const instructionFiles = await this.findFilesRecursive(
+      this.instructionsDir,
+      (name) => name.toLowerCase().endsWith(".instructions.md")
+    );
+
+    for (const fileUri of instructionFiles) {
+      const name = fileUri.path.split("/").at(-1) ?? "";
       const meta = await this.readFrontmatter(fileUri);
       const label = name
         .replace(/\.instructions\.md$/i, "")
@@ -132,6 +141,65 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
       });
     }
     return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private async getAgents(): Promise<IAssetItem[]> {
+    const items: IAssetItem[] = [];
+    const agentFiles = await this.findFilesRecursive(this.agentsDir, (name) =>
+      name.toLowerCase().endsWith(".agent.md")
+    );
+
+    for (const fileUri of agentFiles) {
+      const meta = await this.readFrontmatter(fileUri);
+      // Keep sidebar aligned with the chat selector: agents with
+      // user-invocable: false are subagents and should not be listed as selectable.
+      if ((meta?.["user-invocable"] ?? "true").toLowerCase() === "false") {
+        continue;
+      }
+      const fileName = fileUri.path.split("/").at(-1) ?? "";
+      const agentId = fileName.replace(/\.agent\.md$/i, "");
+      const label = meta?.["name"] ?? fileName.replace(/\.agent\.md$/i, "");
+      items.push({
+        label,
+        // Use stable file slug for @mention resolution in chat.
+        id: agentId,
+        tooltip: meta?.["description"],
+        resourceUri: fileUri,
+      });
+    }
+
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  /**
+   * Recursively finds files below `root` that satisfy `predicate`.
+   */
+  private async findFilesRecursive(
+    root: vscode.Uri,
+    predicate: (name: string) => boolean
+  ): Promise<vscode.Uri[]> {
+    const results: vscode.Uri[] = [];
+
+    const walk = async (dir: vscode.Uri): Promise<void> => {
+      let entries: [string, vscode.FileType][];
+      try {
+        entries = await vscode.workspace.fs.readDirectory(dir);
+      } catch {
+        return;
+      }
+
+      for (const [name, type] of entries) {
+        const child = vscode.Uri.joinPath(dir, name);
+        if (type === vscode.FileType.Directory) {
+          await walk(child);
+        } else if (type === vscode.FileType.File && predicate(name)) {
+          results.push(child);
+        }
+      }
+    };
+
+    await walk(root);
+    return results;
   }
 
   /**

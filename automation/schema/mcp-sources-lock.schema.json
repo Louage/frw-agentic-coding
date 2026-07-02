@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theframework.internal/schemas/mcp-sources-lock.schema.json",
+  "title": "FRW MCP Sources Lock v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generatedAt",
+    "sources"
+  ],
+  "properties": {
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "owner",
+          "repo",
+          "branch",
+          "commit",
+          "usage"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "repo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "branch": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "commit": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "usage": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        }
+      }
+    }
+  }
+}

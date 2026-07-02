@@ -1,0 +1,8 @@
+{
+  "adapterVersion": "1.0",
+  "sourceId": "microsoft-bcquality-assets",
+  "assets": {
+    "skills": "microsoft/skills",
+    "instructions": "microsoft/knowledge"
+  }
+}

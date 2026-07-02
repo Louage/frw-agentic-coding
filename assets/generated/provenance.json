@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-07-02T11:29:48.5034420+02:00",
+  "sources": [
+    {
+      "id": "aldc-community",
+      "owner": "javiarmesto",
+      "repo": "ALDC-AL-Development-Collection",
+      "branch": "main",
+      "commit": "a900263f51e416762cc7f85575deb9b30cd5b1e3",
+      "priority": 20,
+      "sourceKind": "extension-assets",
+      "declarationMode": "adapter"
+    },
+    {
+      "id": "microsoft-bcquality-assets",
+      "owner": "microsoft",
+      "repo": "BCQuality",
+      "branch": "main",
+      "commit": "4119417ce4db7cd5423671fb726459c485549f6c",
+      "priority": 30,
+      "sourceKind": "extension-assets",
+      "declarationMode": "adapter"
+    }
+  ]
+}

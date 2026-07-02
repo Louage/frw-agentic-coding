@@ -1,0 +1,105 @@
+name: Sync External AI Assets
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync external sources
+        shell: pwsh
+        run: |
+          ./automation/scripts/Sync-ExternalSources.ps1 -Clean
+
+      - name: Validate source contracts
+        run: npm run validate:source-contract:strict
+
+      - name: Sync MCP knowledge sources
+        shell: pwsh
+        run: |
+          ./automation/scripts/Sync-McpKnowledgeSources.ps1 -Clean
+
+      - name: Generate contribution manifest
+        shell: pwsh
+        run: |
+          ./automation/scripts/Generate-ContributionManifest.ps1
+
+      - name: Apply generated contributions to package.json
+        shell: pwsh
+        run: |
+          ./automation/scripts/Apply-ContributionManifest.ps1
+
+      - name: Validate generated contribution paths
+        run: npm run validate:contribution-paths
+
+      - name: Validate MCP source schemas
+        run: npm run validate:mcp-schemas
+
+      - name: Validate no absolute local paths
+        shell: pwsh
+        run: |
+          $filesToCheck = @(
+            "automation/mcp/sources.lock.json",
+            "assets/generated/provenance.json",
+            "assets/generated/contributions.generated.json"
+          )
+
+          $absolutePathPattern = '(?i)([a-z]:\\[^\s"'']+|/Users/[^\s"'']+|/home/[^\s"'']+)'
+          $violations = @()
+
+          foreach ($file in $filesToCheck) {
+            if (-not (Test-Path -LiteralPath $file)) {
+              continue
+            }
+
+            $content = Get-Content -LiteralPath $file -Raw -Encoding UTF8
+            if ($content -match $absolutePathPattern) {
+              $violations += $file
+            }
+          }
+
+          if ($violations.Count -gt 0) {
+            throw "Detected absolute local path(s) in generated artifacts: $($violations -join ', ')"
+          }
+
+      - name: Validate extension build
+        run: npm run compile
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(assets): sync external AI assets"
+          title: "chore(assets): sync external AI assets"
+          body: |
+            Automated sync of external AI assets.
+
+            Changes include:
+            - refreshed source clones
+            - regenerated merged assets under assets/generated
+            - refreshed MCP knowledge source lock under automation/mcp
+            - updated generated contribution manifest
+            - synchronized package contributions
+          branch: chore/sync-external-ai-assets
+          delete-branch: true
+          labels: |
+            automation
+            assets

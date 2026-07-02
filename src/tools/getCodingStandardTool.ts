@@ -10,8 +10,9 @@ interface IGetCodingStandardInput {
 
 /**
  * Serves the company's AL coding standards directly from the extension's bundled
- * `assets/instructions/*.instructions.md` files. No copying into the workspace is
- * required: the content is read live from the installed extension.
+ * `assets/generated/aldc-community/instructions/*.instructions.md` files.
+ * No copying into the workspace is required: the content is read live from the
+ * installed extension.
  *
  * Topics are derived from the file names: `al-naming-conventions.instructions.md`
  * is exposed as the topic `naming-conventions` (the leading `al-` is optional when
@@ -23,7 +24,13 @@ export class GetCodingStandardTool
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   private get instructionsDir(): vscode.Uri {
-    return vscode.Uri.joinPath(this.extensionUri, "assets", "instructions");
+    return vscode.Uri.joinPath(
+      this.extensionUri,
+      "assets",
+      "generated",
+      "aldc-community",
+      "instructions"
+    );
   }
 
   /**
