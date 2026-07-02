@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 /** Which kind of bundled asset a tree shows. */
-export type AssetKind = "skill" | "rule";
+export type AssetKind = "skill" | "rule" | "agent";
 
 /** A single skill or rule entry rendered in the sidebar. */
 interface IAssetItem {
@@ -51,14 +51,16 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
     }
     item.resourceUri = element.resourceUri;
     item.iconPath = new vscode.ThemeIcon(
-      this.kind === "skill" ? "rocket" : "law"
+      this.kind === "skill" ? "rocket" : this.kind === "rule" ? "law" : "hubot"
     );
     item.contextValue = this.kind;
     item.command = {
       command:
         this.kind === "skill"
           ? "frwAgenticCoding.useSkill"
-          : "frwAgenticCoding.useRule",
+          : this.kind === "rule"
+            ? "frwAgenticCoding.useRule"
+            : "frwAgenticCoding.useAgent",
       title: "Use in Chat",
       arguments: [element.id],
     };
@@ -66,7 +68,13 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
   }
 
   getChildren(): Promise<IAssetItem[]> {
-    return this.kind === "skill" ? this.getSkills() : this.getRules();
+    if (this.kind === "skill") {
+      return this.getSkills();
+    }
+    if (this.kind === "rule") {
+      return this.getRules();
+    }
+    return this.getAgents();
   }
 
   private get skillsDir(): vscode.Uri {
@@ -74,6 +82,10 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
   }
 
   private get instructionsDir(): vscode.Uri {
+    return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
+  }
+
+  private get agentsDir(): vscode.Uri {
     return vscode.Uri.joinPath(this.extensionUri, "assets", "generated");
   }
 
@@ -123,6 +135,27 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
         resourceUri: fileUri,
       });
     }
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private async getAgents(): Promise<IAssetItem[]> {
+    const items: IAssetItem[] = [];
+    const agentFiles = await this.findFilesRecursive(this.agentsDir, (name) =>
+      name.toLowerCase().endsWith(".agent.md")
+    );
+
+    for (const fileUri of agentFiles) {
+      const meta = await this.readFrontmatter(fileUri);
+      const fileName = fileUri.path.split("/").at(-1) ?? "";
+      const label = meta?.["name"] ?? fileName.replace(/\.agent\.md$/i, "");
+      items.push({
+        label,
+        id: label,
+        tooltip: meta?.["description"],
+        resourceUri: fileUri,
+      });
+    }
+
     return items.sort((a, b) => a.label.localeCompare(b.label));
   }
 

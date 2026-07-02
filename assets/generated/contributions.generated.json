@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T11:30:03.8180441+02:00",
+  "generatedAt": "2026-07-02T11:58:17.0545381+02:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-agent-instructions/SKILL.md"
@@ -766,6 +766,38 @@
     },
     {
       "path": "./assets/generated/aldc-community/prompts/al-spec.create.prompt.md"
+    }
+  ],
+  "chatAgents": [
+    {
+      "path": "./assets/generated/aldc-community/agents/al-agent-builder.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-architect.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-conductor.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-developer.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-implement-subagent.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-planning-subagent.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-presales.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-review-subagent.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-triage.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/dredd.agent.md"
     }
   ]
 }

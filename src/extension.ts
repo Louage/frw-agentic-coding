@@ -19,14 +19,19 @@ export function activate(context: vscode.ExtensionContext): void {
   // 2. Sidebar: tree views listing the bundled skills and rules.
   const skillsProvider = new AssetTreeProvider(context.extensionUri, "skill");
   const rulesProvider = new AssetTreeProvider(context.extensionUri, "rule");
+  const agentsProvider = new AssetTreeProvider(context.extensionUri, "agent");
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("frwSkills", skillsProvider),
     vscode.window.registerTreeDataProvider("frwRules", rulesProvider),
+    vscode.window.registerTreeDataProvider("frwAgents", agentsProvider),
     vscode.commands.registerCommand("frwAgenticCoding.refreshSkills", () =>
       skillsProvider.refresh()
     ),
     vscode.commands.registerCommand("frwAgenticCoding.refreshRules", () =>
       rulesProvider.refresh()
+    ),
+    vscode.commands.registerCommand("frwAgenticCoding.refreshAgents", () =>
+      agentsProvider.refresh()
     ),
     // Clicking a skill drops its `/slash` command into the chat input.
     vscode.commands.registerCommand(
@@ -37,6 +42,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "frwAgenticCoding.useRule",
       (topic: string) => openChatWith(`#frwCodingStandard ${topic} `)
+    ),
+    // Clicking an agent prepares an @mention to assign the next task.
+    vscode.commands.registerCommand(
+      "frwAgenticCoding.useAgent",
+      (agentName: string) => openChatWith(`@${agentName} `)
     ),
     vscode.commands.registerCommand(
       "frwAgenticCoding.runRepoScopedAction",

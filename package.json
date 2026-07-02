@@ -808,6 +808,12 @@
         "title": "Refresh",
         "category": "The Framework",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "frwAgenticCoding.refreshAgents",
+        "title": "Refresh",
+        "category": "The Framework",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -832,6 +838,12 @@
           "name": "Rules",
           "icon": "$(law)",
           "contextualTitle": "The Framework"
+        },
+        {
+          "id": "frwAgents",
+          "name": "Agents",
+          "icon": "$(hubot)",
+          "contextualTitle": "The Framework"
         }
       ]
     },
@@ -845,6 +857,11 @@
         {
           "command": "frwAgenticCoding.refreshRules",
           "when": "view == frwRules",
+          "group": "navigation"
+        },
+        {
+          "command": "frwAgenticCoding.refreshAgents",
+          "when": "view == frwAgents",
           "group": "navigation"
         }
       ]
@@ -912,6 +929,38 @@
       },
       {
         "path": "./assets/generated/aldc-community/prompts/al-spec.create.prompt.md"
+      }
+    ],
+    "chatAgents": [
+      {
+        "path": "./assets/generated/aldc-community/agents/al-agent-builder.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-architect.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-conductor.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-developer.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-implement-subagent.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-planning-subagent.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-presales.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-review-subagent.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-triage.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/dredd.agent.md"
       }
     ]
   },

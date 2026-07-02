@@ -100,7 +100,15 @@ elseif ($package.contributes.PSObject.Properties["chatPromptFiles"]) {
     $package.contributes.PSObject.Properties.Remove("chatPromptFiles")
 }
 
+$generatedAgents = @(ConvertTo-ContributionEntries -Entries (Get-OptionalPropertyValue -Object $generated -Name "chatAgents"))
+if ($generatedAgents.Count -gt 0) {
+    $package.contributes | Add-Member -NotePropertyName chatAgents -NotePropertyValue $generatedAgents -Force
+}
+elseif ($package.contributes.PSObject.Properties["chatAgents"]) {
+    $package.contributes.PSObject.Properties.Remove("chatAgents")
+}
+
 $package | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $PackageJsonPath -Encoding UTF8
 
 Write-Host "Applied generated contributions to package.json" -ForegroundColor Green
-Write-Host "Skills: $(@($package.contributes.chatSkills).Count), Instructions: $(@($package.contributes.chatInstructions).Count), Prompts: $(@($generatedPrompts).Count)" -ForegroundColor Green
+Write-Host "Skills: $(@($package.contributes.chatSkills).Count), Instructions: $(@($package.contributes.chatInstructions).Count), Prompts: $(@($generatedPrompts).Count), Agents: $(@($generatedAgents).Count)" -ForegroundColor Green

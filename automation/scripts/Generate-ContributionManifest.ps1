@@ -17,6 +17,8 @@ if (-not (Test-Path -LiteralPath $GeneratedAssetsRoot)) {
 $skills = @()
 $instructions = @()
 $prompts = @()
+$agents = @()
+$seenAgentPaths = @{}
 $trimChars = [char[]]@('.', [char]92, '/')
 
 $sources = Get-ChildItem -LiteralPath $GeneratedAssetsRoot -Directory | Where-Object { $_.Name -ne ".gitkeep" }
@@ -50,6 +52,34 @@ foreach ($source in $sources) {
             $prompts += [ordered]@{ path = "./$rel" }
         }
     }
+
+    $agentsDir = Join-Path $source.FullName "agents"
+    if (Test-Path -LiteralPath $agentsDir) {
+        $agentDefs = Get-ChildItem -LiteralPath $agentsDir -Recurse -File -Filter "*.agent.md"
+        foreach ($a in $agentDefs) {
+            $rel = Resolve-Path -LiteralPath $a.FullName -Relative
+            $rel = $rel.TrimStart($trimChars) -replace "\\", "/"
+            $contributionPath = "./$rel"
+            if (-not $seenAgentPaths.ContainsKey($contributionPath)) {
+                $seenAgentPaths[$contributionPath] = $true
+                $agents += [ordered]@{ path = $contributionPath }
+            }
+        }
+    }
+
+    $chatModesDir = Join-Path $source.FullName "chatmodes"
+    if (Test-Path -LiteralPath $chatModesDir) {
+        $chatModeDefs = Get-ChildItem -LiteralPath $chatModesDir -Recurse -File -Filter "*.agent.md"
+        foreach ($a in $chatModeDefs) {
+            $rel = Resolve-Path -LiteralPath $a.FullName -Relative
+            $rel = $rel.TrimStart($trimChars) -replace "\\", "/"
+            $contributionPath = "./$rel"
+            if (-not $seenAgentPaths.ContainsKey($contributionPath)) {
+                $seenAgentPaths[$contributionPath] = $true
+                $agents += [ordered]@{ path = $contributionPath }
+            }
+        }
+    }
 }
 
 $manifest = [ordered]@{
@@ -57,6 +87,7 @@ $manifest = [ordered]@{
     chatSkills = $skills
     chatInstructions = $instructions
     chatPromptFiles = $prompts
+    chatAgents = $agents
 }
 
 $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $OutputPath -Encoding UTF8

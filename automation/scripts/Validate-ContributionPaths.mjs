@@ -4,7 +4,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const REQUIRED_PREFIX = "./assets/generated/";
-const CONTRIBUTION_KEYS = ["chatSkills", "chatInstructions", "chatPromptFiles"];
+const CONTRIBUTION_KEYS = [
+  "chatSkills",
+  "chatInstructions",
+  "chatPromptFiles",
+  "chatAgents",
+];
 
 function fail(message) {
   console.error(message);
