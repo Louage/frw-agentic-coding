@@ -2,7 +2,7 @@
   "name": "frw-agentic-coding",
   "displayName": "The Framework Agentic Coding",
   "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
-  "version": "0.2.0",
+  "version": "1.0.11",
   "publisher": "theframework",
   "private": true,
   "license": "UNLICENSED",

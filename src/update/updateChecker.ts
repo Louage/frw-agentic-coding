@@ -32,6 +32,11 @@ export async function checkForUpdates(
   context: vscode.ExtensionContext,
   interactive: boolean
 ): Promise<void> {
+  // Never check for updates while running in the Extension Development Host.
+  // The local build version is always behind the published releases.
+  if (context.extensionMode === vscode.ExtensionMode.Development) {
+    return;
+  }
   const config = vscode.workspace.getConfiguration("frwAgenticCoding");
   const repo = config.get<string>("update.repository", "").trim();
   const includePrereleases = config.get<boolean>(
