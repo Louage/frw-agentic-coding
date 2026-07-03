@@ -58,7 +58,8 @@ export function activate(context: vscode.ExtensionContext): void {
           context.extensionUri,
           displayName,
           stableId,
-          context.extension.id
+          context.extension.id,
+          context
         );
       }
     ),
@@ -178,16 +179,29 @@ async function openAgentWorkflowVisualizer(
   extensionUri: vscode.Uri,
   displayName: string,
   stableId: string | undefined,
-  extensionId: string
+  extensionId: string,
+  context: vscode.ExtensionContext
 ): Promise<void> {
   const workflow = await getAgentWorkflowViewModel(
     extensionUri,
     displayName,
-    stableId
+    stableId,
+    context
   );
 
   // Check if required tools are available
   await checkToolsAvailable(workflow);
+
+  // Attempt to auto-enable the agent's available tools in the current chat session.
+  // VS Code may not expose a stable public API for this; we try silently and ignore failures.
+  const availableToolIds = workflow.requiredTools
+    ?.filter((t) => t.available)
+    .map((t) => t.id) ?? [];
+  if (availableToolIds.length > 0) {
+    try {
+      await vscode.commands.executeCommand("workbench.action.chat.selectTools", availableToolIds);
+    } catch { /* command not available in this VS Code version — ignore */ }
+  }
 
   WorkflowPanel.show(workflow, {
     onSelectCurrentAgent: async () => {
@@ -207,7 +221,22 @@ async function openAgentWorkflowVisualizer(
         extensionUri,
         handoff.targetDisplayName,
         handoff.targetStableId,
+        extensionId,
+        context
+      );
+    },
+    onSelectIncoming: async (incoming) => {
+      await selectAgentInChat(
+        incoming.sourceDisplayName,
+        incoming.sourceStableId,
         extensionId
+      );
+      await openAgentWorkflowVisualizer(
+        extensionUri,
+        incoming.sourceDisplayName,
+        incoming.sourceStableId,
+        extensionId,
+        context
       );
     },
     onFileDropped: async (fileUri: string) => {
@@ -232,6 +261,40 @@ async function openAgentWorkflowVisualizer(
           uris[0].toString()
         );
       }
+    },
+    onRefreshTools: async () => {
+      // Re-open the visualizer so tool availability is re-checked against
+      // whatever MCP servers are now running / configured.
+      await openAgentWorkflowVisualizer(
+        extensionUri,
+        workflow.currentAgent.displayName,
+        workflow.currentAgent.stableId,
+        extensionId,
+        context
+      );
+    },
+    onOpenToolsPicker: async () => {
+      // Try known VS Code Chat tool-picker commands until one succeeds.
+      const candidates = [
+        "workbench.action.chat.selectTools",
+        "workbench.action.chat.configureTools",
+        "workbench.panel.chat.openToolsPicker",
+      ];
+      for (const cmd of candidates) {
+        try {
+          await vscode.commands.executeCommand(cmd);
+          return;
+        } catch { /* try next */ }
+      }
+      // Fallback: focus chat so the user can click the tools button manually.
+      await vscode.commands.executeCommand("workbench.action.chat.open");
+    },
+    onInstallTool: async (toolId: string) => {
+      // If this looks like an extension ID, open it in the Extensions view.
+      await vscode.commands.executeCommand(
+        "workbench.extensions.search",
+        `@id:${toolId}`
+      );
     },
   });
 }

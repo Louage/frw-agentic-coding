@@ -23,7 +23,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Core tools that ALL agents should have
+# Core tools that ALL agents should have.
+# NOTE: MCP server IDs (e.g., bc-code-intel/*, microsoft.docs.mcp/*) are intentionally
+# NOT listed here — they vary per user profile and are managed dynamically by the
+# extension via mcpDiscoveryService. Only VS Code built-in tool categories are listed.
 $CoreTools = @(
     "vscode/memory",
     "vscode/askQuestions",
@@ -39,10 +42,16 @@ $CoreTools = @(
     "search/listDirectory",
     "search/textSearch",
     "search/usages",
-    "al-symbols-mcp/*",
-    "bc-code-intelligence-mcp/*",
-    "microsoft-learn/*",
     "todo"
+)
+
+# Tools that are deprecated, renamed, or environment-specific and must be removed
+# from all agent files during normalization. These are stripped even if present in
+# external source files. Add new entries here when a tool is discontinued upstream.
+$DeprecatedTools = @(
+    # VS Code built-in Mermaid Chat — not a marketplace extension, not universally available
+    "vscode.mermaid-chat-features/renderMermaidDiagram",
+    "vscode.mermaid-chat-features/*"
 )
 
 function Merge-ToolArrays {
@@ -87,7 +96,7 @@ function Merge-ToolArrays {
         $SpecialtyTools = $tools
     }
 
-    # Merge: core tools first, then specialty tools (excluding duplicates)
+    # Merge: core tools first, then specialty tools (excluding duplicates and deprecated)
     $merged = [ordered]@{}
     
     # Add core tools
@@ -95,9 +104,9 @@ function Merge-ToolArrays {
         $merged[$tool] = $true
     }
     
-    # Add specialty tools (won't override core tools if duplicated)
+    # Add specialty tools (skip duplicates and deprecated)
     foreach ($tool in $SpecialtyTools) {
-        if ($tool -and -not ($merged.Keys -contains $tool)) {
+        if ($tool -and -not ($merged.Keys -contains $tool) -and -not ($DeprecatedTools -contains $tool)) {
             $merged[$tool] = $true
         }
     }

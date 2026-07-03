@@ -1,9 +1,25 @@
 import * as vscode from "vscode";
+import { getAvailableMcpServerIds, checkToolAvailability } from "../tools/mcpDiscoveryService";
+import { lookupKnownTool, type KnownToolSuggestion } from "../tools/knownToolsCatalog";
 
 export interface AgentWorkflowHandoff {
   label: string;
   targetDisplayName: string;
   targetStableId?: string;
+}
+
+export interface AgentWorkflowIncomingRoute {
+  sourceDisplayName: string;
+  sourceStableId?: string;
+  label: string;
+}
+
+export interface AgentWorkflowTool {
+  id: string;
+  available: boolean;
+  /** True when the tool is known-deprecated and will be removed on next sync — do not count as an error */
+  deprecated?: boolean;
+  suggestion?: KnownToolSuggestion;
 }
 
 export interface AgentWorkflowViewModel {
@@ -16,12 +32,10 @@ export interface AgentWorkflowViewModel {
     stableId?: string;
   };
   bcReviewSpecialist?: string;
-  requiredTools?: string[];
+  requiredTools?: AgentWorkflowTool[];
+  requiredMcpServers?: AgentWorkflowTool[];
   handoffs: AgentWorkflowHandoff[];
-  incoming: Array<{
-    sourceDisplayName: string;
-    label: string;
-  }>;
+  incoming: AgentWorkflowIncomingRoute[];
 }
 
 interface ParsedHandoff {
@@ -41,7 +55,8 @@ interface ParsedAgent {
 export async function getAgentWorkflowViewModel(
   extensionUri: vscode.Uri,
   displayName: string,
-  stableId?: string
+  stableId?: string,
+  context?: vscode.ExtensionContext
 ): Promise<AgentWorkflowViewModel> {
   const agents = await loadAgents(extensionUri);
   const byId = new Map(agents.map((agent) => [agent.fileId.toLowerCase(), agent]));
@@ -73,6 +88,7 @@ export async function getAgentWorkflowViewModel(
         )
         .map((handoff) => ({
           sourceDisplayName: agent.name,
+          sourceStableId: agent.fileId,
           label: handoff.label,
         }))
     )
@@ -80,6 +96,18 @@ export async function getAgentWorkflowViewModel(
 
   const mermaid = buildMermaidSequenceDiagram(selected, handoffs, incoming);
   const svg = buildSvgDiagram(selected.name, handoffs, incoming);
+
+  // Resolve tool availability against the user's configured MCP servers
+  let requiredTools: AgentWorkflowTool[] | undefined;
+  let requiredMcpServers: AgentWorkflowTool[] | undefined;
+  if (selected.tools && selected.tools.length > 0) {
+    const availableServers = context
+      ? await getAvailableMcpServerIds(context)
+      : new Set<string>();
+    const requirements = checkToolAvailability(selected.tools, availableServers);
+    requiredTools = requirements.filter((r) => !isMcpRequirement(r.id, availableServers));
+    requiredMcpServers = requirements.filter((r) => isMcpRequirement(r.id, availableServers));
+  }
 
   return {
     title: `${selected.name} Workflow`,
@@ -91,10 +119,35 @@ export async function getAgentWorkflowViewModel(
       stableId: selected.fileId,
     },
     bcReviewSpecialist: selected.bcReviewSpecialist,
-    requiredTools: selected.tools,
+    requiredTools,
+    requiredMcpServers,
     handoffs,
     incoming,
   };
+}
+
+function isMcpRequirement(id: string, availableServers: Set<string>): boolean {
+  const known = lookupKnownTool(id);
+  if (known?.type === "mcp-server") {
+    return true;
+  }
+  if (known?.type === "vscode-extension") {
+    return false;
+  }
+
+  // Built-in tool groups are not MCP servers.
+  const builtins = new Set(["read", "search", "edit", "execute", "web", "browser", "agent", "todo", "new", "changes"]);
+  if (builtins.has(id)) {
+    return false;
+  }
+
+  // If this id appears as a discovered server id, treat it as MCP.
+  if (availableServers.has(id)) {
+    return true;
+  }
+
+  // Heuristic fallback for unknown ids: names containing "mcp" are MCP servers.
+  return /(^|[-_.])mcp($|[-_.])/i.test(id);
 }
 
 async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
@@ -314,159 +367,168 @@ function svgEsc(s: string): string {
 }
 
 /**
- * Build a sequence diagram as SVG showing the approval workflow.
- * Vertical flow: User → Agent → Specialist → Approved? → Handoffs (with rejection loop)
+ * Build a simple state-diagram style SVG with exactly 3 blocks:
+ * Incoming Routes | The Agent | Outgoing Routes
  */
 export function buildSvgDiagram(
   selectedName: string,
   handoffs: AgentWorkflowHandoff[],
-  _incoming: Array<{ sourceDisplayName: string; label: string }>
+  incoming: AgentWorkflowIncomingRoute[]
 ): string {
-  const agentShort = selectedName.replace(/^AL\s+/i, "");
-  const participants = [
-    { id: "dev", label: "BC Developer" },
-    { id: "agent", label: agentShort },
-    { id: "spec", label: "Specialist/Alex" },
-  ];
-  
-  // Add handoff participants
-  handoffs.forEach((h, i) => {
-    participants.push({ id: `handoff${i}`, label: h.label });
-  });
+  const clean = (v: string) => v.replace(/^AL\s+/i, "").trim();
+  const agentName = clean(selectedName);
 
-  const PAD = 40;
-  const COL_W = 140;
-  const _LINE_H = 40;
-  const W = PAD * 2 + participants.length * COL_W;
-  
-  let H = 300 + (handoffs.length > 0 ? handoffs.length * 100 : 0);
-  
-  // Calculate positions
-  const cols = participants.map((p, i) => ({
-    ...p,
-    x: PAD + i * COL_W + COL_W / 2,
-  }));
+  const incomingItems = incoming.length > 0
+    ? incoming.map((i) => ({
+      label: clean(i.sourceDisplayName),
+      exact: i.sourceDisplayName,
+    }))
+    : ["No incoming routes"];
+  const outgoingItems = handoffs.length > 0
+    ? handoffs.map((h) => ({
+      label: clean(h.label),
+      exact: h.targetDisplayName,
+    }))
+    : ["No outgoing routes"];
+
+  const PAD = 24;
+  const GAP = 20;
+  const BLOCK_W = 260;
+  const HEADER_H = 34;
+  const ITEM_H = 20;
+  const ITEM_GAP = 6;
+
+  const maxRows = Math.max(incomingItems.length, outgoingItems.length, 4);
+  const innerH = 30 + (maxRows * (ITEM_H + ITEM_GAP)) + 30;
+  const blockH = HEADER_H + innerH;
+
+  const W = PAD * 2 + BLOCK_W * 3 + GAP * 2;
+  const H = PAD * 2 + blockH;
+
+  const xIncoming = PAD;
+  const xAgent = xIncoming + BLOCK_W + GAP;
+  const xOutgoing = xAgent + BLOCK_W + GAP;
+  const y = PAD;
 
   const lines: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;background:var(--vscode-editor-background,#1e1e1e)">`,
     `  <defs>`,
-    `    <marker id="seqArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">`,
+    `    <marker id="stateArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">`,
     `      <polygon points="0,0 8,4 0,8" fill="var(--vscode-descriptionForeground,#888)"/>`,
-    `    </marker>`,
-    `    <marker id="seqArrowDash" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">`,
-    `      <polygon points="0,0 8,4 0,8" fill="#f48482"/>`,
     `    </marker>`,
     `  </defs>`,
     `  <style>`,
-    `    .participant-box { fill: var(--vscode-textCodeBlock-background,#252526); stroke: var(--vscode-panel-border,#444); stroke-width: 1.5; }`,
-    `    .participant-label { fill: var(--vscode-editor-foreground,#ccc); font-size: 11px; font-weight: 600; font-family: var(--vscode-font-family,sans-serif); }`,
-    `    .lifeline { stroke: var(--vscode-descriptionForeground,#888); stroke-width: 1; stroke-dasharray: 2,2; }`,
-    `    .activation { fill: var(--vscode-textCodeBlock-background,#252526); stroke: var(--vscode-panel-border,#444); stroke-width: 1.5; }`,
-    `    .message-arrow { stroke: var(--vscode-descriptionForeground,#888); stroke-width: 1.5; fill: none; marker-end: url(#seqArrow); }`,
-    `    .loop-box { fill: none; stroke: #4b9dd9; stroke-width: 1.5; }`,
-    `    .alt-box { fill: none; stroke: #fbbf24; stroke-width: 1.5; }`,
-    `    .box-label { fill: #4b9dd9; font-size: 10px; font-weight: 600; font-family: var(--vscode-font-family,sans-serif); }`,
-    `    .alt-label { fill: #fbbf24; font-size: 10px; font-weight: 600; font-family: var(--vscode-font-family,sans-serif); }`,
-    `    .message-label { fill: var(--vscode-editor-foreground,#ccc); font-size: 10px; font-family: var(--vscode-font-family,sans-serif); }`,
-    `    .separator { stroke: var(--vscode-panel-border,#444); stroke-width: 1; }`,
+    `    .block { fill: var(--vscode-textCodeBlock-background,#252526); stroke: var(--vscode-panel-border,#444); stroke-width: 1.5; }`,
+    `    .title { fill: var(--vscode-editor-foreground,#ccc); font-size: 13px; font-weight: 700; font-family: var(--vscode-font-family,sans-serif); }`,
+    `    .item { fill: var(--vscode-editor-foreground,#ccc); font-size: 11px; font-family: var(--vscode-font-family,sans-serif); }`,
+    `    .agentState { fill: rgba(75,157,217,0.12); stroke: #4b9dd9; stroke-width: 1.2; }`,
+    `    .agentStep { fill: #9cd2ff; font-size: 10px; font-family: var(--vscode-font-family,sans-serif); }`,
+    `    .arrow { stroke: var(--vscode-descriptionForeground,#888); stroke-width: 1.4; fill:none; marker-end:url(#stateArrow); }`,
     `  </style>`,
   ];
 
-  // Draw participant boxes
-  let y = 20;
-  const headerH = 50;
-  cols.forEach((col) => {
-    lines.push(`  <rect class="participant-box" x="${col.x - 60}" y="${y}" width="120" height="${headerH}" rx="2" />`);
-    lines.push(`  <text class="participant-label" x="${col.x}" y="${y + 30}" text-anchor="middle">${svgEsc(col.label)}</text>`);
-  });
+  // 3 fixed blocks
+  lines.push(`  <rect class="block" x="${xIncoming}" y="${y}" width="${BLOCK_W}" height="${blockH}" rx="8" />`);
+  lines.push(`  <rect class="block" x="${xAgent}" y="${y}" width="${BLOCK_W}" height="${blockH}" rx="8" />`);
+  lines.push(`  <rect class="block" x="${xOutgoing}" y="${y}" width="${BLOCK_W}" height="${blockH}" rx="8" />`);
 
-  y += headerH + 10;
-  const _contentStart = y;
+  lines.push(`  <text class="title" x="${xIncoming + 12}" y="${y + 22}">Incoming Routes</text>`);
+  lines.push(`  <text class="title" x="${xAgent + 12}" y="${y + 22}">${svgEsc(agentName)}</text>`);
+  lines.push(`  <text class="title" x="${xOutgoing + 12}" y="${y + 22}">Outgoing Routes</text>`);
 
-  // Draw lifelines
-  cols.forEach((col) => {
-    lines.push(`  <line class="lifeline" x1="${col.x}" y1="${y}" x2="${col.x}" y2="${H - 30}" />`);
-  });
-
-  // Message 1: Dev -> Agent
-  let msgY = y + 20;
-  lines.push(`  <line class="message-arrow" x1="${cols[0].x}" y1="${msgY}" x2="${cols[1].x}" y2="${msgY}" />`);
-  lines.push(`  <text class="message-label" x="${(cols[0].x + cols[1].x) / 2}" y="${msgY - 5}" text-anchor="middle">Analyze Request</text>`);
-
-  // Activation box for agent
-  const agentActY = msgY + 10;
-  const agentActH = 220 + (handoffs.length > 0 ? handoffs.length * 100 : 0);
-  lines.push(`  <rect class="activation" x="${cols[1].x - 8}" y="${agentActY}" width="16" height="${agentActH}" />`);
-
-  // Agent self-message
-  msgY += 30;
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 15}" y1="${msgY}" x2="${cols[1].x + 40}" y2="${msgY}" />`);
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 40}" y1="${msgY}" x2="${cols[1].x + 40}" y2="${msgY + 20}" />`);
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 40}" y1="${msgY + 20}" x2="${cols[1].x}" y2="${msgY + 20}" />`);
-  lines.push(`  <text class="message-label" x="${cols[1].x + 50}" y="${msgY + 8}" text-anchor="start" font-size="9">Create design</text>`);
-
-  // Message 2: Agent -> Specialist
-  msgY += 40;
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x}" y1="${msgY}" x2="${cols[2].x}" y2="${msgY}" />`);
-  lines.push(`  <text class="message-label" x="${(cols[1].x + cols[2].x) / 2}" y="${msgY - 5}" text-anchor="middle">Review design?</text>`);
-
-  // Activation box for specialist
-  const specActY = msgY + 5;
-  const specActH = 120 + (handoffs.length > 0 ? handoffs.length * 100 : 0);
-  lines.push(`  <rect class="activation" x="${cols[2].x - 8}" y="${specActY}" width="16" height="${specActH}" />`);
-
-  // LOOP box
-  msgY += 20;
-  const loopY = msgY;
-  const loopH = 100 + (handoffs.length > 0 ? handoffs.length * 80 : 0);
-  lines.push(`  <rect class="loop-box" x="${PAD}" y="${loopY - 15}" width="${W - PAD * 2}" height="${loopH}" />`);
-  lines.push(`  <text class="box-label" x="${PAD + 5}" y="${loopY}">loop Until Design OK</text>`);
-  lines.push(`  <line class="loop-box" x1="${PAD}" y1="${loopY + 10}" x2="${W - PAD}" y2="${loopY + 10}" />`);
-
-  // Specialist feedback
-  msgY += 20;
-  lines.push(`  <line class="message-arrow" x1="${cols[2].x}" y1="${msgY}" x2="${cols[1].x}" y2="${msgY + 10}" stroke-dasharray="5,5" />`);
-  lines.push(`  <text class="message-label" x="${(cols[1].x + cols[2].x) / 2}" y="${msgY + 5}" text-anchor="middle">Result (OK/NOK)</text>`);
-
-  // Agent redesign
-  msgY += 20;
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 15}" y1="${msgY}" x2="${cols[1].x + 40}" y2="${msgY}" />`);
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 40}" y1="${msgY}" x2="${cols[1].x + 40}" y2="${msgY + 20}" />`);
-  lines.push(`  <line class="message-arrow" x1="${cols[1].x + 40}" y1="${msgY + 20}" x2="${cols[1].x}" y2="${msgY + 20}" />`);
-  lines.push(`  <text class="message-label" x="${cols[1].x + 50}" y="${msgY + 8}" text-anchor="start" font-size="9">Redesign</text>`);
-
-  // ALT box for handoff decision
-  msgY += 40;
-  const altY = msgY;
-  const altH = 50 + (handoffs.length > 0 ? handoffs.length * 80 : 0);
-  lines.push(`  <rect class="alt-box" x="${PAD}" y="${altY - 10}" width="${W - PAD * 2}" height="${altH}" />`);
-  lines.push(`  <text class="alt-label" x="${PAD + 5}" y="${altY + 5}">alt [Design Decision]</text>`);
-  lines.push(`  <line class="alt-box" x1="${PAD}" y1="${altY + 20}" x2="${W - PAD}" y2="${altY + 20}" />`);
-
-  // Draw handoff alternatives
-  handoffs.forEach((handoff, idx) => {
-    const altIdx = idx;
-    const altLabelY = altY + 25 + altIdx * 80;
-
-    // Alt separator
-    if (idx > 0) {
-      lines.push(`  <line class="alt-box" x1="${PAD}" y1="${altLabelY - 15}" x2="${W - PAD}" y2="${altLabelY - 15}" />`);
+  // Incoming list
+  let yInc = y + HEADER_H + 16;
+  incomingItems.forEach((item, idx) => {
+    const name = typeof item === "string" ? item : item.label;
+    const exact = typeof item === "string" ? item : item.exact;
+    const label = `${String.fromCharCode(65 + (idx % 26))}: ${name}`;
+    if (incoming.length > 0) {
+      lines.push(`  <g class="nav-incoming" data-incoming-index="${idx}" style="cursor:pointer">`);
+      lines.push(`    <title>Agent: ${svgEsc(exact)}</title>`);
+      lines.push(`    <text class="item" x="${xIncoming + 14}" y="${yInc}">${svgEsc(label)}</text>`);
+      lines.push(`  </g>`);
+    } else {
+      lines.push(`  <text class="item" x="${xIncoming + 14}" y="${yInc}">${svgEsc(label)}</text>`);
     }
-
-    // Alt condition label
-    lines.push(`  <text class="alt-label" x="${PAD + 10}" y="${altLabelY}" font-size="11">[${handoff.label}]</text>`);
-
-    // Arrow from agent to handoff participant
-    lines.push(`  <line class="message-arrow" x1="${cols[1].x}" y1="${altLabelY + 10}" x2="${cols[3 + idx].x}" y2="${altLabelY + 10}" />`);
-    lines.push(`  <text class="message-label" x="${(cols[1].x + cols[3 + idx].x) / 2}" y="${altLabelY + 5}" text-anchor="middle">Handoff</text>`);
-
-    // Activation box for handoff target
-    lines.push(`  <rect class="activation" x="${cols[3 + idx].x - 8}" y="${altLabelY + 15}" width="16" height="25" />`);
+    yInc += ITEM_H + ITEM_GAP;
   });
+
+  // Agent inner state-like box + minimal flow
+  const agentInnerX = xAgent + 12;
+  const agentInnerY = y + HEADER_H + 8;
+  const agentInnerW = BLOCK_W - 24;
+  const agentInnerH = innerH - 16;
+  lines.push(`  <rect class="agentState" x="${agentInnerX}" y="${agentInnerY}" width="${agentInnerW}" height="${agentInnerH}" rx="6" />`);
+
+  const steps = getAgentStateSteps(agentName, handoffs);
+  const s1y = agentInnerY + 26;
+  const s2y = s1y + 30;
+  const s3y = s2y + 30;
+  lines.push(`  <text class="agentStep" x="${agentInnerX + 10}" y="${s1y}">${svgEsc(steps[0])}</text>`);
+  lines.push(`  <text class="agentStep" x="${agentInnerX + 10}" y="${s2y}">${svgEsc(steps[1])}</text>`);
+  lines.push(`  <text class="agentStep" x="${agentInnerX + 10}" y="${s3y}">${svgEsc(steps[2])}</text>`);
+  lines.push(`  <line class="arrow" x1="${agentInnerX + 6}" y1="${s1y + 6}" x2="${agentInnerX + 6}" y2="${s2y - 10}" />`);
+  lines.push(`  <line class="arrow" x1="${agentInnerX + 6}" y1="${s2y + 6}" x2="${agentInnerX + 6}" y2="${s3y - 10}" />`);
+
+  // Outgoing list
+  let yOut = y + HEADER_H + 16;
+  outgoingItems.forEach((item, idx) => {
+    const name = typeof item === "string" ? item : item.label;
+    const exact = typeof item === "string" ? item : item.exact;
+    const label = `${String.fromCharCode(89 + (idx % 2))}: ${name}`; // Y, Z style hint
+    if (handoffs.length > 0) {
+      lines.push(`  <g class="nav-handoff" data-handoff-index="${idx}" style="cursor:pointer">`);
+      lines.push(`    <title>Agent: ${svgEsc(exact)}</title>`);
+      lines.push(`    <text class="item" x="${xOutgoing + 14}" y="${yOut}">${svgEsc(label)}</text>`);
+      lines.push(`  </g>`);
+    } else {
+      lines.push(`  <text class="item" x="${xOutgoing + 14}" y="${yOut}">${svgEsc(label)}</text>`);
+    }
+    yOut += ITEM_H + ITEM_GAP;
+  });
+
+  // Cross-block arrows (state transitions)
+  const midY = y + HEADER_H + 30;
+  lines.push(`  <line class="arrow" x1="${xIncoming + BLOCK_W}" y1="${midY}" x2="${xAgent}" y2="${midY}" />`);
+  lines.push(`  <line class="arrow" x1="${xAgent + BLOCK_W}" y1="${midY}" x2="${xOutgoing}" y2="${midY}" />`);
 
   lines.push(`</svg>`);
-
   return lines.join("\n");
+}
+
+function getAgentStateSteps(
+  agentName: string,
+  handoffs: AgentWorkflowHandoff[]
+): [string, string, string] {
+  const n = agentName.toLowerCase();
+  const handoffTarget = handoffs[0]?.label ? `Handoff: ${handoffs[0].label}` : "Handoff";
+
+  if (n.includes("architect") || n.includes("design")) {
+    return ["Analyze Request", "Ask BC Expert (check)", handoffTarget];
+  }
+  if (n.includes("implementation") || n.includes("developer")) {
+    return ["Analyze Spec", "Implement Changes", handoffTarget];
+  }
+  if (n.includes("conductor")) {
+    return ["Plan Phases", "Delegate Work", handoffTarget];
+  }
+  if (n.includes("review")) {
+    return ["Review Deliverable", "Validate Rules", handoffTarget];
+  }
+  if (n.includes("triage") || n.includes("tester")) {
+    return ["Assess Issue", "Define Test Strategy", handoffTarget];
+  }
+  if (n.includes("presales") || n.includes("market")) {
+    return ["Analyze Opportunity", "Shape Proposal", handoffTarget];
+  }
+  if (n.includes("agent builder")) {
+    return ["Analyze Request", "Create Agent Design", handoffTarget];
+  }
+  if (n.includes("dredd") || n.includes("debug")) {
+    return ["Inspect Failure", "Propose Fix Path", handoffTarget];
+  }
+
+  return ["Analyze Request", "Ask Specialist (check)", handoffTarget];
 }
 
 
