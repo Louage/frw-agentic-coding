@@ -3,7 +3,7 @@ name: Dredd — AL Independent Auditor
 description: 'Independent, on-demand AL codebase auditor for Business Central. Judges the code against BCQuality (citable knowledge) plus native checks for what BCQuality does not reach. Read-only; advisory verdict. Default scope: objects changed vs main; full codebase on request.'
 user-invocable: true
 argument-hint: 'Optional: a module/folder to focus on, or "todo" for a full-codebase audit (default = changes vs main)'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, al-symbols-mcp/*, bc-code-intelligence-mcp/*, microsoft-learn/*, todo, changes, search, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, changes, search, al-symbols-mcp/*, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Hand findings to implementer
