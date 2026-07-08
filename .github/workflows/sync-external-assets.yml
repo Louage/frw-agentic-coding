@@ -35,6 +35,11 @@ jobs:
         run: |
           ./automation/scripts/Normalize-AgentTools.ps1
 
+      - name: Validate agent handoff integrity
+        shell: pwsh
+        run: |
+          ./automation/scripts/Validate-AgentHandoffs.ps1
+
       - name: Validate source contracts
         run: npm run validate:source-contract:strict
 
