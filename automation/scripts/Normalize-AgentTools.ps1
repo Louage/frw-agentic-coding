@@ -54,6 +54,13 @@ $DeprecatedTools = @(
     "vscode.mermaid-chat-features/*"
 )
 
+# Frontmatter keys that belong exclusively to the extension (read from assets/agent-metadata.json)
+# and must NOT appear in .agent.md files. Any of these found in synced agent files are stripped
+# during normalization to keep frontmatter to VS Code-recognized keys only.
+$ExtensionOnlyKeys = @(
+    "bc-review-specialist"
+)
+
 function Merge-ToolArrays {
     <#
     .SYNOPSIS
@@ -117,7 +124,7 @@ function Merge-ToolArrays {
 function Normalize-AgentFile {
     <#
     .SYNOPSIS
-    Updates a single agent file with normalized tools array.
+    Updates a single agent file with normalized tools array and strips extension-only keys.
     #>
     param(
         [string]$FilePath
@@ -128,7 +135,18 @@ function Normalize-AgentFile {
     # Extract frontmatter and tools line
     if ($content -match '(?s)^---\r?\n(.+?)\r?\n---') {
         $frontmatter = $Matches[1]
-        
+        $changed = $false
+
+        # Strip extension-only frontmatter keys that must not appear in .agent.md files
+        foreach ($key in $ExtensionOnlyKeys) {
+            $keyPattern = "(?m)^${key}:.*(\r?\n)?"
+            if ($frontmatter -match $keyPattern) {
+                $frontmatter = $frontmatter -replace $keyPattern, ''
+                $changed = $true
+                Write-Verbose "Stripped extension-only key '$key' from: $(Split-Path -Leaf $FilePath)"
+            }
+        }
+
         # Extract current tools array
         if ($frontmatter -match "tools:\s*\[([^\]]*)\]") {
             $currentToolsStr = $Matches[0]
@@ -146,17 +164,19 @@ function Normalize-AgentFile {
             $newToolsLine = "tools: [$mergedTools]"
             
             # Replace in frontmatter
-            $newFrontmatter = $frontmatter -replace [regex]::Escape($currentToolsStr), $newToolsLine
-            
-            # Reconstruct content
-            $newContent = "---`r`n$newFrontmatter`r`n---`r`n" + ($content -replace '(?s)^---\r?\n.+?\r?\n---\r?\n', '')
-            
-            # Write back if changed
-            if ($newContent -ne $content) {
-                Set-Content -LiteralPath $FilePath -Value $newContent -Encoding UTF8 -NoNewline
-                Write-Verbose "Normalized tools in: $(Split-Path -Leaf $FilePath)"
-                return $true
+            $normalizedFrontmatter = $frontmatter -replace [regex]::Escape($currentToolsStr), $newToolsLine
+            if ($normalizedFrontmatter -ne $frontmatter) {
+                $frontmatter = $normalizedFrontmatter
+                $changed = $true
             }
+        }
+
+        if ($changed) {
+            # Reconstruct content
+            $newContent = "---`r`n$frontmatter`r`n---`r`n" + ($content -replace '(?s)^---\r?\n.+?\r?\n---\r?\n', '')
+            Set-Content -LiteralPath $FilePath -Value $newContent -Encoding UTF8 -NoNewline
+            Write-Verbose "Normalized: $(Split-Path -Leaf $FilePath)"
+            return $true
         }
     }
     

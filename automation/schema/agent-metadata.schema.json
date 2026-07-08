@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theframework.internal/schemas/agent-metadata.schema.json",
+  "title": "Agent Extension Metadata",
+  "description": "Extension-only metadata for .agent.md files. Keys are agent fileIds (filename without .agent.md). Values hold properties that VS Code does not consume and must not appear in frontmatter.",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/$defs/AgentExtensionMetadata"
+  },
+  "$defs": {
+    "AgentExtensionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bcReviewSpecialist": {
+          "type": "string",
+          "description": "Display name of the BC review specialist agent used by this agent's workflow visualizer."
+        }
+      }
+    }
+  }
+}

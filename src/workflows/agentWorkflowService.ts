@@ -43,6 +43,12 @@ interface ParsedHandoff {
   agentName: string;
 }
 
+interface AgentExtensionMetadata {
+  bcReviewSpecialist?: string;
+}
+
+type AgentMetadataManifest = Record<string, AgentExtensionMetadata>;
+
 interface ParsedAgent {
   fileId: string;
   name: string;
@@ -150,9 +156,20 @@ function isMcpRequirement(id: string, availableServers: Set<string>): boolean {
   return /(^|[-_.])mcp($|[-_.])/i.test(id);
 }
 
+async function loadAgentMetadata(extensionUri: vscode.Uri): Promise<AgentMetadataManifest> {
+  const manifestUri = vscode.Uri.joinPath(extensionUri, "assets", "agent-metadata.json");
+  try {
+    const data = await vscode.workspace.fs.readFile(manifestUri);
+    return JSON.parse(Buffer.from(data).toString("utf8")) as AgentMetadataManifest;
+  } catch {
+    return {};
+  }
+}
+
 async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
   const root = vscode.Uri.joinPath(extensionUri, "assets", "generated");
   const files = await findAgentFiles(root);
+  const metadata = await loadAgentMetadata(extensionUri);
 
   const parsed: ParsedAgent[] = [];
   for (const file of files) {
@@ -169,15 +186,17 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
       .toLowerCase()
       .trim() !== "false";
     const handoffs = readHandoffs(fm);
-    const bcReviewSpecialist = readScalar(fm, "bc-review-specialist");
     const tools = readTools(fm);
+
+    // Extension-only metadata comes from the manifest, not from .agent.md frontmatter.
+    const ext = metadata[fileId] ?? {};
 
     parsed.push({
       fileId,
       name,
       userInvocable,
       handoffs,
-      bcReviewSpecialist,
+      bcReviewSpecialist: ext.bcReviewSpecialist,
       tools,
     });
   }
