@@ -77,7 +77,7 @@ Privacy guardrail:
 - Built and packaged to a `.vsix` by the GitHub Actions [release workflow](.github/workflows/release.yml) on every `v*` tag.
 - The `.vsix` is attached to a **GitHub Release** on a private repository.
 - Installed VS Code clients check that repository on startup and offer to update
-  (see `frwAgenticCoding.update.*` settings). Updating uses your VS Code GitHub
+  (see `acdc.update.*` settings). Updating uses your VS Code GitHub
   sign-in to read the private release.
 
 ## Develop
