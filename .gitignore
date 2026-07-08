@@ -4,3 +4,7 @@ out/
 *.vsix
 .vscode-test/
 *.log
+
+# Regenerable sync caches (rebuilt by npm run sync:sources / sync:mcp-sources)
+tmp/external-sources/
+tmp/mcp-knowledge-sources/

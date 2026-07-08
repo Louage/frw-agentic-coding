@@ -37,7 +37,7 @@ export async function checkForUpdates(
   if (context.extensionMode === vscode.ExtensionMode.Development) {
     return;
   }
-  const config = vscode.workspace.getConfiguration("frwAgenticCoding");
+  const config = vscode.workspace.getConfiguration("acdc");
   const repo = config.get<string>("update.repository", "").trim();
   const includePrereleases = config.get<boolean>(
     "update.includePrereleases",
@@ -47,7 +47,7 @@ export async function checkForUpdates(
   if (!repo || !repo.includes("/")) {
     if (interactive) {
       vscode.window.showWarningMessage(
-        "The Framework: Set 'frwAgenticCoding.update.repository' to your-org/repo first."
+        "The Framework: Set 'acdc.update.repository' to your-org/repo first."
       );
     }
     return;

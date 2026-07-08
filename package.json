@@ -1,6 +1,6 @@
 {
   "name": "frw-agentic-coding",
-  "displayName": "The Framework Agentic Coding",
+  "displayName": "Agentic Coding⚡Direct Coding",
   "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
   "version": "1.0.11",
   "publisher": "theframework",
@@ -821,6 +821,16 @@
         "category": "AC/DC"
       },
       {
+        "command": "acdc.manageAlBaseCode",
+        "title": "Manage AL Base Code / ISV Code",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.syncAlBaseCode",
+        "title": "Sync AL Base Code / ISV Code",
+        "category": "AC/DC"
+      },
+      {
         "command": "frwAgenticCoding.refreshSkills",
         "title": "Refresh Skills",
         "category": "AC/DC",
@@ -889,36 +899,75 @@
         }
       ]
     },
-    "configuration": {
-      "title": "The Framework Agentic Coding",
-      "properties": {
-        "frwAgenticCoding.update.repository": {
-          "type": "string",
-          "default": "Louage/frw-agentic-coding",
-          "markdownDescription": "The private GitHub repository (in `owner/repo` form) that publishes new `.vsix` releases of this extension. Used by the in-editor update check."
-        },
-        "frwAgenticCoding.update.checkOnStartup": {
-          "type": "boolean",
-          "default": true,
-          "description": "Check the configured GitHub repository for a newer release when VS Code starts."
-        },
-        "frwAgenticCoding.update.includePrereleases": {
-          "type": "boolean",
-          "default": false,
-          "description": "Also consider GitHub pre-releases when checking for updates."
-        },
-        "frwAgenticCoding.sources.catalogPath": {
-          "type": "string",
-          "default": "automation/sources/catalog.json",
-          "description": "Workspace-relative path to the external source catalog used by the asset sync pipeline."
-        },
-        "frwAgenticCoding.sources.multiRoot.requireSelection": {
-          "type": "boolean",
-          "default": true,
-          "description": "When true, repository-scoped actions in multi-root workspaces require explicit human repository selection when no target is given."
+    "configuration": [
+      {
+        "title": "AC⚡DC",
+        "order": 1,
+        "properties": {
+          "acdc.update.repository": {
+            "type": "string",
+            "default": "Louage/frw-agentic-coding",
+            "markdownDescription": "The private GitHub repository (in `owner/repo` form) that publishes new `.vsix` releases of this extension. Used by the in-editor update check."
+          },
+          "acdc.update.checkOnStartup": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check the configured GitHub repository for a newer release when VS Code starts."
+          },
+          "acdc.update.includePrereleases": {
+            "type": "boolean",
+            "default": false,
+            "description": "Also consider GitHub pre-releases when checking for updates."
+          }
+        }
+      },
+      {
+        "title": "AL Base Code / ISV Code",
+        "order": 2,
+        "properties": {
+          "acdc.alBaseCode.repositories": {
+            "type": "array",
+            "default": [
+              {
+                "repository": "https://github.com/StefanMaron/MSDyn365BC.Sandbox.Code.History",
+                "branch": "",
+                "folder": "",
+                "enabled": false
+              }
+            ],
+            "markdownDescription": "**[▶ Open the AL Base Code / ISV Code table editor](command:acdc.manageAlBaseCode)** — recommended instead of editing JSON. Provides a table with a live branch picker and folder defaults.\n\nRead-only AL source repositories (Business Central base app and ISV products such as Continia or Tasklet) mounted into the workspace so agents can search and read real AL code. Mounted source folders are added to `git.ignoredRepositories` so they don't clutter the Source Control view.\n\nEach entry: `repository` (git URL — leave empty for a **manual** folder you update yourself, e.g. an ISV file download), `branch`, `folder` (leave empty to use the portable per-user default under `%LOCALAPPDATA%\\acdc-sources`), `enabled`.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string",
+                  "description": "Git repository URL of the AL source (BC base app or ISV product). Leave empty for a manual folder that the extension only mounts and never clones/pulls."
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "Branch to check out (e.g. a localisation/version branch). Ignored for manual folders."
+                },
+                "folder": {
+                  "type": "string",
+                  "description": "Local folder the repository is cloned into, or the folder of a manual source. Leave empty (with a repository set) to use the portable per-user default under %LOCALAPPDATA%\\acdc-sources\\<repo>."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether this source is cloned/pulled and mounted in the workspace."
+                }
+              },
+              "required": ["enabled"]
+            }
+          },
+          "acdc.alBaseCode.syncOnStartup": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "When enabled, keeps the AL source folders up to date on startup: missing folders are cloned (after you approve), and existing folders are pulled to the latest commit of their branch (read-only, never pushed)."
+          }
         }
       }
-    },
+    ],
     "chatPromptFiles": [
       {
         "path": "./assets/generated/aldc-community/prompts/al-agent.build-instructions.prompt.md"

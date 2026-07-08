@@ -10,6 +10,12 @@ import {
 } from "./workflows/agentWorkflowService";
 import { checkForUpdates } from "./update/updateChecker";
 import { withRepositoryGuard } from "./workspaceRepoResolver";
+import {
+  syncAlBaseCode,
+  syncOnStartup,
+  syncGitIgnoredRepositories,
+} from "./alBaseCode";
+import { AlBaseCodePanel } from "./views/alBaseCodePanel";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -102,11 +108,36 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  // 4. Startup update check (silent auth, opt-out via setting).
-  const config = vscode.workspace.getConfiguration("frwAgenticCoding");
+  // 4. AL Base Code / ISV Code: mount external BC/ISV source folders for AI context.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.manageAlBaseCode", () =>
+      AlBaseCodePanel.show(output)
+    ),
+    vscode.commands.registerCommand("acdc.syncAlBaseCode", async () => {
+      const results = await syncAlBaseCode(output, { promptBeforeClone: true });
+      const errors = results.filter((r) => r.outcome === "error").length;
+      const cloned = results.filter((r) => r.outcome === "cloned").length;
+      const pulled = results.filter((r) => r.outcome === "pulled").length;
+      if (errors > 0) {
+        vscode.window.showWarningMessage(
+          `AL Base Code sync: ${errors} error(s). Check the AC⚡DC output.`
+        );
+      } else {
+        vscode.window.showInformationMessage(
+          `AL Base Code synced: ${cloned} cloned, ${pulled} updated.`
+        );
+      }
+    })
+  );
+
+  // 5. Startup checks.
+  const config = vscode.workspace.getConfiguration("acdc");
   if (config.get<boolean>("update.checkOnStartup", true)) {
     void checkForUpdates(context, false);
   }
+  void syncOnStartup(output);
+  // Keep already-mounted AL source folders out of the Source Control view.
+  void syncGitIgnoredRepositories();
 }
 
 export function deactivate(): void {
