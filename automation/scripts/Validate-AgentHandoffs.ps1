@@ -1,10 +1,13 @@
 <#
 .SYNOPSIS
-Validates referential integrity of agent handoffs and sub-agent references.
+Validates referential integrity of agent handoffs, sub-agent references, and the extension manifest.
 
 .DESCRIPTION
 Parses every .agent.md in the specified roots and asserts that every
 `agents:` and `handoffs[].agent` value resolves to an existing agent `name`.
+
+Also validates assets/agent-metadata.json: every value that names an agent
+(e.g. bcReviewSpecialist) must resolve to a known agent name.
 
 Fails with a non-zero exit code if any reference is unresolved.
 This script is intended to run AFTER Normalize-AgentTools.ps1 in the
@@ -14,6 +17,9 @@ introduce broken handoffs.
 .PARAMETER AgentRoots
 Paths to search for .agent.md files recursively.
 Defaults to .github/agents and assets/generated (both under the repo root).
+
+.PARAMETER ManifestPath
+Path to assets/agent-metadata.json. Defaults to the canonical location under the repo root.
 
 .EXAMPLE
 ./Validate-AgentHandoffs.ps1
@@ -25,7 +31,9 @@ param(
     [string[]]$AgentRoots = @(
         (Join-Path $PSScriptRoot "..\..\\.github\agents"),
         (Join-Path $PSScriptRoot "..\..\assets\generated")
-    )
+    ),
+    [Parameter(Mandatory = $false)]
+    [string]$ManifestPath = (Join-Path $PSScriptRoot "..\..\assets\agent-metadata.json")
 )
 
 Set-StrictMode -Version Latest
@@ -168,6 +176,54 @@ if ($violations.Count -gt 0) {
         Write-Host ""
     }
     exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Validate extension manifest (assets/agent-metadata.json)
+# ---------------------------------------------------------------------------
+
+if (Test-Path -LiteralPath $ManifestPath -PathType Leaf) {
+    Write-Verbose "Validating manifest: $ManifestPath"
+
+    $manifestJson = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+
+    $manifestViolations = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    foreach ($property in $manifestJson.PSObject.Properties) {
+        # Skip schema key
+        if ($property.Name -eq '$schema') { continue }
+
+        $agentEntry = $property.Value
+
+        # Validate bcReviewSpecialist
+        if ($null -ne $agentEntry.bcReviewSpecialist -and $agentEntry.bcReviewSpecialist -ne '') {
+            if (-not $agentNames.Contains($agentEntry.bcReviewSpecialist)) {
+                $manifestViolations.Add([PSCustomObject]@{
+                    FileId        = $property.Name
+                    Key           = 'bcReviewSpecialist'
+                    UnresolvedName = $agentEntry.bcReviewSpecialist
+                })
+            }
+        }
+    }
+
+    if ($manifestViolations.Count -gt 0) {
+        Write-Host ""
+        Write-Host "Manifest referential-integrity check FAILED — $($manifestViolations.Count) unresolved reference(s) in $ManifestPath :" -ForegroundColor Red
+        Write-Host ""
+        foreach ($v in $manifestViolations) {
+            Write-Host "  Agent   : $($v.FileId)" -ForegroundColor Red
+            Write-Host "  Key     : $($v.Key)" -ForegroundColor Red
+            Write-Host "  Missing : '$($v.UnresolvedName)'" -ForegroundColor Red
+            Write-Host ""
+        }
+        exit 1
+    }
+
+    Write-Verbose "Manifest referential-integrity check passed."
+}
+else {
+    Write-Verbose "No manifest found at $ManifestPath — skipping manifest validation."
 }
 
 Write-Host "Agent referential-integrity check passed — all references resolved ($($allFiles.Count) files, $($agentNames.Count) agents)."
