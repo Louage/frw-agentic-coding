@@ -7,6 +7,8 @@ description: Imported BCQuality skill from microsoft/skills/review/al-breaking-c
 
 Source: microsoft/skills/review/al-breaking-changes-review.md
 
+> **Bundled consumption note.** This extension packages BCQuality as VS Code chat skills and chat instructions under `assets/generated/microsoft-bcquality-assets`. Do not probe an external clone, `skills/entry.md`, `skills/read.md`, `skills/do.md`, or `knowledge-index.json` when using this bundled copy. Treat this `SKILL.md` plus the bundled BCQuality instruction files whose `Source:` paths match the active domain as the packaged knowledge surface. This note overrides upstream clone-oriented path references preserved below for provenance.
+
 # AL breaking changes review
 
 Reviews AL source changes against the `breaking-changes` knowledge domain in BCQuality and emits a findings report. This is a leaf action skill: it invokes no sub-skills. It is one of the skills composed by `al-code-review`.

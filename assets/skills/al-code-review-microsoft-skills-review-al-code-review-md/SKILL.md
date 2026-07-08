@@ -7,6 +7,8 @@ description: Imported BCQuality skill from microsoft/skills/review/al-code-revie
 
 Source: microsoft/skills/review/al-code-review.md
 
+> **Bundled consumption note.** This extension packages BCQuality as VS Code chat skills and chat instructions under `assets/generated/microsoft-bcquality-assets`. Do not probe an external clone, `skills/entry.md`, `skills/read.md`, `skills/do.md`, or `knowledge-index.json` when using this bundled copy. Treat this `SKILL.md` plus the bundled BCQuality instruction files whose `Source:` paths match the active domain as the packaged knowledge surface. This note overrides upstream clone-oriented path references preserved below for provenance.
+
 # AL code review
 
 Reviews AL source changes by composing the leaf AL review skills. This is the canonical reference implementation of a **super-skill** — skill authors writing composed reviews should copy its structure.

@@ -373,11 +373,11 @@ AL-Development-Collection-for-GitHub-Copilot/
 
 ## Using BCQuality (optional)
 
-BCQuality is an optional, externally-consumed BC knowledge layer for cited reviews and audits. The source is configurable in `aldc.yaml` and defaults to the canonical upstream [microsoft/BCQuality](https://github.com/microsoft/BCQuality) (point it at your own fork if you keep one); it is consumed via a multi-root workspace — **not a submodule, never compiled**. When absent, agents fall back gracefully to the native A–G checklist and are never blocked.
+BCQuality is an optional BC knowledge layer for cited reviews and audits. The source is configurable in `aldc.yaml` and defaults to the canonical upstream [microsoft/BCQuality](https://github.com/microsoft/BCQuality) (point it at your own fork if you keep one). Runtime Step 0 uses the bundled generated assets under `assets/generated/microsoft-bcquality-assets`; no external clone is required for review or audit consultation. When disabled, agents fall back gracefully to the native A–G checklist and are never blocked.
 
-**Quick start (3 steps):**
+**Optional source clone for evidence validation:**
 
-1. From your AL project root, run the install script — clones the pinned fork to `../bcquality`:
+1. From your AL project root, run the install script — clones the pinned source to `../bcquality`:
    ```bash
    bash tools/bcquality/install.sh
    # or on Windows:
@@ -385,9 +385,9 @@ BCQuality is an optional, externally-consumed BC knowledge layer for cited revie
    ```
    Override the target location with `$BCQUALITY_HOME` if needed.
 
-2. Open `aldc.code-workspace` (multi-root: your extension + `../bcquality`, which does **not** compile).
+2. Use the clone for local citation validation/source inspection. It is outside the extension project and does **not** compile.
 
-3. Run a review or audit (`@AL Development Conductor`, `@Dredd`, or `@AL Triage`): they cite BCQuality if mounted, or degrade gracefully to native checks if not.
+3. Run a review or audit (`@AL Development Conductor`, `@Dredd`, or `@AL Triage`): they consult the bundled BCQuality skills/instructions when enabled, or degrade gracefully to native checks if disabled.
 
 See [`docs/bcquality.md`](docs/bcquality.md) for the full guide.
 

@@ -1,11 +1,11 @@
 # BCQuality task-context (construction reference)
 
-The **task-context** is the input a BCQuality consumer hands to `entry.md`. Per
-the BCQuality consumption contract, the **orchestrator builds it** and the agent
-consumes it — for the TDD loop the orchestrator is `@al-conductor`; for an
-on-demand audit the orchestrator is Dredd itself. This file is the single source
-of truth for *how* to build it, so the rule lives in one place, not copied into
-every agent.
+The **task-context** is the input a BCQuality consumer hands to the bundled
+BCQuality review skill(s). Per the BCQuality consumption contract, the
+**orchestrator builds it** and the agent consumes it — for the TDD loop the
+orchestrator is `@al-conductor`; for an on-demand audit the orchestrator is
+Dredd itself. This file is the single source of truth for *how* to build it, so
+the rule lives in one place, not copied into every agent.
 
 ## Shape
 
@@ -43,6 +43,8 @@ denylist is derived from `aldc.yaml` automatically).
 
 ## After building it
 
-Hand the task-context to the BCQuality entry point (`<home>/skills/entry.md`, per `aldc.yaml`) and **execute whatever
-`dispatch[]` returns** — do not assume which skills come back. Entry owns
-routing; the consumer owns only the convention "invoke entry.md first."
+Hand the task-context to the bundled BCQuality review skill surface registered
+by this extension. Start with `microsoft-bcquality-assets-al-code-review`, then
+open discrete passes only for the enabled pilot leaves from
+`aldc.yaml → external.bcquality.pilotSkills`. Do not probe `../bcquality` or
+look for `skills/entry.md`; the packaged skill list is the routing surface.

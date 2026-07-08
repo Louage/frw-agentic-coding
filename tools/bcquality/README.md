@@ -1,21 +1,23 @@
 # tools/bcquality
 
-Tooling that clones (outside the AL project) and validates the BCQuality
-knowledge base for this repo. Three files, each with one job.
+Tooling that optionally clones BCQuality outside the AL project and validates
+persisted BCQuality citations for this repo. Runtime Step 0 consultation uses
+the bundled generated BCQuality assets shipped by the extension; this folder is
+for reproducibility and evidence checks.
 
-## install.sh / install.ps1 — clone the knowledge base at the pinned commit
+## install.sh / install.ps1 — clone the source knowledge base at the pinned commit
 
-Use one of these on a fresh ALDC test repo before invoking any review or audit.
-BCQuality is consumed from **outside the AL project** (multi-root): the scripts
-clone it to `../bcquality` (override `$BCQUALITY_HOME`) so its example `.al`
-files never enter your extension's compilation. Then open `aldc.code-workspace`
-to get it as a second root. Without `skills/entry.md` present, agents fall back
-to native checks only and the BCQuality citation layer is silent.
+Use one of these when you want a local checkout for citation validation or
+source inspection. BCQuality Step 0 no longer depends on this clone: the
+extension consumes BCQuality from `assets/generated/microsoft-bcquality-assets`
+as registered chat skills and chat instructions. The scripts still clone the
+source repo to `../bcquality` (override `$BCQUALITY_HOME`) so evidence tooling
+can resolve `references[].path` against the original BCQuality source tree.
 
 | Script | Shell | Notes |
 |---|---|---|
 | `install.sh` | bash | Linux, macOS, Git Bash, WSL. The repo's root `.gitattributes` pins `tools/bcquality/*.sh` to `eol=lf` so it stays runnable after a Windows clone. |
-| `install.ps1` | PowerShell | Native Windows alternative. Same pin, same clone logic, same `entry.md` verification. |
+| `install.ps1` | PowerShell | Native Windows alternative. Same pin, same clone logic, same source verification. |
 
 Both scripts are idempotent and handle two situations:
 
@@ -25,7 +27,7 @@ Both scripts are idempotent and handle two situations:
 
 After completion they:
 
-- Verify `<home>/skills/entry.md` exists; fail loudly if not.
+- Verify the expected BCQuality source files exist; fail loudly if not.
 - Print the actual HEAD SHA of the clone so you can confirm it matches `aldc.yaml`.
 - Warn if `aldc.yaml` doesn't record the same pin (the evidence validator would fail).
 

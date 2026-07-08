@@ -84,7 +84,7 @@ Provide structured summary with AL-specific sections.
 
 When you complete your research, return findings by reading and filling `.github/docs/templates/planning-findings-template.md`. Do not invent the format inline; the template is the single source of truth.
 
-**Evidence the BCQuality decision.** If the Conductor passed you a resolved BCQuality decision (`active (sha …)` / `not-applicable` / `disabled`), record it verbatim in your findings so it is captured in the plan. Do **not** probe the BCQuality clone yourself — the Conductor already resolved it once.
+**Evidence the BCQuality decision.** If the Conductor passed you a resolved BCQuality decision (`active (sha …)` / `not-applicable` / `disabled`), record it verbatim in your findings so it is captured in the plan. Do **not** probe an external BCQuality clone yourself — the Conductor already resolved bundled BCQuality once.
 
 ## Research Guidelines
 
