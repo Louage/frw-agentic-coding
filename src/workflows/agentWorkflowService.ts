@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getAvailableMcpServerIds, checkToolAvailability } from "../tools/mcpDiscoveryService";
+import { getAvailableMcpServerIds, checkToolAvailability, VSCODE_BUILTIN_PREFIXES } from "../tools/mcpDiscoveryService";
 import { lookupKnownTool, type KnownToolSuggestion } from "../tools/knownToolsCatalog";
 
 export interface AgentWorkflowHandoff {
@@ -34,6 +34,8 @@ export interface AgentWorkflowViewModel {
   bcReviewSpecialist?: string;
   requiredTools?: AgentWorkflowTool[];
   requiredMcpServers?: AgentWorkflowTool[];
+  /** Full, unfiltered tool list from frontmatter — used to enable tools via selectTools. */
+  rawTools?: string[];
   handoffs: AgentWorkflowHandoff[];
   incoming: AgentWorkflowIncomingRoute[];
 }
@@ -55,7 +57,22 @@ interface ParsedAgent {
   userInvocable: boolean;
   handoffs: ParsedHandoff[];
   bcReviewSpecialist?: string;
-  tools?: string[];
+  tools?: string[];    // normalized server IDs for availability reporting
+  rawTools?: string[]; // raw frontmatter entries for selectTools
+}
+
+/**
+ * Returns the list of user-invocable agents (name + fileId).
+ * Useful for quick-pick pickers without loading full workflow view-models.
+ */
+export async function listUserInvocableAgents(
+  extensionUri: vscode.Uri
+): Promise<Array<{ displayName: string; stableId: string }>> {
+  const agents = await loadAgents(extensionUri);
+  return agents
+    .filter((a) => a.userInvocable)
+    .map((a) => ({ displayName: a.name, stableId: a.fileId }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
 export async function getAgentWorkflowViewModel(
@@ -111,8 +128,11 @@ export async function getAgentWorkflowViewModel(
       ? await getAvailableMcpServerIds(context)
       : new Set<string>();
     const requirements = checkToolAvailability(selected.tools, availableServers);
-    requiredTools = requirements.filter((r) => !isMcpRequirement(r.id, availableServers));
-    requiredMcpServers = requirements.filter((r) => isMcpRequirement(r.id, availableServers));
+    // Exclude VS Code built-in prefixes from display — they are always available
+    // and have no install/enable action. Only show extensions and MCP servers.
+    const reportable = requirements.filter((r) => !VSCODE_BUILTIN_PREFIXES.has(r.id));
+    requiredTools = reportable.filter((r) => !isMcpRequirement(r.id, availableServers));
+    requiredMcpServers = reportable.filter((r) => isMcpRequirement(r.id, availableServers));
   }
 
   return {
@@ -127,6 +147,7 @@ export async function getAgentWorkflowViewModel(
     bcReviewSpecialist: selected.bcReviewSpecialist,
     requiredTools,
     requiredMcpServers,
+    rawTools: selected.rawTools,
     handoffs,
     incoming,
   };
@@ -142,8 +163,7 @@ function isMcpRequirement(id: string, availableServers: Set<string>): boolean {
   }
 
   // Built-in tool groups are not MCP servers.
-  const builtins = new Set(["read", "search", "edit", "execute", "web", "browser", "agent", "todo", "new", "changes"]);
-  if (builtins.has(id)) {
+  if (VSCODE_BUILTIN_PREFIXES.has(id)) {
     return false;
   }
 
@@ -186,7 +206,7 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
       .toLowerCase()
       .trim() !== "false";
     const handoffs = readHandoffs(fm);
-    const tools = readTools(fm);
+    const { normalized: tools, raw: rawTools } = readTools(fm);
 
     // Extension-only metadata comes from the manifest, not from .agent.md frontmatter.
     const ext = metadata[fileId] ?? {};
@@ -198,6 +218,7 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
       handoffs,
       bcReviewSpecialist: ext.bcReviewSpecialist,
       tools,
+      rawTools,
     });
   }
 
@@ -313,13 +334,21 @@ function readTools(frontmatter: string): string[] {
   });
 
   // Filter for MCP tools (contain "/" or "-mcp"), and exclude standard ones
-  return tools
+  const normalized = tools
     .filter((t) => (t.includes("/") || t.includes("-mcp")) && !t.startsWith("vscode/"))
     .map((t) => {
       // Normalize tool name for display (e.g., "bc-code-intelligence-mcp/*" → "bc-code-intelligence-mcp")
       return t.replace(/\/\*$/, "").replace(/\/.*/, "");
     })
     .filter((v, i, a) => a.indexOf(v) === i); // Deduplicate
+
+  // rawTools: the original entries, stripped of wildcards, deduped — used for selectTools.
+  const raw = tools
+    .map((t) => t.replace(/\/\*$/, "").trim())
+    .filter((t) => t.length > 0)
+    .filter((v, i, a) => a.indexOf(v) === i);
+
+  return { normalized, raw };
 }
 
 function buildMermaidSequenceDiagram(

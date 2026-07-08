@@ -4,6 +4,7 @@ import { AssetTreeProvider } from "./views/assetTreeProvider";
 import { WorkflowPanel } from "./views/workflowPanel";
 import {
   getAgentWorkflowViewModel,
+  listUserInvocableAgents,
   type AgentWorkflowHandoff,
   type AgentWorkflowViewModel,
 } from "./workflows/agentWorkflowService";
@@ -11,6 +12,10 @@ import { checkForUpdates } from "./update/updateChecker";
 import { withRepositoryGuard } from "./workspaceRepoResolver";
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Shared output channel — visible via View → Output → "AC⚡DC"
+  const output = vscode.window.createOutputChannel("AC⚡DC");
+  context.subscriptions.push(output);
+
   // 1. Skill (executable tool): registered so agent mode can invoke it.
   //    Skills (SKILL.md) and rules (*.instructions.md) are contributed
   //    declaratively via the chatSkills / chatInstructions manifest points
@@ -52,14 +57,25 @@ export function activate(context: vscode.ExtensionContext): void {
     // Clicking an agent prepares an @mention to assign the next task.
     vscode.commands.registerCommand(
       "frwAgenticCoding.useAgent",
-      async (displayName: string, stableId?: string) => {
+      async (displayName: string | undefined, stableId?: string) => {
+        // When invoked from the command palette, displayName is undefined —
+        // show a quick-pick so the user can choose an agent.
+        if (!displayName) {
+          const picked = await pickAgent(context.extensionUri);
+          if (!picked) { return; }
+          displayName = picked.displayName;
+          stableId = picked.stableId;
+        }
+        output.show(true); // reveal the AC⚡DC output channel without stealing focus
+        output.appendLine(`[useAgent] Activating: ${displayName} (${stableId ?? "no stableId"})`);
         await selectAgentInChat(displayName, stableId, context.extension.id);
         await openAgentWorkflowVisualizer(
           context.extensionUri,
           displayName,
           stableId,
           context.extension.id,
-          context
+          context,
+          output
         );
       }
     ),
@@ -77,12 +93,6 @@ export function activate(context: vscode.ExtensionContext): void {
         );
       }
     ),
-    vscode.commands.registerCommand(
-      "frwAgenticCoding.diagnoseChatAgentCommands",
-      async () => {
-        await printChatAgentCommandDiagnostics();
-      }
-    )
   );
 
   // 3. Command: manual update check.
@@ -180,7 +190,8 @@ async function openAgentWorkflowVisualizer(
   displayName: string,
   stableId: string | undefined,
   extensionId: string,
-  context: vscode.ExtensionContext
+  context: vscode.ExtensionContext,
+  output?: vscode.OutputChannel
 ): Promise<void> {
   const workflow = await getAgentWorkflowViewModel(
     extensionUri,
@@ -192,14 +203,25 @@ async function openAgentWorkflowVisualizer(
   // Check if required tools are available
   await checkToolsAvailable(workflow);
 
+  // Log tool discovery results to the AC⚡DC output channel.
+  if (output) {
+    const ext = workflow.requiredTools ?? [];
+    const mcp = workflow.requiredMcpServers ?? [];
+    output.appendLine(`[tools] Extension tools (${ext.length}): ${ext.map((t) => `${t.available ? "✓" : "✗"} ${t.id}`).join(", ") || "none"}`);
+    output.appendLine(`[tools] MCP servers   (${mcp.length}): ${mcp.map((t) => `${t.available ? "✓" : "✗"} ${t.id}`).join(", ") || "none"}`);
+  }
+
   // Attempt to auto-enable the agent's available tools in the current chat session.
+  // Use the raw frontmatter tool list (vscode/memory, read/readFile, al-symbols-mcp, etc.)
+  // so VS Code can enable ALL declared tools — not just the MCP subset.
   // VS Code may not expose a stable public API for this; we try silently and ignore failures.
-  const availableToolIds = workflow.requiredTools
-    ?.filter((t) => t.available)
-    .map((t) => t.id) ?? [];
-  if (availableToolIds.length > 0) {
+  const rawToolIds = workflow.rawTools ?? [];
+  if (output) {
+    output.appendLine(`[tools] Passing to selectTools: [${rawToolIds.join(", ")}]`);
+  }
+  if (rawToolIds.length > 0) {
     try {
-      await vscode.commands.executeCommand("workbench.action.chat.selectTools", availableToolIds);
+      await vscode.commands.executeCommand("workbench.action.chat.selectTools", rawToolIds);
     } catch { /* command not available in this VS Code version — ignore */ }
   }
 
@@ -222,7 +244,8 @@ async function openAgentWorkflowVisualizer(
         handoff.targetDisplayName,
         handoff.targetStableId,
         extensionId,
-        context
+        context,
+        output
       );
     },
     onSelectIncoming: async (incoming) => {
@@ -236,7 +259,8 @@ async function openAgentWorkflowVisualizer(
         incoming.sourceDisplayName,
         incoming.sourceStableId,
         extensionId,
-        context
+        context,
+        output
       );
     },
     onFileDropped: async (fileUri: string) => {
@@ -270,7 +294,8 @@ async function openAgentWorkflowVisualizer(
         workflow.currentAgent.displayName,
         workflow.currentAgent.stableId,
         extensionId,
-        context
+        context,
+        output
       );
     },
     onOpenToolsPicker: async () => {
@@ -297,6 +322,78 @@ async function openAgentWorkflowVisualizer(
       );
     },
   });
+
+  // First-response availability summary: notify the developer about missing
+  // tools/MCP servers so they are aware before starting a session with the agent.
+  postToolAvailabilitySummary(workflow, extensionUri, extensionId, context, output);
+}
+
+/**
+ * Posts a first-response availability summary as a VS Code notification when
+ * the agent has required tools/MCP servers that are not yet available.
+ * Separate MCP-server misses from extension misses so the developer knows
+ * exactly which install/configure action is needed.
+ * If everything is available (or there are no tool requirements), stays silent.
+ */
+function postToolAvailabilitySummary(
+  workflow: AgentWorkflowViewModel,
+  extensionUri: vscode.Uri,
+  extensionId: string,
+  context: vscode.ExtensionContext,
+  output?: vscode.OutputChannel
+): void {
+  const missingExtensions = workflow.requiredTools?.filter((t) => !t.available && !t.deprecated) ?? [];
+  const missingMcp = workflow.requiredMcpServers?.filter((t) => !t.available && !t.deprecated) ?? [];
+
+  if (missingExtensions.length === 0 && missingMcp.length === 0) {
+    output?.appendLine(`[summary] All required tools available — no action needed.`);
+    return;
+  }
+
+  const parts: string[] = [];
+  if (missingExtensions.length > 0) {
+    const names = missingExtensions.map((t) => t.id).slice(0, 2).join(", ");
+    const extra = missingExtensions.length > 2 ? ` (+${missingExtensions.length - 2} more)` : "";
+    parts.push(`${missingExtensions.length} extension${missingExtensions.length > 1 ? "s" : ""} not installed: ${names}${extra}`);
+  }
+  if (missingMcp.length > 0) {
+    const names = missingMcp.map((t) => t.id).slice(0, 2).join(", ");
+    const extra = missingMcp.length > 2 ? ` (+${missingMcp.length - 2} more)` : "";
+    parts.push(`${missingMcp.length} MCP server${missingMcp.length > 1 ? "s" : ""} not configured: ${names}${extra}`);
+  }
+
+  const message = `${workflow.currentAgent.displayName}: ${parts.join("; ")}.`;
+  output?.appendLine(`[summary] ${message}`);
+
+  void vscode.window.showWarningMessage(message, "Show Details").then((choice) => {
+    if (choice === "Show Details") {
+      void openAgentWorkflowVisualizer(
+        extensionUri,
+        workflow.currentAgent.displayName,
+        workflow.currentAgent.stableId,
+        extensionId,
+        context,
+        output
+      );
+    }
+  });
+}
+
+/**
+ * Shows a quick-pick list of user-invocable agents and returns the selection.
+ */
+async function pickAgent(
+  extensionUri: vscode.Uri
+): Promise<{ displayName: string; stableId: string } | undefined> {
+  const agents = await listUserInvocableAgents(extensionUri);
+  if (agents.length === 0) {
+    vscode.window.showWarningMessage("No agents found in this extension.");
+    return undefined;
+  }
+  return vscode.window.showQuickPick(
+    agents.map((a) => ({ label: a.displayName, description: a.stableId, ...a })),
+    { placeHolder: "Select an agent to activate" }
+  );
 }
 
 /**
@@ -503,38 +600,4 @@ function buildDirectOpenAgentCommands(
   return [...new Set([...exact, ...discovered])];
 }
 
-/**
- * Temporary diagnostics helper to inspect available chat/agent commands.
- */
-async function printChatAgentCommandDiagnostics(): Promise<void> {
-  const all = await vscode.commands.getCommands(true);
-  const relevant = all
-    .filter((command) => {
-      const lc = command.toLowerCase();
-      return (
-        lc.includes("chat") ||
-        lc.includes("copilot") ||
-        lc.includes("agent") ||
-        lc.includes("participant")
-      );
-    })
-    .sort((a, b) => a.localeCompare(b));
 
-  const output = vscode.window.createOutputChannel(
-    "The Framework Agent Diagnostics"
-  );
-  output.clear();
-  output.appendLine("=== Chat/Agent Command Diagnostics ===");
-  output.appendLine(`Total commands in host: ${all.length}`);
-  output.appendLine(`Relevant commands: ${relevant.length}`);
-  output.appendLine("");
-
-  for (const command of relevant) {
-    output.appendLine(command);
-  }
-
-  output.show(true);
-  vscode.window.showInformationMessage(
-    `Wrote ${relevant.length} chat/agent command IDs to output: The Framework Agent Diagnostics.`
-  );
-}
