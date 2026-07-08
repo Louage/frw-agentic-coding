@@ -1,4 +1,4 @@
-# Extension Manifest — Lead Tracking
+﻿# Extension Manifest — Lead Tracking
 
 | Field | Value |
 |-------|-------|
@@ -14,7 +14,7 @@
 | Repo | https://github.com/contoso/bc-lead-tracking |
 | Branch | main |
 | AL source path | src/ |
-| Spec reference | .github/plans/lead-tracking/lead-tracking.spec.md |
+| Spec reference | specs/Plans/lead-tracking/lead-tracking.spec.md |
 
 ---
 

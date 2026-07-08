@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-performance
 description: "AL performance optimization patterns for Business Central. Use when optimizing queries with SetLoadFields, working with FlowFields and CalcFields, profiling codeunits, or resolving performance issues."
 ---
@@ -293,7 +293,7 @@ Performance targets:
 
 ### Step 4: Document Findings
 
-For significant optimizations, create a triage report at `.github/plans/perf-triage-<scope>.md`:
+For significant optimizations, create a triage report at `specs/Plans/perf-triage-<scope>.md`:
 
 ```markdown
 # Performance Triage — <Scope>

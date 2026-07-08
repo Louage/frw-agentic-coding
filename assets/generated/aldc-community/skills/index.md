@@ -27,6 +27,19 @@ Skills follow the GitHub Copilot Agent Skills structure (`skills/{skill-name}/SK
 | [skill-translate](skill-translate/SKILL.md) | XLF, multi-language | developer |
 | [skill-estimation](skill-estimation/SKILL.md) | Project estimation, SWOT | presales |
 
+## Lean SDD Skills (spec-kit-aligned flow)
+
+These skills power the lightweight SDD alternative to full ALDC orchestration. Loaded by `@AL Lean SDD` agent.
+
+| Skill | Step | spec-kit command |
+|-------|------|------------------|
+| [skill-sdd-setup-constitution](skill-sdd-setup-constitution/SKILL.md) | One-time project init | `/speckit.constitution` |
+| [skill-sdd-create-feature-spec](skill-sdd-create-feature-spec/SKILL.md) | Specify requirement | `/speckit.specify` + `.plan` + `.tasks` |
+| [skill-sdd-implement-feature](skill-sdd-implement-feature/SKILL.md) | Implement AL objects | `/speckit.implement` |
+| [skill-sdd-run-al-tests](skill-sdd-run-al-tests/SKILL.md) | Validate acceptance criteria | `/speckit.analyze` |
+| [skill-sdd-generate-docs](skill-sdd-generate-docs/SKILL.md) | Docs + CHANGELOG | `/speckit.docs` |
+| [skill-sdd-finalise-feature](skill-sdd-finalise-feature/SKILL.md) | Close loop + PR | `/speckit.finalise` |
+
 ## Creating New Skills
 
 1. Create folder `skills/skill-{domain}/`

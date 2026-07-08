@@ -58,7 +58,7 @@ What BCQuality's pilot does not reach — verify and flag, citing `file:line` an
 
 ### Step 4 — Build the Audit-Report JSON
 
-Aggregate everything into one **Audit-Report JSON** (a DO findings-report + an `audit` envelope). Reuses the review-report contract; see `.github/plans/bcquality-aldc-integration/propuesta-review-json-canonico.md` and `.github/plans/dredd-independent-auditor/propuesta-dredd.md`.
+Aggregate everything into one **Audit-Report JSON** (a DO findings-report + an `audit` envelope). Reuses the review-report contract; see `specs/Plans/bcquality-aldc-integration/propuesta-review-json-canonico.md` and `specs/Plans/dredd-independent-auditor/propuesta-dredd.md`.
 
 - `skill`: `{ "id": "dredd", "version": 1 }`; `outcome`: `completed | partial | failed`.
 - `audit`: `{ target: "changed-vs-main" | "codebase", verdict: PASS | PASS_WITH_FINDINGS | FAIL, gate: "advisory", bcquality: {submodule-sha, outcome, skills-run}, notes }`.

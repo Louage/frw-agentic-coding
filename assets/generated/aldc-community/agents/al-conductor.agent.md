@@ -123,9 +123,9 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 
 6. **🚨 HARD GATE — PLAN APPROVAL**: STOP and WAIT for explicit user approval. DO NOT start implementation until user confirms. If `test-plan.md` doesn't exist for this requirement, CREATE IT from template during planning. Verify requirement set: `.spec.md` + `.architecture.md` + `.test-plan.md`.
 
-7. **Write Plan File**: Once approved, write `.github/plans/<task-name>/<task-name>-plan.md`.
+7. **Write Plan File**: Once approved, write `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-plan.md`.
 
-8. **Create Phase 1 Completion File** (MANDATORY): Write `.github/plans/<task-name>/<task-name>-phase-1-complete.md` with:
+8. **Create Phase 1 Completion File** (MANDATORY): Write `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-phase-1-complete.md` with:
    - Planning findings summary (from al-planning-subagent)
    - Approved plan (phases, AL objects, estimated effort)
    - Requirement set status: spec ✅, architecture ✅/N/A, test-plan ✅
@@ -145,8 +145,8 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
    ```
 
    **🚨 HARD GATE — PHASE 1 ARTIFACTS PERSISTED**: Before showing the checkpoint above, you MUST have **written to disk** both files:
-   - `.github/plans/<task-name>/<task-name>-plan.md`
-   - `.github/plans/<task-name>/<task-name>-phase-1-complete.md`
+   - `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-plan.md`
+   - `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-phase-1-complete.md`
 
    Showing the plan in chat is NOT enough — the artifacts must exist on disk. If either file is missing when you reach this step, write it NOW before continuing. Skipping persistence is a Core v1.1 violation.
 
@@ -179,7 +179,7 @@ Review subagent MUST run after EVERY phase, even with 0 build errors. **Build su
 
 Invoke **AL Code Review Subagent** (✅) via `#runSubagent` with:
 - Phase objective and acceptance criteria
-- **Phase-relevant context excerpts inline** (per §"Passing Context to Subagents"): the architecture/spec the implementation had to satisfy and the test-plan coverage expected. The review subagent validates against these and reads the full `.github/plans/` files only if a detail is missing.
+- **Phase-relevant context excerpts inline** (per §"Passing Context to Subagents"): the architecture/spec the implementation had to satisfy and the test-plan coverage expected. The review subagent validates against these and reads the full `specs/Plans/` files only if a detail is missing.
 - **The BCQuality decision + task-context inline.** Pass the **BCQuality decision** you resolved in Phase 1 (`disabled` | `not-applicable` | `active` + `mounted` + `sha`) so the review subagent **consumes it and does not re-probe**. Only when `active` do you also build the task-context per `.github/docs/templates/bcquality-task-context.md` (OMIT unknown dimensions; pilot from `aldc.yaml`) and pass it — you already read `app.json` and know this phase's changed objects, so the subagent consumes it instead of re-deriving `bc-version`/`application-area`. When `disabled`/`not-applicable`, skip the task-context and tell the subagent to review natively (full A–G).
 - Modified/created files
 - **The event-subscriber list the implement-subagent returned** (each subscriber's exact base object + event name + signature). Pass it inline so the reviewer **validates against it** and does not re-discover base events by `al_symbolsearch` (a measured token sink — trial-and-error symbol searches). Tell it to symbol-search only to spot-confirm a signature it cannot resolve from the list.
@@ -222,11 +222,11 @@ Act on the resulting verdict:
    💾 Commit msg in {req_name}-phase-{N}-complete.md → **commit & {start Phase {N+1} | finalize}?**   (or ⏸️ revise)
    ```
 
-2. **Write Phase Completion File**: Create `.github/plans/<task-name>/<task-name>-phase-<N>-complete.md` following `<phase_complete_style_guide>`. **Render the full review** into it from the Review-Report JSON, using `.github/docs/templates/code-review-template.md` as the render template: `review.verdict`→Status; `findings[]`→Issues applying the severity naming (`blocker`→CRITICAL, `major`→MAJOR, `minor`→MINOR, `info`→recommendation) with `location` + `references`; `findings[source=bcquality]`→External Knowledge Findings; `review.skills-compliance`→Skills Compliance Check.
+2. **Write Phase Completion File**: Create `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-phase-<N>-complete.md` following `<phase_complete_style_guide>`. **Render the full review** into it from the Review-Report JSON, using `.github/docs/templates/code-review-template.md` as the render template: `review.verdict`→Status; `findings[]`→Issues applying the severity naming (`blocker`→CRITICAL, `major`→MAJOR, `minor`→MINOR, `info`→recommendation) with `location` + `references`; `findings[source=bcquality]`→External Knowledge Findings; `review.skills-compliance`→Skills Compliance Check.
 
    **Persistence (two artifacts)**:
-   - **Canonical** — write the whole Review-Report JSON verbatim to `.github/plans/<task-name>/<task-name>-review-phase-<N>.json`. This is the source of truth and what gating/audit rely on.
-   - **Derived BCQuality view** — extract the BCQuality leaf reports from `sub-results[]` and write them verbatim to `.github/plans/<task-name>/<task-name>-bcquality-phase-<N>.json`. This is a **projection** (not authored separately, so it cannot drift) kept for didactic/traceability purposes — a clean, standalone artifact showing BCQuality ran. Omit only when BCQuality was not consulted (`bcquality.outcome` = `not-applicable`).
+   - **Canonical** — write the whole Review-Report JSON verbatim to `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-review-phase-<N>.json`. This is the source of truth and what gating/audit rely on.
+   - **Derived BCQuality view** — extract the BCQuality leaf reports from `sub-results[]` and write them verbatim to `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-bcquality-phase-<N>.json`. This is a **projection** (not authored separately, so it cannot drift) kept for didactic/traceability purposes — a clean, standalone artifact showing BCQuality ran. Omit only when BCQuality was not consulted (`bcquality.outcome` = `not-applicable`).
    - The `bcquality-evidence` CI workflow validates citations in **both** against BCQuality source paths at the pinned/provenance SHA.
 
    **Didactic BCQuality callout (educational)**: in the rendered review, make the BCQuality consultation explicit — *"🔎 BCQuality consulted (SHA `<sha>`) → entry.md dispatched [skills-run] → N findings with citations"* — and fill the **BCQuality Evidence** block in the phase-complete file. When `bcquality.outcome` is `not-applicable` (layer absent or disabled), render instead *"🔎 BCQuality not consulted (unavailable) → reviewed via ALDC native checks + instructions"*. The point is that a reader can *see* BCQuality was called and what it returned, in readable form, without opening the JSON.
@@ -246,7 +246,7 @@ Act on the resulting verdict:
 
 ### Phase 3: Plan Completion
 
-1. **Compile Final Report**: Create `.github/plans/<task-name>/<task-name>-complete.md` following `<plan_complete_style_guide>` containing:
+1. **Compile Final Report**: Create `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-complete.md` following `<plan_complete_style_guide>` containing:
    - Overall summary
    - All phases completed
    - All AL objects created/modified
@@ -256,7 +256,7 @@ Act on the resulting verdict:
    - Final verification (all tests pass)
 
 2. **🚨 MANDATORY memory.md update at completion**:
-   Append to `.github/plans/memory.md`:
+   Append to `specs/Plans/memory.md`:
    - Requirement status: in-progress → done
    - Decisions taken during implementation
    - Deviations from spec/architecture (if any)
@@ -327,7 +327,7 @@ Act on the resulting verdict:
 
 ### <phase_complete_style_guide>
 
-File name: `.github/plans/<plan-name>/<plan-name>-phase-<N>-complete.md` (kebab-case).
+File name: `specs/Plans/YYYY-MM-DD-<plan-name>/<plan-name>-phase-<N>-complete.md` (kebab-case).
 
 ```markdown
 ## Phase {N} Complete: {Phase Title}
@@ -372,7 +372,7 @@ File name: `.github/plans/<plan-name>/<plan-name>-phase-<N>-complete.md` (kebab-
 - Skills run: {al-performance-review, al-security-review, al-style-review}
 - Outcome: {completed | no-knowledge | not-applicable | partial | failed}
 - Findings: {N} (blocker/major/minor/info) — citations: {N}
-- Raw report: `.github/plans/<plan>/<plan>-bcquality-phase-<N>.json`
+- Raw report: `specs/Plans/YYYY-MM-DD-<plan>/<plan>-bcquality-phase-<N>.json`
 
 **Review Status:** {APPROVED / APPROVED with minor recommendations / NEEDS_REVISION}
 
@@ -382,7 +382,7 @@ File name: `.github/plans/<plan-name>/<plan-name>-phase-<N>-complete.md` (kebab-
 
 ### <plan_complete_style_guide>
 
-File name: `.github/plans/<plan-name>/<plan-name>-complete.md` (kebab-case).
+File name: `specs/Plans/YYYY-MM-DD-<plan-name>/<plan-name>-complete.md` (kebab-case).
 
 ```markdown
 ## Plan Complete: {Task Title}
@@ -637,12 +637,12 @@ Cross-check implement-subagent's "### Skills Loaded" against review-subagent's "
 
 ### Context Files to Read Before Orchestration
 
-ALWAYS check for existing context in `.github/plans/`:
+ALWAYS check for existing context in `specs/Plans/`:
 
-1. `.github/plans/memory.md` — global memory (decisions, context, cross-session state — append-only)
-2. `.github/plans/{req_name}/{req_name}.architecture.md` — design from `@al-architect`
-3. `.github/plans/{req_name}/{req_name}.spec.md` — specification from `al-spec.create`
-4. `.github/plans/{req_name}/{req_name}.test-plan.md` — test strategy
+1. `specs/Plans/memory.md` — global memory (decisions, context, cross-session state — append-only)
+2. `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md` — design from `@al-architect`
+3. `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.spec.md` — specification from `al-spec.create`
+4. `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.test-plan.md` — test strategy
 
 **Why**:
 - Architecture files provide strategic design to guide your plan
@@ -666,7 +666,7 @@ Instead, **pass phase-relevant excerpts inline** in the `#runSubagent` instructi
 - **The 7 always-on instruction micro-rules** (`.github/instructions/al-*.instructions.md`) — read them **once** at run start and pass them inline to **every** code-touching subagent (implement, review). They are tiny (~1.3K tokens total) hard-rule baselines, and the `applyTo` auto-apply does **not** fire in subagent runtime (no attached files) — so injecting them is the only way they take effect. **Not optional, not per-domain**: pass all seven on every code phase. They are the floor; the depth lives in the skills they point to.
 - **Domain skill *hints*** — name the skills likely relevant to this phase's domain (e.g. `skill-events` for an event phase). These are **hints, not mandates**: the subagent loads the `SKILL.md` on demand when it enters the domain, and may load a skill you didn't hint if it finds it needs one.
 
-Tell the subagent: **the excerpts are authoritative for this phase; read the full file under `.github/plans/` only if a referenced detail is missing from the excerpt.** Always include the file path so that escape hatch works. This trades a few KB in the invocation prompt for eliminating 5–8 redundant `read_file` round-trips per subagent invocation.
+Tell the subagent: **the excerpts are authoritative for this phase; read the full file under `specs/Plans/` only if a referenced detail is missing from the excerpt.** Always include the file path so that escape hatch works. This trades a few KB in the invocation prompt for eliminating 5–8 redundant `read_file` round-trips per subagent invocation.
 
 > **Don't re-read what's already in context (yours or theirs).** Within a single invocation, a file read once must be **reused, not re-read** — measured runs show the same source `.al`/`spec`/`memory` read 5–7× in one review, each re-injecting the file into the growing context. Instruct subagents: *"if you already read a path this invocation, reuse it; do not `read_file` it again."*
 
@@ -675,9 +675,9 @@ Tell the subagent: **the excerpts are authoritative for this phase; read the ful
 ### Documentation Creation During Orchestration
 
 You **create phase completion files** as orchestrator:
-- After each approved phase → `.github/plans/<task-name>/<task-name>-phase-<N>-complete.md`
-- At plan completion → `.github/plans/<task-name>/<task-name>-complete.md`
-- Append summaries to `.github/plans/memory.md` (append-only, never delete)
+- After each approved phase → `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-phase-<N>-complete.md`
+- At plan completion → `specs/Plans/YYYY-MM-DD-<task-name>/<task-name>-complete.md`
+- Append summaries to `specs/Plans/memory.md` (append-only, never delete)
 
 Reference architecture and spec compliance in completion files. Document deviations with justification.
 
@@ -685,7 +685,7 @@ Reference architecture and spec compliance in completion files. Document deviati
 
 **MEDIUM / HIGH**:
 ```
-1. @al-architect designs → .github/plans/{req_name}/{req_name}.architecture.md  ← GATE
+1. @al-architect designs → specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md  ← GATE
 2. @workspace use al-spec.create → reads architecture → .spec.md  ← GATE
 3. User invokes @al-conductor → reads spec + architecture, starts orchestration
 4. al-planning-subagent → references architecture/spec + creates test-plan

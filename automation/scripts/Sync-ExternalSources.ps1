@@ -190,6 +190,94 @@ You are your own orchestrator (no conductor above you), so **you build the task-
     }
 }
 
+function Add-AldcCommunityOverlay {
+    <#
+    .SYNOPSIS
+        Restores project-local aldc-community assets after the upstream wipe+copy.
+    .DESCRIPTION
+        The weekly sync removes and re-copies the whole agents/skills/prompts/instructions
+        tree from upstream (javiarmesto/ALDC-AL-Development-Collection), which deletes any
+        project-local additions (the Lean SDD skills + agent) and reverts the project-controlled
+        entrypoint (copilot-instructions.md). This copies the overlay under
+        automation/overlays/aldc-community back into the synced destination so those survive.
+
+        Overlay files that also exist upstream (e.g. instructions/copilot-instructions.md) are
+        overwritten by the overlay copy — the overlay wins for those project-controlled files.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$OverlayRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $OverlayRoot)) {
+        return
+    }
+
+    foreach ($kind in @("agents", "skills", "prompts", "instructions", "chatmodes")) {
+        $srcKind = Join-Path $OverlayRoot $kind
+        if (-not (Test-Path -LiteralPath $srcKind)) {
+            continue
+        }
+
+        $destKind = Join-Path $DestinationRoot $kind
+        New-Item -ItemType Directory -Path $destKind -Force | Out-Null
+
+        Get-ChildItem -LiteralPath $srcKind -Force | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $destKind -Recurse -Force
+        }
+    }
+}
+
+function Update-AldcSpecLocationReferences {
+    <#
+    .SYNOPSIS
+        Rewrites spec-location paths in synced aldc-community assets to the unified specs/ root.
+    .DESCRIPTION
+        Upstream authored ALDC artifacts under .github/plans/. This project stores every
+        requirement artifact under specs/ (specs/Plans/ for the full ALDC flow, specs/SDD/ for
+        the lean flow) so both flows share one root. The rewrite is idempotent — running it on
+        already-normalized content (e.g. the overlay files) is a no-op.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationRoot
+    )
+
+    # Ordered rewrite rules: more specific (with two path segments) before the catch-all.
+    $rules = @(
+        @{ From = '\.github/plans/\{req_name\}/\{req_name\}';       To = 'specs/Plans/YYYY-MM-DD-{req_name}/{req_name}' },
+        @{ From = '\.github/plans/<task-name>/<task-name>';         To = 'specs/Plans/YYYY-MM-DD-<task-name>/<task-name>' },
+        @{ From = '\.github/plans/<plan-name>/<plan-name>';         To = 'specs/Plans/YYYY-MM-DD-<plan-name>/<plan-name>' },
+        @{ From = '\.github/plans/<plan>/<plan>';                   To = 'specs/Plans/YYYY-MM-DD-<plan>/<plan>' },
+        @{ From = '\.github/plans/\{req_name\}/';                   To = 'specs/Plans/YYYY-MM-DD-{req_name}/' },
+        @{ From = '\.github/plans/<task-name>/';                    To = 'specs/Plans/YYYY-MM-DD-<task-name>/' },
+        @{ From = '\.github/plans/<plan-name>/';                    To = 'specs/Plans/YYYY-MM-DD-<plan-name>/' },
+        @{ From = '\.github/plans/';                                To = 'specs/Plans/' },
+        @{ From = 'specs/spec-YYYY-MM-DD-';                         To = 'specs/SDD/YYYY-MM-DD-' }
+    )
+
+    foreach ($kind in @("agents", "skills", "prompts", "instructions", "chatmodes")) {
+        $kindRoot = Join-Path $DestinationRoot $kind
+        if (-not (Test-Path -LiteralPath $kindRoot)) {
+            continue
+        }
+
+        Get-ChildItem -LiteralPath $kindRoot -Recurse -File -Filter "*.md" | ForEach-Object {
+            $content = [IO.File]::ReadAllText($_.FullName)
+            $original = $content
+            foreach ($rule in $rules) {
+                $content = $content -replace $rule.From, $rule.To
+            }
+            if ($content -ne $original) {
+                [IO.File]::WriteAllText($_.FullName, $content, [System.Text.UTF8Encoding]::new($false))
+            }
+        }
+    }
+}
+
 function Normalize-BcQualityAssets {
     param(
         [Parameter(Mandatory = $true)]
@@ -510,6 +598,9 @@ foreach ($source in $catalog.sources) {
     }
 
     if ($source.id -eq "aldc-community") {
+        $overlayRoot = Join-Path $PSScriptRoot "..\overlays\aldc-community"
+        Add-AldcCommunityOverlay -OverlayRoot $overlayRoot -DestinationRoot $destinationRoot
+        Update-AldcSpecLocationReferences -DestinationRoot $destinationRoot
         Update-BcQualityBundledReferences -DestinationRoot $destinationRoot
     }
 

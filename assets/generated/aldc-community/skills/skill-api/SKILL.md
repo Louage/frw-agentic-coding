@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-api
 description: "AL API development patterns for Business Central. Use when creating OData/REST API pages, HttpClient integrations, webhook implementations, or any external system integration via API."
 ---
@@ -331,7 +331,7 @@ Before implementing, define:
 5. **Versioning** — initial version and deprecation plan
 6. **Authentication** — OAuth 2.0 scope, permission sets needed
 
-Document in `.github/plans/{req_name}.architecture.md` or a dedicated API design section.
+Document in `specs/Plans/{req_name}.architecture.md` or a dedicated API design section.
 **PAUSE — wait for user approval before implementing.**
 
 ### Step 2: Implement API Pages

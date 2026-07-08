@@ -21,7 +21,7 @@ The Conductor gives you: the phase objective, the AL objects created/modified, t
 
 ## Before reviewing — load context
 
-The Conductor passes **phase-relevant excerpts** of the architecture (patterns to follow), spec (object IDs/structure), plan (phase objectives), test-plan (expected coverage), and memory (cross-session decisions) inline — treat these as authoritative, validate against them, and reference them in findings. Read the full file under `.github/plans/` only if a needed detail is missing from the excerpt. (This does not affect Step 0 — BCQuality uses the bundled review skills/instructions plus `app.json` and the changed objects.)
+The Conductor passes **phase-relevant excerpts** of the architecture (patterns to follow), spec (object IDs/structure), plan (phase objectives), test-plan (expected coverage), and memory (cross-session decisions) inline — treat these as authoritative, validate against them, and reference them in findings. Read the full file under `specs/Plans/` only if a needed detail is missing from the excerpt. (This does not affect Step 0 — BCQuality uses the bundled review skills/instructions plus `app.json` and the changed objects.)
 
 ## Review pipeline
 
@@ -97,7 +97,7 @@ You no longer fill a markdown template — the **Conductor renders** the human-f
 
 ### Step 4 — Return the Review-Report JSON (your only output)
 
-Return a **single** fenced ```json block headed `### Review-Report (JSON)`, conforming to the shape below — nothing else. You no longer emit a markdown review or a separate BCQuality block: the Conductor renders the human review from this JSON, gates on it, and persists it; the BCQuality leaf reports live in `sub-results[]`. (Full schema + example: `.github/plans/bcquality-aldc-integration/proposal-review-json-canonical.md`.)
+Return a **single** fenced ```json block headed `### Review-Report (JSON)`, conforming to the shape below — nothing else. You no longer emit a markdown review or a separate BCQuality block: the Conductor renders the human review from this JSON, gates on it, and persists it; the BCQuality leaf reports live in `sub-results[]`. (Full schema + example: `specs/Plans/bcquality-aldc-integration/proposal-review-json-canonical.md`.)
 
 **Review-Report JSON shape** — a DO findings-report plus a `review` envelope:
 - `skill`: `{ "id": "al-review-subagent", "version": 1 }`; `outcome`: `completed | partial | failed`.
