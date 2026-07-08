@@ -789,35 +789,35 @@
     "commands": [
       {
         "command": "frwAgenticCoding.checkForUpdates",
-        "title": "The Framework: Check for extension updates",
-        "category": "The Framework"
+        "title": "Check for extension updates",
+        "category": "AC/DC"
       },
       {
         "command": "frwAgenticCoding.runRepoScopedAction",
-        "title": "The Framework: Run guarded repository action",
-        "category": "The Framework"
+        "title": "Run guarded repository action",
+        "category": "AC/DC"
       },
       {
-        "command": "frwAgenticCoding.diagnoseChatAgentCommands",
-        "title": "The Framework: Diagnose chat/agent commands (temporary)",
-        "category": "The Framework"
+        "command": "frwAgenticCoding.useAgent",
+        "title": "Use Agent",
+        "category": "AC/DC"
       },
       {
         "command": "frwAgenticCoding.refreshSkills",
-        "title": "Refresh",
-        "category": "The Framework",
+        "title": "Refresh Skills",
+        "category": "AC/DC",
         "icon": "$(refresh)"
       },
       {
         "command": "frwAgenticCoding.refreshRules",
-        "title": "Refresh",
-        "category": "The Framework",
+        "title": "Refresh Rules",
+        "category": "AC/DC",
         "icon": "$(refresh)"
       },
       {
         "command": "frwAgenticCoding.refreshAgents",
-        "title": "Refresh",
-        "category": "The Framework",
+        "title": "Refresh Agents",
+        "category": "AC/DC",
         "icon": "$(refresh)"
       }
     ],
@@ -825,7 +825,7 @@
       "activitybar": [
         {
           "id": "frwAgenticCoding",
-          "title": "The Framework",
+          "title": "AC⚡DC",
           "icon": "images/icon.png"
         }
       ]
@@ -836,19 +836,19 @@
           "id": "frwAgents",
           "name": "Agents",
           "icon": "$(hubot)",
-          "contextualTitle": "The Framework"
+          "contextualTitle": "AC⚡DC"
         },
         {
           "id": "frwSkills",
           "name": "Skills",
           "icon": "$(rocket)",
-          "contextualTitle": "The Framework"
+          "contextualTitle": "AC⚡DC"
         },
         {
           "id": "frwRules",
           "name": "Rules",
           "icon": "$(law)",
-          "contextualTitle": "The Framework"
+          "contextualTitle": "AC⚡DC"
         }
       ]
     },

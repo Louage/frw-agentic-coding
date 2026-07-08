@@ -34,8 +34,9 @@ export async function getAvailableMcpServerIds(
 
 /**
  * VS Code built-in tool group prefixes — always available, no MCP server needed.
+ * Exported so consumers can filter them from required-tool reporting.
  */
-const VSCODE_BUILTIN_PREFIXES = new Set([
+export const VSCODE_BUILTIN_PREFIXES = new Set([
   "read", "search", "edit", "execute", "web", "browser", "agent", "todo", "new", "changes",
 ]);
 
