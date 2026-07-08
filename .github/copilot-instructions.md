@@ -81,11 +81,11 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 
 ## External Knowledge: BCQuality
 
-[BCQuality](https://github.com/microsoft/BCQuality) — a curated, citable knowledge base of Business Central guidance (atomic knowledge files + review skills) — is consumed from **outside the AL project**: a clone added as a second VS Code workspace root (multi-root via `aldc.code-workspace`), so its example `.al` files never enter your extension's compilation. Source/version is configurable in `aldc.yaml → external.bcquality` (defaults to upstream; point it at your own fork). See [`docs/bcquality.md`](../docs/bcquality.md) for install + usage.
+[BCQuality](https://github.com/microsoft/BCQuality) — a curated, citable knowledge base of Business Central guidance (atomic knowledge files + review skills) — is bundled into this extension as generated chat skills and chat instructions under `assets/generated/microsoft-bcquality-assets`. Source/version is configurable in `aldc.yaml → external.bcquality` (defaults to upstream; point it at your own fork); weekly external-source sync refreshes the bundled copy.
 
-BCQuality is a **citation/audit layer, not a replacement** for the 7 auto-applied instructions or the 11 skills. The **AL Code Review Subagent** consults it (its "Step 0") before the A-G checklist: it routes via the BCQuality entry point (`<home>/skills/entry.md`, per `aldc.yaml`), runs the dispatched review skills, and folds the resulting findings — each backed by a knowledge-file citation — into the review report. A BCQuality `blocker`/`major` raises the review verdict like a native CRITICAL/MAJOR.
+BCQuality is a **citation/audit layer, not a replacement** for the 7 auto-applied instructions or the 11 skills. The **AL Code Review Subagent** consults it (its "Step 0") before the A-G checklist: it uses the bundled BCQuality review skills registered by this extension, starting with `microsoft-bcquality-assets-al-code-review` and the enabled pilot leaves from `aldc.yaml`, then folds the resulting findings — each backed by a BCQuality source citation — into the review report. A BCQuality `blocker`/`major` raises the review verdict like a native CRITICAL/MAJOR.
 
-> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. Run `bash tools/bcquality/install.sh` to clone BCQuality (to `../bcquality`), then open `aldc.code-workspace`.
+> **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. These are shipped as bundled generated skills; no `../bcquality` clone is required for Step 0 runtime consultation.
 
 ## Skills Evidencing
 
@@ -103,8 +103,8 @@ This traceability chain ensures every skill application is auditable end-to-end.
 
 The chain above is **declarative** — an agent could in principle claim a BCQuality consultation it did not perform. Two mechanisms make it **falsifiable**:
 
-1. **Persisted findings-report** — the raw JSON on disk (`*-bcquality-phase-<N>.json`) carries each finding's `references[].path` (the cited knowledge file) and the pinned BCQuality SHA.
-2. **CI validation** — the `bcquality-evidence` workflow runs `tools/bcquality/validate_evidence.py`, which (a) asserts the pin agrees across `aldc.yaml` and both install scripts, and (b) verifies **every** citation resolves to a real file in the BCQuality clone (cloned at the pin via `--bcquality-root`). A hallucinated citation or a drifted pin fails the check.
+1. **Persisted findings-report** — the raw JSON on disk (`*-bcquality-phase-<N>.json`) carries each finding's `references[].path` (the cited BCQuality source file) and the pinned/provenance BCQuality SHA.
+2. **CI validation** — the `bcquality-evidence` workflow runs `tools/bcquality/validate_evidence.py`, which verifies **every** citation resolves to a real BCQuality source file at the pinned/provenance SHA. A hallucinated citation or drifted provenance fails the check.
 
 ## Auto-Applied Instructions
 

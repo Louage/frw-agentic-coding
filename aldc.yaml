@@ -7,32 +7,30 @@ core:
 
 toolkitRoot: ".github"
 
-# External citable knowledge base, consumed by al-review-subagent (Step 0) as an
-# audit/citation layer. Does NOT replace instructions or skills.
+# Bundled citable knowledge base, consumed by al-review-subagent (Step 0) as an
+# audit/citation layer. Does NOT replace instructions or native ALDC skills.
 external:
   bcquality:
-    mode: "external-multiroot"            # consumed from OUTSIDE the AL project (see aldc.code-workspace)
+    mode: "bundled-extension-assets"      # packaged as VS Code chatSkills/chatInstructions
     # Master switch resolved ONCE by al-conductor and propagated to the subagents
     # (it is recorded in the plan doc; subagents consume the decision, they don't re-probe):
-    #   auto  (default) — probe <home>/<entryPoint> to detect; mounted -> consult, absent -> native A-G
-    #   true            — BCQuality is expected; probe to confirm mount, warn + native fallback if absent
-    #   false           — disabled: never probe, always native A-G (the explicit off switch)
+    #   auto  (default) — use bundled assets when present; absent -> native A-G
+    #   true            — BCQuality is expected from bundled assets; warn + native fallback if absent
+    #   false           — disabled: always native A-G (the explicit off switch)
     enabled: "auto"
-    # Source of the knowledge base. Configurable: defaults to the canonical upstream
-    # (microsoft/BCQuality). Override `url` to point at your own fork. The install
-    # scripts read `url` / `ref` / `pinnedCommit` from here — this file is the single
-    # source of truth.
+    # Upstream source of the bundled knowledge base. The weekly external-source sync
+    # copies this into assets/generated/microsoft-bcquality-assets and package.json
+    # registers those files as chatSkills/chatInstructions. Keep url/ref/pinnedCommit
+    # here for provenance, sync reproducibility, and evidence validation.
     url: "https://github.com/microsoft/BCQuality.git"
     ref: "main"                           # branch/tag to track when pinnedCommit is empty
     pinnedCommit: ""                       # optional: set a 40-hex SHA for reproducible, pinned evidence
-    home: "../bcquality"                  # external clone location (override: $BCQUALITY_HOME); 2nd workspace root
-    entryPoint: "skills/entry.md"         # relative to `home`
-    workspace: "aldc.code-workspace"      # multi-root workspace (this repo root + ../bcquality); see docs/bcquality.md
+    generatedSourceId: "microsoft-bcquality-assets"
+    assetsRoot: "assets/generated/microsoft-bcquality-assets"
+    skillRoot: "assets/generated/microsoft-bcquality-assets/skills"
+    instructionRoot: "assets/generated/microsoft-bcquality-assets/instructions"
     consumedBy: ["agents/al-review-subagent.agent.md", "agents/dredd.agent.md", "agents/al-triage.agent.md"]
-    # Policy when BCQuality is ABSENT (the default until install.sh clones it).
-    # The .github/hooks/bcquality-precondition hook reads this and injects the
-    # directive (hook ported later as Preview); the agents' prose precondition is
-    # the backstop (#49/#54).
+    # Policy when bundled BCQuality assets are absent or disabled.
     fallback:
       mode: "skills-mode"        # review natively via instructions + skills
       residual: "A-G"            # expand the native checklist from A/C/F/G to full A-G

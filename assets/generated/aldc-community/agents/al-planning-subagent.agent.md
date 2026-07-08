@@ -4,7 +4,7 @@ description: 'AL Planning Subagent - AL-aware research and context gathering for
 user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Research goal or problem statement for AL development'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, al-symbols-mcp/*, bc-code-intelligence-mcp/*, microsoft-learn/*, todo, vscode/resolveMemoryFileUri, search, web/githubTextSearch]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, vscode/resolveMemoryFileUri, search, web/githubTextSearch, al-symbols-mcp/*, microsoft-learn/*]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Return to Conductor
@@ -84,7 +84,7 @@ Provide structured summary with AL-specific sections.
 
 When you complete your research, return findings by reading and filling `.github/docs/templates/planning-findings-template.md`. Do not invent the format inline; the template is the single source of truth.
 
-**Evidence the BCQuality decision.** If the Conductor passed you a resolved BCQuality decision (`active (sha …)` / `not-applicable` / `disabled`), record it verbatim in your findings so it is captured in the plan. Do **not** probe the BCQuality clone yourself — the Conductor already resolved it once.
+**Evidence the BCQuality decision.** If the Conductor passed you a resolved BCQuality decision (`active (sha …)` / `not-applicable` / `disabled`), record it verbatim in your findings so it is captured in the plan. Do **not** probe an external BCQuality clone yourself — the Conductor already resolved bundled BCQuality once.
 
 ## Research Guidelines
 
@@ -265,3 +265,4 @@ Checking for context:
 6. Flag uncertainties → Questions for user clarification
 ```
 </context_requirements>
+

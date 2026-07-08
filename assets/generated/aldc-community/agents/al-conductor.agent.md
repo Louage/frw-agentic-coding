@@ -1,7 +1,7 @@
 ---
 name: AL Development Conductor
 description: 'AL Conductor Agent - Orchestrates Planning → Implementation → Review → Commit cycle for AL Development. Enforces TDD and quality gates for Business Central extensions.'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, al-symbols-mcp/*, bc-code-intelligence-mcp/*, microsoft-learn/*, todo, vscode/resolveMemoryFileUri, search/searchSubagent]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, vscode/resolveMemoryFileUri, search/searchSubagent]
 agents: ['AL Planning Subagent', 'AL Code Review Subagent', 'AL Implementation Subagent']
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature description or requirements for TDD orchestration (e.g., "Add customer loyalty points system")'
@@ -95,10 +95,10 @@ Progress is by **phase** (N/Total), a real value — never invent per-task perce
 2. **Check for Input Documents**: architecture.md, spec.md, requirements doc — use whatever's available to guide planning.
 
    > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**):
-   > - `false` → **off**: `bcquality = { decision: "disabled", mounted: false }`. **Do not probe.**
-   > - `auto` / `true` → probe `<home>/<entryPoint>` **once** (e.g. `read_file ../bcquality/skills/entry.md`): a successful read → `{ decision: "active", mounted: true, sha: <pinnedCommit or resolved> }`; absent — **a probe that errors or returns empty counts as absent** → `{ decision: "not-applicable", mounted: false }`; do **not** retry the read (for `true`, note the expected-but-absent in the plan — never block).
+   > - `false` → **off**: `bcquality = { decision: "disabled", mounted: false }`.
+   > - `auto` / `true` / absent → **active from bundled assets**: `bcquality = { decision: "active", mounted: true, source: "bundled", sha: <pinnedCommit or generated provenance commit> }`. Do **not** probe `../bcquality` or `<home>/<entryPoint>`; this extension packages BCQuality as registered chat skills/instructions.
    >
-   > This decision is **authoritative for the whole run**: you (a) **record it in the plan / phase-complete doc** and (b) **pass it inline** to every subagent (planning, implement, review) with the task-context. Subagents **consume** it — they do **not** re-probe (they self-probe only if invoked standalone, outside your orchestration). Surface one line: `🟢 BCQuality · active — <sha>` / `⚪ BCQuality · disabled — native A–G` / `⚪ BCQuality · not mounted — native A–G`.
+   > This decision is **authoritative for the whole run**: you (a) **record it in the plan / phase-complete doc** and (b) **pass it inline** to every subagent (planning, implement, review) with the task-context. Subagents **consume** it — they do **not** re-probe (they self-resolve only if invoked standalone, outside your orchestration). Surface one line: `BCQuality · active — bundled assets` / `BCQuality · disabled — native A–G`.
 
 3. **Delegate Research**: Use `#runSubagent` to invoke **AL Planning Subagent** (icon 🔍). **Pass the resolved BCQuality decision** so it records it in its findings (evidenced). Instruct it to:
    - Analyze AL codebase structure and dependencies
@@ -227,7 +227,7 @@ Act on the resulting verdict:
    **Persistence (two artifacts)**:
    - **Canonical** — write the whole Review-Report JSON verbatim to `.github/plans/<task-name>/<task-name>-review-phase-<N>.json`. This is the source of truth and what gating/audit rely on.
    - **Derived BCQuality view** — extract the BCQuality leaf reports from `sub-results[]` and write them verbatim to `.github/plans/<task-name>/<task-name>-bcquality-phase-<N>.json`. This is a **projection** (not authored separately, so it cannot drift) kept for didactic/traceability purposes — a clean, standalone artifact showing BCQuality ran. Omit only when BCQuality was not consulted (`bcquality.outcome` = `not-applicable`).
-   - The `bcquality-evidence` CI workflow validates citations in **both** against the BCQuality clone at the pinned SHA.
+   - The `bcquality-evidence` CI workflow validates citations in **both** against BCQuality source paths at the pinned/provenance SHA.
 
    **Didactic BCQuality callout (educational)**: in the rendered review, make the BCQuality consultation explicit — *"🔎 BCQuality consulted (SHA `<sha>`) → entry.md dispatched [skills-run] → N findings with citations"* — and fill the **BCQuality Evidence** block in the phase-complete file. When `bcquality.outcome` is `not-applicable` (layer absent or disabled), render instead *"🔎 BCQuality not consulted (unavailable) → reviewed via ALDC native checks + instructions"*. The point is that a reader can *see* BCQuality was called and what it returned, in readable form, without opening the JSON.
 
@@ -670,7 +670,7 @@ Tell the subagent: **the excerpts are authoritative for this phase; read the ful
 
 > **Don't re-read what's already in context (yours or theirs).** Within a single invocation, a file read once must be **reused, not re-read** — measured runs show the same source `.al`/`spec`/`memory` read 5–7× in one review, each re-injecting the file into the growing context. Instruct subagents: *"if you already read a path this invocation, reuse it; do not `read_file` it again."*
 
-> Scope: this governs the per-phase implement/review invocations. The same principle now covers the **BCQuality task-context** — you build it (per `.github/docs/templates/bcquality-task-context.md`) and pass it inline, since you already hold `app.json` and the phase's changed objects. The review subagent still reads the external BCQuality clone itself (the knowledge files), but no longer re-derives the task-context.
+> Scope: this governs the per-phase implement/review invocations. The same principle now covers the **BCQuality task-context** — you build it (per `.github/docs/templates/bcquality-task-context.md`) and pass it inline, since you already hold `app.json` and the phase's changed objects. The review subagent uses the bundled BCQuality skills/instructions itself, but no longer re-derives the task-context.
 
 ### Documentation Creation During Orchestration
 
@@ -703,3 +703,4 @@ Reference architecture and spec compliance in completion files. Document deviati
    (no @al-conductor needed)
 ```
 </context_requirements>
+

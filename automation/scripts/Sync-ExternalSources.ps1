@@ -63,6 +63,133 @@ function Get-FirstHeading {
     return $Fallback
 }
 
+function Convert-BcQualitySkillBodyForBundledAssets {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Body
+    )
+
+    $note = @'
+> **Bundled consumption note.** This extension packages BCQuality as VS Code chat skills and chat instructions under `assets/generated/microsoft-bcquality-assets`. Do not probe an external clone, `skills/entry.md`, `skills/read.md`, `skills/do.md`, or `knowledge-index.json` when using this bundled copy. Treat this `SKILL.md` plus the bundled BCQuality instruction files whose `Source:` paths match the active domain as the packaged knowledge surface. This note overrides upstream clone-oriented path references preserved below for provenance.
+'@
+
+    return ($note.Trim() + "`n`n" + $Body.Trim())
+}
+
+function Update-BcQualityBundledReferences {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationRoot
+    )
+
+    $agentsRoot = Join-Path $DestinationRoot "agents"
+    if (-not (Test-Path -LiteralPath $agentsRoot)) {
+        return
+    }
+
+    $reviewStep0 = @'
+### Step 0 — Consult BCQuality (bundled citable knowledge)
+
+BCQuality is a curated, citable BC knowledge base bundled with this extension as registered chat skills and chat instructions under `assets/generated/microsoft-bcquality-assets`. It is a citation/audit layer — it does not replace the checklist or the auto-applied instructions; it adds findings backed by BCQuality `Source:` paths.
+
+> **0. Precondition — BCQuality decision (consume; do NOT re-probe).** The Conductor resolves BCQuality **once** (per `aldc.yaml → external.bcquality.enabled`) and passes the decision inline: `disabled` | `active` (+ `sha`, `source: bundled`). **Consume it — do not probe an external clone and do not read `entry.md`, `skills/read.md`, or `do.md`:**
+> - `disabled` → **skip Step 0 entirely**: set `review.bcquality = { outcome: "not-applicable", skills-run: [], submodule-sha: null }`, leave `sub-results: []`, record the reason in `review.notes`. The Step 2 native residual then **expands from A/C/F/G to the full A–G checklist**, each domain verified against its `.github/instructions/*` + `.github/skills/*`.
+> - `active` → proceed to Step 0 proper (1–5), using the passed `sha` when available.
+>
+> **Standalone fallback only** (no decision passed — you were invoked outside the Conductor): read `aldc.yaml → external.bcquality.enabled`; `false` → skip as above; `auto`/`true`/absent → treat bundled BCQuality as active because this extension registers the BCQuality skills and instructions. A missing external clone never blocks the review because the clone is no longer the runtime source.
+
+> **BCQuality status — surface one line** (product signal): active → `BCQuality · active — bundled assets` (append `sha <...>` when known); disabled → `BCQuality · disabled — native A–G fallback`. When you emit the review, append `BCQuality · {n} cited findings` (n = findings with non-empty `references[]`; omit when not-applicable).
+
+1. **Get the task-context — don't re-derive it.** The Conductor builds it (it already holds `app.json` and this phase's changed objects) and passes it inline; **consume that**. Build it yourself per `.github/docs/templates/bcquality-task-context.md` **only** if you were invoked standalone without one (fallback). The template owns the OMIT rule and the pilot-from-`aldc.yaml` rule — follow it; do not re-encode them here.
+2. **Route via bundled skills**: use the bundled BCQuality review skills registered by this extension. Start with the `microsoft-bcquality-assets-al-code-review` super-skill, then open discrete passes only for the enabled pilot leaves from `aldc.yaml → external.bcquality.pilotSkills` (currently performance, security, style unless changed). Do not look for `entry.md`; the packaged skill list is the routing surface.
+3. **Execute** each active bundled skill as a discrete pass. Each pass returns a findings-report JSON (`findings[]` with `references[].path`, `severity`, `confidence`, and `suppressed[]`). `completed` with empty `findings` ≠ `no-knowledge`.
+   - **Load knowledge once (cache for the invocation).** Use the bundled skill body and bundled BCQuality instructions once per active domain; reuse them for that leaf's pass and the cross-cutting pass. Resolve any base-object/event symbols **once** (prefer the subscriber list the Conductor passed — see Step 1) and reuse across leaves; don't re-`al_symbolsearch` the same symbol per leaf.
+   - **Execution discipline.** Run each leaf as its own **discrete pass** — apply its Source→Relevance→Worklist→Action to the diff and produce its full findings-report — *before* moving to the next. Do **not** collapse the leaves into one blended scan.
+   - **Cross-cutting self-review.** After every leaf has produced its sub-result, do one final pass for defects that span leaf domains. Validate each candidate against the bundled BCQuality knowledge already loaded: matches → upgrade to a cited finding; explicit contradiction → suppress; otherwise emit an **agent finding** (`references: []`, `id: "agent:<slug>"`, `from-sub-skill: "agent"`, `confidence ≤ medium`, self-contained `message`). An empty agent-findings list is only acceptable when the diff is small (≤2 files / ≤30 changed lines).
+4. **Degraded outcomes never block the review**: `no-knowledge`/`not-applicable` → proceed on native checks; `partial`/`failed` → record it, never treat a tooling failure as a code defect, and re-activate the affected native checks (Step 2).
+5. Record the BCQuality SHA from `aldc.yaml → external.bcquality.pinnedCommit`, or the `microsoft-bcquality-assets` entry in `assets/generated/provenance.json` when unpinned, in the report for reproducibility.
+
+(Severity mapping → Step 3. Raw-JSON persistence → Step 4.)
+'@
+
+    $conductorDecision = @'
+   > **Resolve the BCQuality decision ONCE (here — not in each subagent).** Read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**):
+   > - `false` → **off**: `bcquality = { decision: "disabled", mounted: false }`.
+   > - `auto` / `true` / absent → **active from bundled assets**: `bcquality = { decision: "active", mounted: true, source: "bundled", sha: <pinnedCommit or generated provenance commit> }`. Do **not** probe `../bcquality` or `<home>/<entryPoint>`; this extension packages BCQuality as registered chat skills/instructions.
+   >
+   > This decision is **authoritative for the whole run**: you (a) **record it in the plan / phase-complete doc** and (b) **pass it inline** to every subagent (planning, implement, review) with the task-context. Subagents **consume** it — they do **not** re-probe (they self-resolve only if invoked standalone, outside your orchestration). Surface one line: `BCQuality · active — bundled assets` / `BCQuality · disabled — native A–G`.
+'@
+
+    $dreddStep2 = @'
+### Step 2 — Consult BCQuality per batch
+
+> **Precondition — use the bundled BCQuality switch; never probe a clone.** Read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**): **`false`** → disabled, **skip Step 2 entirely** and set `audit.bcquality = { outcome: "not-applicable", skills-run: [], submodule-sha: null }`, leaving `sub-results: []`. For **`auto`/`true`/absent**, treat BCQuality as active because this extension registers the bundled BCQuality skills and instructions under `assets/generated/microsoft-bcquality-assets`. Do **not** read `../bcquality`, `<home>/<entryPoint>`, `entry.md`, `skills/read.md`, or `do.md`. A missing external clone never aborts the audit.
+
+> **BCQuality status — surface one line** (product signal): active → `BCQuality · active — bundled assets` (append `sha <...>` when known); disabled → `BCQuality · disabled — native A–G fallback`. When you emit the audit, append `BCQuality · {n} cited findings` (n = findings with non-empty `references[]`; omit when not-applicable).
+
+You are your own orchestrator (no conductor above you), so **you build the task-context** — one per batch — per `.github/docs/templates/bcquality-task-context.md`. Use `goal: "audit AL source"`, `inputs-available: [file-path]` (the batch's files); the template owns the rest (the OMIT rule, the pilot-from-`aldc.yaml` denylist). The rule that bites: an omitted dimension is `unknown`, not a wildcard — OMIT what you can't determine, never substitute `[all]`/`[w1]`.
+
+- **Route via bundled skills**: use the bundled BCQuality review skills registered by this extension. Start with the `microsoft-bcquality-assets-al-code-review` super-skill, then open discrete passes only for the enabled pilot leaves from `aldc.yaml → external.bcquality.pilotSkills` (currently performance, security, style unless changed). Do not look for `entry.md`; the packaged skill list is the routing surface.
+- **Execute** each active bundled skill as a discrete pass. Each pass returns a findings-report JSON. `completed` with empty `findings` ≠ `no-knowledge`.
+  - **Load knowledge & symbols once (cache for the invocation).** Use the bundled skill body and bundled BCQuality instructions once per active domain; reuse them across that leaf's pass and the cross-cutting pass. Resolve base-object/event symbols **once** and reuse across leaves; don't re-`al_symbolsearch` the same symbol per leaf or per batch.
+  - **Execution discipline.** Run each leaf as its own **discrete pass** (Source→Relevance→Worklist→Action on the batch → full findings-report) *before* the next. Never collapse the leaves into one blended scan.
+  - **Cross-cutting self-review.** After every leaf's sub-result, do one pass for cross-domain defects. Validate each candidate against the bundled knowledge already loaded — match → cited finding; contradiction → suppress; otherwise an **agent finding** (`references: []`, `id: "agent:<kebab-slug>"`, `from-sub-skill: "agent"`, `confidence ≤ medium`). Empty is acceptable only when the scope is small (≤2 files / ≤30 lines).
+- **Degraded outcomes never abort the audit**: `no-knowledge`/`not-applicable` → rely on native checks for that batch; `partial`/`failed` → record it, never treat a tooling failure as a code defect.
+- Record the BCQuality SHA from `aldc.yaml → external.bcquality.pinnedCommit`, or the `microsoft-bcquality-assets` entry in `assets/generated/provenance.json` when unpinned, for reproducibility.
+
+### Step 3 — Native checks (repo-level residual)
+'@
+
+    $triageKnowledge = @'
+5. **Knowledge (optional, cited).** **Use the bundled BCQuality switch; never probe a clone.** First read `aldc.yaml → external.bcquality.enabled` (**absent field ⇒ `auto`**): **`false`** → skip this step entirely (rely on skill-debug + auto-applied instructions). For **`auto`/`true`/absent**, treat BCQuality as active because this extension registers the bundled BCQuality skills and instructions under `assets/generated/microsoft-bcquality-assets`. Do **not** read `../bcquality`, `<home>/<entryPoint>`, `entry.md`, `skills/read.md`, or `do.md`. Consult the relevant bundled BCQuality review skill(s) scoped to the suspect area and fold citations into Root Cause / Recommended Fix. For a broad "is this whole module unhealthy?" question, recommend a standalone **`@dredd`** audit instead. **Status — one line** (product signal): active → `BCQuality · active — bundled assets`; disabled → `BCQuality · disabled — native (skill-debug + instructions)`. Add `BCQuality · {n} cited` to the diagnosis when citations exist.
+'@
+
+    foreach ($file in Get-ChildItem -LiteralPath $agentsRoot -File -Filter "*.agent.md") {
+        $originalContent = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
+        $content = $originalContent
+        switch ($file.Name) {
+            "al-review-subagent.agent.md" {
+                $content = $content.Replace('(This does not affect Step 0 — BCQuality reads `app.json`, the changed objects, and the external BCQuality clone independently.)', '(This does not affect Step 0 — BCQuality uses the bundled review skills/instructions plus `app.json` and the changed objects.)')
+                $content = [regex]::Replace($content, "(?s)### Step 0 — Consult BCQuality.*?\(Severity mapping → Step 3\. Raw-JSON persistence → Step 4\.\)", [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $reviewStep0 })
+                $content = $content.Replace('`validate-evidence` resolves every cited path inside the BCQuality clone, so a non-knowledge path fails CI', '`validate-evidence` resolves every cited path against BCQuality source paths, so a non-knowledge path fails CI')
+            }
+            "al-conductor.agent.md" {
+                $content = [regex]::Replace($content, "(?s)   > \*\*Resolve the BCQuality decision ONCE.*?\r?\n\r?\n3\. \*\*Delegate Research\*\*", [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $conductorDecision.TrimEnd() + "`n`n3. **Delegate Research**" })
+                $content = $content -replace "The review subagent still reads the external BCQuality clone itself \(the knowledge files\)", "The review subagent uses the bundled BCQuality skills/instructions itself"
+                $content = $content -replace "against the BCQuality clone at the pinned SHA", "against BCQuality source paths at the pinned/provenance SHA"
+            }
+            "dredd.agent.md" {
+                $content = [regex]::Replace($content, "(?s)### Step 2 — Consult BCQuality per batch.*?### Step 3 — Native checks \(repo-level residual\)", [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $dreddStep2 })
+                $content = $content -replace "against the BCQuality clone at the pinned SHA", "against BCQuality source paths at the pinned/provenance SHA"
+                $content = $content.Replace('the `bcquality-evidence` workflow resolves every cited path inside the BCQuality clone and a non-knowledge path would fail CI', 'the `bcquality-evidence` workflow resolves every cited path against BCQuality source paths and a non-knowledge path would fail CI')
+            }
+            "al-triage.agent.md" {
+                $content = [regex]::Replace($content, "(?s)5\. \*\*Knowledge \(optional, cited\).*?\r?\n6\. \*\*Diagnose\.\*\*", [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $triageKnowledge.TrimEnd() + "`n6. **Diagnose.**" })
+                $content = $content.Replace("the suspect `.al`, the changed-vs-`main` diff, `aldc.yaml`, and `<home>/entry.md` get touched", "the suspect `.al`, the changed-vs-`main` diff, `aldc.yaml`, and the bundled BCQuality skill/instruction content get touched")
+            }
+            "al-planning-subagent.agent.md" {
+                $content = $content.Replace("Do **not** probe the BCQuality clone yourself — the Conductor already resolved it once.", "Do **not** probe an external BCQuality clone yourself — the Conductor already resolved bundled BCQuality once.")
+            }
+        }
+
+        if ($content -ne $originalContent) {
+            $written = $false
+            for ($attempt = 1; $attempt -le 3 -and -not $written; $attempt++) {
+                try {
+                    Set-Content -LiteralPath $file.FullName -Value $content -Encoding UTF8
+                    $written = $true
+                }
+                catch {
+                    if ($attempt -eq 3) {
+                        throw
+                    }
+                    Start-Sleep -Milliseconds (100 * $attempt)
+                }
+            }
+        }
+    }
+}
+
 function Normalize-BcQualityAssets {
     param(
         [Parameter(Mandatory = $true)]
@@ -116,7 +243,7 @@ function Normalize-BcQualityAssets {
         New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
         $skillPath = Join-Path $skillDir "SKILL.md"
 
-        $body = Remove-Frontmatter -Content $raw
+        $body = Convert-BcQualitySkillBodyForBundledAssets -Body (Remove-Frontmatter -Content $raw)
         $content = @(
             "---",
             "name: $SourceId-$slugBase",
@@ -380,6 +507,10 @@ foreach ($source in $catalog.sources) {
                 throw "Unsupported normalizationProfile '$normalizationProfile' for source '$($source.id)'"
             }
         }
+    }
+
+    if ($source.id -eq "aldc-community") {
+        Update-BcQualityBundledReferences -DestinationRoot $destinationRoot
     }
 
     $commit = (git -C $sourceRoot rev-parse HEAD).Trim()
