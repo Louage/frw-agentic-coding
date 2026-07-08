@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T10:16:15.1536408+02:00",
+  "generatedAt": "2026-07-08T18:56:08.6824396+02:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-agent-instructions/SKILL.md"
@@ -42,6 +42,24 @@
     },
     {
       "path": "./assets/generated/aldc-community/skills/skill-permissions/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-create-feature-spec/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-finalise-feature/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-generate-docs/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-implement-feature/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-run-al-tests/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-setup-constitution/SKILL.md"
     },
     {
       "path": "./assets/generated/aldc-community/skills/skill-testing/SKILL.md"
@@ -783,6 +801,9 @@
     },
     {
       "path": "./assets/generated/aldc-community/agents/al-implement-subagent.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-lean-sdd.agent.md"
     },
     {
       "path": "./assets/generated/aldc-community/agents/al-planning-subagent.agent.md"

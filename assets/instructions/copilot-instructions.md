@@ -1,4 +1,4 @@
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+﻿<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
 # GitHub Copilot Instructions for AL Development
 
@@ -26,17 +26,32 @@ Choose the right agent for your task:
 | Implementing, coding, debugging, fixing? | `@AL Implementation Specialist` | Tactical implementation with full AL MCP tools |
 | Building a feature with TDD orchestration (plan → implement → review → commit)? | `@AL Development Conductor` | Orchestrates planning, implementation, and review subagents |
 | Estimating a project, sizing, proposals? | `@AL Pre-Sales & Project Estimation Specialist` | PERT estimation, SWOT analysis, cost breakdown |
+| **Lean, spec-kit-aligned feature loop (LOW–MEDIUM)?** | **`@AL Lean SDD`** | **Constitution → Spec → Implement → Test → Docs → Finalise (lower token cost)** |
 
 ### Quick routing guide
 
 ```
 New feature (MEDIUM/HIGH)? → @AL Architecture & Design Specialist → al-spec.create → @AL Development Conductor
 New feature (LOW)?         → al-spec.create → @AL Implementation Specialist
+                             OR → @AL Lean SDD (if lean-SDD is set up)
 Bug fix / debugging?       → @AL Implementation Specialist
 Architecture review?       → @AL Architecture & Design Specialist
 Full TDD cycle?            → @AL Development Conductor
 Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
+Lean SDD feature?          → @AL Lean SDD
 ```
+
+### Lean SDD vs Full ALDC — Decision Guide
+
+| Dimension | Use `@AL Lean SDD` | Use Full ALDC (Conductor) |
+|-----------|-------------------|---------------------------|
+| Team size | 1–3 developers | 3+ developers, ISV |
+| Complexity | LOW–MEDIUM | MEDIUM–HIGH |
+| Phases | 1–2 | 3+ |
+| External integrations | Few or none | Many |
+| BCQuality audit | Via AGENTS.md instructions (auto) | Full citation chain + CI |
+| Token cost | Low | Higher |
+| Spec location | `specs/SDD/YYYY-MM-DD-<slug>/` | `specs/Plans/YYYY-MM-DD-<slug>/` |
 
 ## Workflows
 
@@ -62,7 +77,9 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 
 ## Skills
 
-11 composable knowledge modules loaded on-demand by agents. You don't invoke skills directly — agents load them automatically when the task requires domain-specific knowledge.
+17 composable knowledge modules loaded on-demand by agents (11 ALDC + 6 Lean SDD). You don't invoke skills directly — agents load them automatically when the task requires domain-specific knowledge.
+
+### ALDC Skills (Full Orchestration)
 
 | Skill | Domain | Loaded by |
 |-------|--------|-----------|
@@ -77,6 +94,17 @@ Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
 | `skill-performance` | CPU profiling, FlowField optimization, set-based ops | al-developer, al-architect |
 | `skill-testing` | TDD, test strategy, AL Test Toolkit | al-architect, al-conductor |
 | `skill-estimation` | PERT estimation, complexity scoring, SWOT | al-presales |
+
+### Lean SDD Skills (spec-kit-aligned flow)
+
+| Skill | Step | Loaded by |
+|-------|------|-----------|
+| `skill-sdd-setup-constitution` | One-time project init | al-lean-sdd |
+| `skill-sdd-create-feature-spec` | Specify requirement (spec + plan + tasks) | al-lean-sdd |
+| `skill-sdd-implement-feature` | Implement AL objects from spec folder | al-lean-sdd |
+| `skill-sdd-run-al-tests` | Validate acceptance criteria | al-lean-sdd |
+| `skill-sdd-generate-docs` | Docs + CHANGELOG | al-lean-sdd |
+| `skill-sdd-finalise-feature` | Close loop + PR description | al-lean-sdd |
 
 ## Skills Evidencing
 
@@ -110,34 +138,47 @@ Each instruction loads automatically when the file you're editing matches its `a
 
 ## Plans
 
-Requirement sets live in `.github/plans/`, one subdirectory per requirement:
+Requirement sets live in `specs/`, with separate subfolders for each flow:
 
 ```
-.github/plans/
-├── memory.md                              # Global memory (decisions, context across sessions)
-└── {req_name}/                            # One directory per requirement
-    ├── {req_name}.spec.md                 # Functional-technical specification
-    ├── {req_name}.architecture.md         # Architecture decisions
-    ├── {req_name}.test-plan.md            # Test plan with acceptance criteria
-    ├── {req_name}-phase-<N>-complete.md   # Phase completion reports (conductor)
-    └── {req_name}-complete.md             # Final completion report (conductor)
+specs/
+├── Plans/                                 # Full ALDC flow
+│   ├── memory.md                          # Global memory (decisions, context across sessions)
+│   └── YYYY-MM-DD-{req_name}/             # One directory per requirement
+│       ├── {req_name}.spec.md             # Functional-technical specification
+│       ├── {req_name}.architecture.md     # Architecture decisions
+│       ├── {req_name}.test-plan.md        # Test plan with acceptance criteria
+│       ├── {req_name}-phase-<N>-complete.md   # Phase completion reports (conductor)
+│       └── {req_name}-complete.md         # Final completion report (conductor)
+└── SDD/                                   # Lean SDD flow
+    ├── funct-design.md                    # Functional design (constitution input)
+    ├── tech-design.md                     # Standard-BC-first plan
+    ├── roadmap.md                         # Ordered feature list
+    └── YYYY-MM-DD-{slug}/                 # One subfolder per requirement
+        ├── spec.md
+        ├── plan.md
+        └── tasks.md
 ```
 
-> `memory.md` is GLOBAL and lives directly in `.github/plans/` (not in a subdirectory).
+> `memory.md` is GLOBAL and lives directly in `specs/Plans/` (not in a subdirectory).
 
 ### Workflow with plans
 
 **MEDIUM / HIGH:**
 
-1. `@AL Architecture & Design Specialist` — Designs solution, creates `.github/plans/{req_name}/{req_name}.architecture.md`
-2. `@workspace use al-spec.create` — Reads architecture, generates `.github/plans/{req_name}/{req_name}.spec.md` (detailed blueprint: object IDs, procedure signatures, AL code)
-3. `@AL Development Conductor` — Reads spec + architecture from `.github/plans/{req_name}/`, orchestrates TDD: planning → implementation → review
+1. `@AL Architecture & Design Specialist` — Designs solution, creates `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md`
+2. `@workspace use al-spec.create` — Reads architecture, generates `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.spec.md` (detailed blueprint: object IDs, procedure signatures, AL code)
+3. `@AL Development Conductor` — Reads spec + architecture from `specs/Plans/YYYY-MM-DD-{req_name}/`, orchestrates TDD: planning → implementation → review
 4. `@workspace use al-pr-prepare` — Prepares PR referencing the plan
 
 **LOW:**
 
-1. `@workspace use al-spec.create` — Generates `.github/plans/{req_name}/{req_name}.spec.md` directly from codebase
+1. `@workspace use al-spec.create` — Generates `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.spec.md` directly from codebase
 2. `@AL Implementation Specialist` — Implements directly using spec as blueprint
+
+**Lean SDD (LOW–MEDIUM):**
+
+1. `@AL Lean SDD` — Run `/speckit.constitution` once, then the 5-step feature loop per requirement under `specs/SDD/YYYY-MM-DD-{slug}/`
 
 ## Complexity-Based Tool Selection
 
@@ -284,7 +325,7 @@ ALDC-Core/
 │   ├── framework/
 │   │   └── ALDC-Core-Spec-v1.1.md         # Normative specification
 │   └── templates/                         # Immutable templates
-├── .github/plans/                         # Requirement sets & memory
+├── specs/Plans/                         # Requirement sets & memory
 ├── src/                                   # Your AL code
 └── app.json
 ```
@@ -330,8 +371,8 @@ Integrated mode: @AL Architecture & Design Specialist + al-spec.create + @AL Dev
 
 ---
 
-**Framework**: ALDC Core v1.1 (Skills-Based Architecture)
-**Version**: 1.1.0
-**Last Updated**: 2026-05-18
+**Framework**: ALDC Core v1.2 (Skills-Based Architecture + Lean SDD)
+**Version**: 1.2.0
+**Last Updated**: 2026-07-08
 **Workspace**: AL Development for Business Central
-**Primitives**: 4 agents + 3 subagents + 11 skills + 6 workflows + 7 instructions (1 transversal + 6 domain)
+**Primitives**: 5 agents + 3 subagents + 17 skills (11 ALDC + 6 Lean SDD) + 6 workflows + 7 instructions (1 transversal + 6 domain)

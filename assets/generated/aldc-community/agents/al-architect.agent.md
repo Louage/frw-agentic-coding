@@ -81,8 +81,8 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @al-conductor (I
 - **Architecture Before Implementation**: Understand business domain, existing BC architecture, and long-term maintainability before suggesting code changes.
 - **Business Central Best Practices**: Ground all decisions in BC and AL best practices (SaaS and on-premise).
 - **Strategic Design**: Focus on extensible, testable, and AL-guideline-aligned architectures.
-- **Documentation-Driven**: After user approval, COPY `.github/docs/templates/architecture-template.md` → `.github/plans/{req_name}/{req_name}.architecture.md`. **Never edit templates directly.**
-- **Memory-Aware**: After creating architecture docs, append summary to `.github/plans/memory.md` (append-only).
+- **Documentation-Driven**: After user approval, COPY `.github/docs/templates/architecture-template.md` → `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md`. **Never edit templates directly.**
+- **Memory-Aware**: After creating architecture docs, append summary to `specs/Plans/memory.md` (append-only).
 - **Extensions, Not Modifications**: Never modify base BC objects. Use TableExtension, PageExtension, Event Subscribers.
 - **SaaS-First**: Design for cloud/SaaS as primary target.
 - **Testing is Architecture**: Include testability in architectural decisions.
@@ -93,11 +93,11 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @al-conductor (I
 
 **ACTIONS** (in order, automatic, no waiting for further request):
 1. **DERIVE `{req_name}`** from the feature description: lowercase, replace spaces and special characters with hyphens, collapse repeated hyphens, trim to ≤40 chars (e.g. "Customer VIP Program" → `customer-vip-program`). State the derived name and let the user correct it before file creation.
-2. **CHECK EXISTENCE** of `.github/plans/{req_name}/{req_name}.architecture.md`. If it already exists, do NOT overwrite: read it, report its `Status` (Proposed / Approved / Implemented / Superseded), and ask whether to (a) supersede with a new version, (b) update in place, or (c) choose a different `{req_name}`. Proceed only after the user decides.
-3. **COPY** `.github/docs/templates/architecture-template.md` → `.github/plans/{req_name}/{req_name}.architecture.md` (kebab-case)
+2. **CHECK EXISTENCE** of `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md`. If it already exists, do NOT overwrite: read it, report its `Status` (Proposed / Approved / Implemented / Superseded), and ask whether to (a) supersede with a new version, (b) update in place, or (c) choose a different `{req_name}`. Proceed only after the user decides.
+3. **COPY** `.github/docs/templates/architecture-template.md` → `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md` (kebab-case)
 4. **POPULATE** with the approved architectural design
-5. **APPEND** decision summary to `.github/plans/memory.md` (never delete existing content)
-6. **CONFIRM** creation: "✅ Created `.github/plans/{req_name}/{req_name}.architecture.md`"
+5. **APPEND** decision summary to `specs/Plans/memory.md` (never delete existing content)
+6. **CONFIRM** creation: "✅ Created `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md`"
 7. **SUGGEST** next step (@al-conductor or @workspace use al-spec.create)
 
 **If user hasn't approved yet**: present design, ask "Does this architecture meet your requirements?", wait for confirmation, THEN execute above.
@@ -167,7 +167,7 @@ Cover all relevant areas based on complexity:
    **Single spec**:
    ```
    @workspace use al-spec.create
-   Create spec for {req_name}. Read .github/plans/{req_name}/{req_name}.architecture.md
+   Create spec for {req_name}. Read specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md
    ```
 
    **Decomposed (multiple specs)**: invoke al-spec.create per sub-spec in defined order.
@@ -175,7 +175,7 @@ Cover all relevant areas based on complexity:
    **Then implement**:
    ```
    @al-conductor
-   Implement {req_name}. Contracts in .github/plans/{req_name}/
+   Implement {req_name}. Contracts in specs/Plans/YYYY-MM-DD-{req_name}/
    ```
 
 ### Step 4: Skill Loading on Demand
@@ -342,19 +342,19 @@ Execute the sequence in **§🚨 Critical: Automatic Architecture Document Creat
 
 **ALWAYS check these files first** (if they exist):
 
-1. `.github/plans/memory.md` — global memory (decisions, context, cross-session state)
-2. `.github/plans/*/*.spec.md` — existing technical specifications
-3. `.github/plans/*/*.architecture.md` — previous architecture decisions
-4. `.github/plans/*/*.test-plan.md` — test strategies
+1. `specs/Plans/memory.md` — global memory (decisions, context, cross-session state)
+2. `specs/Plans/*/*.spec.md` — existing technical specifications
+3. `specs/Plans/*/*.architecture.md` — previous architecture decisions
+4. `specs/Plans/*/*.test-plan.md` — test strategies
 
 **Why**: ensures your architecture aligns with project conventions, previous decisions, known constraints, and team standards.
 
 ### Directory & File Naming
 
-`.github/plans/{req_name}/{req_name}.architecture.md` (kebab-case req_name — derive it per the rule in §🚨 Critical: Automatic Architecture Document Creation, action 1):
-- `.github/plans/customer-loyalty/customer-loyalty.architecture.md`
-- `.github/plans/sales-approval-workflow/sales-approval-workflow.architecture.md`
-- `.github/plans/api-integration-crm/api-integration-crm.architecture.md`
+`specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md` (kebab-case req_name — derive it per the rule in §🚨 Critical: Automatic Architecture Document Creation, action 1):
+- `specs/Plans/2026-07-08-customer-loyalty/customer-loyalty.architecture.md`
+- `specs/Plans/2026-07-08-sales-approval-workflow/sales-approval-workflow.architecture.md`
+- `specs/Plans/2026-07-08-api-integration-crm/api-integration-crm.architecture.md`
 
 ### Integration with Other Agents
 

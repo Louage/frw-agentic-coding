@@ -1,7 +1,7 @@
 ---
 agent: agent
 model: GPT-5.3-Codex (copilot)
-description: 'Create a detailed technical specification (.spec.md) that serves as an implementable blueprint for Business Central features. Reads architecture.md if exists. Outputs to .github/plans/{req_name}/.'
+description: 'Create a detailed technical specification (.spec.md) that serves as an implementable blueprint for Business Central features. Reads architecture.md if exists. Outputs to specs/Plans/YYYY-MM-DD-{req_name}/.'
 tools: [vscode, read, edit/editFiles, search, 'al-symbols-mcp/*', github/get_file_contents, github/search_code, 'markitdown/*', 'microsoft-learn/*', 'upstash/context7/*', ms-dynamics-smb.al/al_symbolsearch, ms-vscode.vscode-websearchforcopilot/websearch, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol, todo]
 ---
 
@@ -14,7 +14,7 @@ This is **NOT** the architecture phase. This phase produces the implementable bl
 ## Guardrails
 
 - **Never** create or modify real AL objects during this phase
-- **Never** output to `/specs/` — always output to `.github/plans/{req_name}/`
+- **Never** output to `/specs/` — always output to `specs/Plans/YYYY-MM-DD-{req_name}/`
 - If `{req_name}.architecture.md` exists, read it first — the spec must implement what the architect designed
 - If spec already exists, confirm with user before overwriting
 - Complexity drives depth: LOW = lighter spec, MEDIUM/HIGH = full spec with all sections
@@ -24,7 +24,7 @@ This is **NOT** the architecture phase. This phase produces the implementable bl
 ### 1.1 Read global memory
 
 ```
-Read .github/plans/memory.md
+Read specs/Plans/memory.md
 ```
 
 Extract: project app ID range, naming conventions (prefix), existing table IDs in use, current extension patterns.
@@ -32,7 +32,7 @@ Extract: project app ID range, naming conventions (prefix), existing table IDs i
 ### 1.2 Read architecture document (if exists)
 
 ```
-Read .github/plans/${input:req_name}/${input:req_name}.architecture.md
+Read specs/Plans/${input:req_name}/${input:req_name}.architecture.md
 ```
 
 If it exists: the spec MUST align with the architectural decisions (data flows, chosen patterns, integration points).
@@ -62,7 +62,7 @@ This keeps the median cost low (most specs touch 1–2 domains) while making the
 
 ## Step 2 — Generate Specification
 
-Create `.github/plans/${input:req_name}/${input:req_name}.spec.md` with the following structure:
+Create `specs/Plans/${input:req_name}/${input:req_name}.spec.md` with the following structure:
 
 ---
 
@@ -390,7 +390,7 @@ page {ID} "{Prefix} {Entity} API"
 
 ## Success Criteria
 
-- ✅ Spec file created at `.github/plans/${input:req_name}/${input:req_name}.spec.md`
+- ✅ Spec file created at `specs/Plans/${input:req_name}/${input:req_name}.spec.md`
 - ✅ Object IDs verified against `app.json` idRanges
 - ✅ Architecture document consulted (if exists)
 - ✅ The feature's **own** procedure signatures are complete (no "TBD"); base-app event targets recorded as **verified publisher + event name + consumed fields** (exact param list resolved from symbols at code time, not transcribed)

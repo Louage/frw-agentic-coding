@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-testing
 description: "AL test development patterns for Business Central. Use when creating test codeunits, writing Given/When/Then test procedures, using Library Assert, configuring test projects, or implementing TDD workflows."
 ---
@@ -326,10 +326,10 @@ codeunit 50210 "Copilot Suggestion Tests"
 
 Read the requirement contracts before creating any tests:
 ```
-.github/plans/{req_name}.spec.md          ← acceptance criteria to test
-.github/plans/{req_name}.architecture.md   ← components to cover
-.github/plans/{req_name}.test-plan.md      ← existing plan (if any)
-.github/plans/memory.md                    ← context and conventions
+specs/Plans/{req_name}.spec.md          ← acceptance criteria to test
+specs/Plans/{req_name}.architecture.md   ← components to cover
+specs/Plans/{req_name}.test-plan.md      ← existing plan (if any)
+specs/Plans/memory.md                    ← context and conventions
 ```
 
 Categorize test scenarios:
@@ -350,7 +350,7 @@ Coverage targets:
 
 ### Step 2: Create Test Plan Document
 
-Create `.github/plans/{req_name}.test-plan.md` using `.github/docs/templates/test-plan-template.md`:
+Create `specs/Plans/{req_name}.test-plan.md` using `.github/docs/templates/test-plan-template.md`:
 - List every scenario as Given/When/Then with a test method name
 - Group by unit / integration / UI / edge case
 - Define library codeunits needed
@@ -424,7 +424,7 @@ end;
 
 1. Run full test suite
 2. Verify all tests pass — zero tolerance for flaky tests
-3. Update coverage metrics in `.github/plans/{req_name}.test-plan.md`
+3. Update coverage metrics in `specs/Plans/{req_name}.test-plan.md`
 4. Update `memory.md` with test results summary
 
 ## References

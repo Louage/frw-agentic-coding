@@ -1,4 +1,4 @@
----
+﻿---
 description: "Index of ALDC role-based agent specialists for AL development in Business Central."
 ---
 
@@ -34,7 +34,7 @@ description: "Index of ALDC role-based agent specialists for AL development in B
 
 ## Requirement Contracts
 
-All agents read/write to `.github/plans/`:
+All agents read/write to `specs/Plans/`:
 - `{req_name}.spec.md` — Technical specification
 - `{req_name}.architecture.md` — Architectural design
 - `{req_name}.test-plan.md` — Test strategy
