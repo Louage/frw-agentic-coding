@@ -51,6 +51,26 @@
             "topic"
           ]
         }
+      },
+      {
+        "name": "frw_list_agent_placeholders",
+        "displayName": "List Agent Placeholders",
+        "modelDescription": "Returns the current mapping of agent/tool placeholder names (e.g. reviewAgent, architectAgent) to their configured concrete values for this workspace. Call this to discover which agents are wired to specific roles, or to resolve a placeholder before mentioning an agent by name.",
+        "toolReferenceName": "frwAgentPlaceholders",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(person)",
+        "userDescription": "Show the configured agent placeholder mappings (e.g. reviewAgent → AL Code Review Subagent) for this workspace.",
+        "tags": [
+          "frw",
+          "agents",
+          "placeholders",
+          "al",
+          "business-central"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
       }
     ],
     "chatSkills": [
@@ -847,6 +867,11 @@
         "title": "Refresh Agents",
         "category": "AC/DC",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "acdc.setAgentPlaceholder",
+        "title": "Set Agent Placeholder…",
+        "category": "AC/DC"
       }
     ],
     "viewsContainers": {
@@ -964,6 +989,27 @@
             "type": "boolean",
             "default": false,
             "markdownDescription": "When enabled, keeps the AL source folders up to date on startup: missing folders are cloned (after you approve), and existing folders are pulled to the latest commit of their branch (read-only, never pushed)."
+          }
+        }
+      },
+      {
+        "title": "Agent Placeholders",
+        "order": 3,
+        "properties": {
+          "acdc.agents.placeholders": {
+            "type": "object",
+            "default": {
+              "reviewAgent": "AL Code Review Subagent",
+              "architectAgent": "AL Architecture & Design Specialist",
+              "developerAgent": "AL Implementation Specialist",
+              "conductorAgent": "AL Development Conductor",
+              "auditorAgent": "Dredd — AL Independent Auditor"
+            },
+            "markdownDescription": "Maps placeholder names to the concrete agent (or tool) display names they resolve to. These placeholders can appear in agent prose, prompts, and skills as `${placeholderName}` and are resolved at runtime by the extension.\n\n**[▶ Set via quick pick](command:acdc.setAgentPlaceholder)** — shows a live dropdown of all agents currently loaded in the workspace; recommended over editing JSON.\n\n**Example**: set `reviewAgent` to `@Dredd` so every `${reviewAgent}` in agent files resolves to `@Dredd` when content is served through the extension.\n\nThe extension ships sensible defaults; override only the roles you want to customize. A warning is shown in the **AC⚡DC** output channel if a resolved value does not match a known agent.",
+            "additionalProperties": {
+              "type": "string",
+              "description": "Display name of the agent or tool this placeholder resolves to."
+            }
           }
         }
       }

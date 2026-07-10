@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { getAvailableMcpServerIds, checkToolAvailability, VSCODE_BUILTIN_PREFIXES } from "../tools/mcpDiscoveryService";
 import { lookupKnownTool, type KnownToolSuggestion } from "../tools/knownToolsCatalog";
+import { PlaceholderResolver } from "../placeholderResolver";
 
 export interface AgentWorkflowHandoff {
   label: string;
@@ -190,6 +191,7 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
   const root = vscode.Uri.joinPath(extensionUri, "assets", "generated");
   const files = await findAgentFiles(root);
   const metadata = await loadAgentMetadata(extensionUri);
+  const resolver = new PlaceholderResolver();
 
   const parsed: ParsedAgent[] = [];
   for (const file of files) {
@@ -201,11 +203,14 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
 
     const fileName = file.path.split("/").at(-1) ?? "";
     const fileId = fileName.replace(/\.agent\.md$/i, "");
-    const name = readScalar(fm, "name") ?? fileId;
+    const name = resolver.resolve(readScalar(fm, "name") ?? fileId);
     const userInvocable = (readScalar(fm, "user-invocable") ?? "true")
       .toLowerCase()
       .trim() !== "false";
-    const handoffs = readHandoffs(fm);
+    const handoffs = readHandoffs(fm).map((h) => ({
+      ...h,
+      agentName: resolver.resolve(h.agentName),
+    }));
     const { normalized: tools, raw: rawTools } = readTools(fm);
 
     // Extension-only metadata comes from the manifest, not from .agent.md frontmatter.

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
+import { ListAgentPlaceholdersTool } from "./tools/listAgentPlaceholdersTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
 import { WorkflowPanel } from "./views/workflowPanel";
 import {
@@ -16,6 +17,7 @@ import {
   syncGitIgnoredRepositories,
 } from "./alBaseCode";
 import { AlBaseCodePanel } from "./views/alBaseCodePanel";
+import { PlaceholderResolver, DEFAULT_PLACEHOLDERS } from "./placeholderResolver";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -30,7 +32,34 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.lm.registerTool(
       "frw_get_coding_standard",
       new GetCodingStandardTool(context.extensionUri)
+    ),
+    vscode.lm.registerTool(
+      "frw_list_agent_placeholders",
+      new ListAgentPlaceholdersTool()
     )
+  );
+
+  // Validate placeholder values on startup and on configuration change.
+  const resolver = new PlaceholderResolver();
+  const validatePlaceholders = async (): Promise<void> => {
+    const agents = await listUserInvocableAgents(context.extensionUri);
+    const knownNames = agents.map((a) => a.displayName);
+    const invalid = resolver.validateAgainstKnown(knownNames);
+    if (invalid.length > 0) {
+      output.appendLine(
+        `[Agent Placeholders] Warning — the following configured values do not match any known agent:\n` +
+          invalid.map((e) => `  \${${e.key}} → "${e.value}"`).join("\n") +
+          `\nCheck the "acdc.agents.placeholders" setting.`
+      );
+    }
+  };
+  void validatePlaceholders();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("acdc.agents.placeholders")) {
+        void validatePlaceholders();
+      }
+    })
   );
 
   // 2. Sidebar: tree views listing the bundled skills and rules.
@@ -108,6 +137,13 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
+  // 3b. Command: set an agent placeholder via a two-step live QuickPick.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.setAgentPlaceholder", async () => {
+      await setAgentPlaceholderCommand(context.extensionUri, resolver);
+    })
+  );
+
   // 4. AL Base Code / ISV Code: mount external BC/ISV source folders for AI context.
   context.subscriptions.push(
     vscode.commands.registerCommand("acdc.manageAlBaseCode", () =>
@@ -142,6 +178,67 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   // Nothing to clean up; all disposables are tracked in context.subscriptions.
+}
+
+/**
+ * Two-step QuickPick command: first pick the placeholder key, then pick the
+ * agent from the live list loaded in the current workspace. Writes the result
+ * to user-global settings so it persists across projects.
+ */
+async function setAgentPlaceholderCommand(
+  extensionUri: vscode.Uri,
+  resolver: PlaceholderResolver
+): Promise<void> {
+  const currentMap = resolver.getMap();
+  const defaultKeys = Object.keys(DEFAULT_PLACEHOLDERS);
+  const allKeys = [...new Set([...defaultKeys, ...Object.keys(currentMap)])].sort();
+
+  // Step 1 — choose the placeholder key to configure.
+  const keyPick = await vscode.window.showQuickPick(
+    allKeys.map((k) => ({
+      label: k,
+      description: `currently: ${currentMap[k] ?? "(not set)"}`,
+    })),
+    {
+      title: "Agent Placeholders (1/2): Select placeholder to configure",
+      placeHolder: "Pick a placeholder name…",
+    }
+  );
+  if (!keyPick) {
+    return;
+  }
+
+  // Step 2 — choose the agent from the live workspace list.
+  const agents = await listUserInvocableAgents(extensionUri);
+  const agentNames = agents.map((a) => a.displayName).sort();
+  const currentValue = currentMap[keyPick.label];
+
+  const valuePick = await vscode.window.showQuickPick(
+    agentNames.map((name) => ({
+      label: name,
+      picked: name === currentValue,
+      description: name === currentValue ? "(current)" : undefined,
+    })),
+    {
+      title: `Agent Placeholders (2/2): Set "\${${keyPick.label}}" → agent`,
+      placeHolder: "Pick an agent…",
+    }
+  );
+  if (!valuePick) {
+    return;
+  }
+
+  // Merge into the existing user-level map and write back.
+  const config = vscode.workspace.getConfiguration();
+  const userMap = config.get<Record<string, string>>("acdc.agents.placeholders") ?? {};
+  await config.update(
+    "acdc.agents.placeholders",
+    { ...userMap, [keyPick.label]: valuePick.label },
+    vscode.ConfigurationTarget.Global
+  );
+  void vscode.window.showInformationMessage(
+    `\${${keyPick.label}} now resolves to "${valuePick.label}".`
+  );
 }
 
 async function checkToolsAvailable(workflow: AgentWorkflowViewModel): Promise<void> {
