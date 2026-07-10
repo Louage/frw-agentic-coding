@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { PlaceholderResolver } from "../placeholderResolver";
 
 /**
  * Input parameters for the get-coding-standard tool.
@@ -21,6 +22,8 @@ interface IGetCodingStandardInput {
 export class GetCodingStandardTool
   implements vscode.LanguageModelTool<IGetCodingStandardInput>
 {
+  private readonly resolver = new PlaceholderResolver();
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   private get instructionsDir(): vscode.Uri {
@@ -94,7 +97,7 @@ export class GetCodingStandardTool
     }
 
     return new vscode.LanguageModelToolResult([
-      new vscode.LanguageModelTextPart(content),
+      new vscode.LanguageModelTextPart(this.resolver.resolve(content)),
     ]);
   }
 
