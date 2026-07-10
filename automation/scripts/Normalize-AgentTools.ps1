@@ -42,7 +42,12 @@ $CoreTools = @(
     "search/listDirectory",
     "search/textSearch",
     "search/usages",
-    "todo"
+    "todo",
+    # AC⚡DC extension-contributed tool: lets the agent update the sidebar
+    # "Agent Flow" view as it moves through phases of its workflow.
+    # See automation/scripts/Inject-FlowReporting.ps1 for the matching body block
+    # that tells the agent WHEN to call this tool.
+    "frw_update_agent_flow"
 )
 
 # Tools that are deprecated, renamed, or environment-specific and must be removed

@@ -318,16 +318,16 @@ function readHandoffs(frontmatter: string): ParsedHandoff[] {
   return handoffs;
 }
 
-function readTools(frontmatter: string): string[] {
+function readTools(frontmatter: string): { normalized: string[]; raw: string[] } {
   const toolsScalar = readScalar(frontmatter, "tools");
   if (!toolsScalar) {
-    return [];
+    return { normalized: [], raw: [] };
   }
 
   // Parse array format: [tool1, tool2, 'tool3', "tool4"]
   const arrayMatch = /^\[(.+)\]$/.exec(toolsScalar.trim());
   if (!arrayMatch) {
-    return [];
+    return { normalized: [], raw: [] };
   }
 
   const content = arrayMatch[1];

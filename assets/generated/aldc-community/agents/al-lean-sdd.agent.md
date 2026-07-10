@@ -1,7 +1,7 @@
 ---
 name: AL Lean SDD
 description: "Lean Spec-Driven Development agent for Business Central AL. Use for low-to-medium complexity features with spec-kit-aligned workflow: constitution setup, feature spec, implementation, tests, docs, and finalise. Lower token cost than full ALDC orchestration."
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, frw_update_agent_flow, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature slug or description (e.g. "fleet-registration", "implement SDD/2026-07-08-fleet-register")'
 handoffs:
@@ -12,6 +12,30 @@ handoffs:
     agent: AL Architecture & Design Specialist
     prompt: Feature requires architectural decisions before specification
 ---
+
+<!-- BEGIN:AC-DC-FLOW-REPORTING -->
+> **PROTOCOL — FLOW REPORTING (do this FIRST, before any other work).** For every distinct phase of your response, you MUST write to `%TEMP%\acdc-agent-flow.txt` (Windows) or `/tmp/acdc-agent-flow.txt` (macOS/Linux) using `create_file` — resolve `%TEMP%` / `$TMPDIR` to the concrete absolute path before writing. Do **not** write inside the workspace.
+>
+> **Write ordering is critical**: write the file **BEFORE** doing the work of a step, not after. The sidebar shows the LAST line of the file as the *active* step (highlighted blue). If you load a skill and then write "loading-skill", the user sees the step light up only after it's already done. Do this instead:
+>
+> 1. Write the file with the new step as the LAST line.
+> 2. Do the work of that step.
+> 3. When you move to the next step, write the file again with the completed step now in the history and the new step as the LAST line.
+>
+> **File format** — one short kebab-case step name per line. Optional `agent: <your display name>` as the very FIRST line so the sidebar switches agent + reloads the roadmap when Copilot hands off to you from another agent. Optional `skill: <name>` line right after a step to attach a skill.
+>
+> Example after handoff to you where you are on your third step:
+>
+> `
+> agent: AL Architecture & Design Specialist
+> analysing-requirements
+> loading-skill-api
+> skill: skill-api
+> drafting-architecture
+> `
+>
+> Keep labels stable across runs so the user learns to recognise them. If your session has the `frw_update_agent_flow` LM tool enabled you may call it instead — the two feed the same view — but the file write always works. Silent-fail is fine: never let a failed write block your work.
+<!-- END:AC-DC-FLOW-REPORTING -->
 
 # AL Lean SDD Agent
 
