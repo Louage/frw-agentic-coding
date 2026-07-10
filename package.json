@@ -71,6 +71,39 @@
           "type": "object",
           "properties": {}
         }
+      },
+      {
+        "name": "frw_update_agent_flow",
+        "displayName": "Update Agent Flow",
+        "modelDescription": "Updates the Agent Flow view in the AC⚡DC sidebar to reflect the current position in this agent's workflow. Call this at the start of a new task or when switching to a new skill so the user sees where in the SDD/orchestration flow the agent currently is. Provide `step` with a short label (2–4 words). Optionally set `action` to 'start' (default — mark as current in-progress step), 'complete' (mark the current step done and move it to history), or 'reset' (clear history and start fresh). Optionally pass `skill` to record which SKILL.md is being applied at this step.",
+        "toolReferenceName": "frwUpdateAgentFlow",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(pulse)",
+        "userDescription": "Let the active agent update the current step shown in the AC⚡DC Agent Flow view.",
+        "tags": [
+          "frw",
+          "agents",
+          "flow",
+          "state"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "step": {
+              "type": "string",
+              "description": "Short label for the current step (e.g. 'create-feature-spec', 'implement-feature', 'review')."
+            },
+            "action": {
+              "type": "string",
+              "enum": ["start", "complete", "reset"],
+              "description": "'start' (default) marks the step as current in-progress. 'complete' pushes the current step to history and clears the active step. 'reset' clears the entire flow history for this agent."
+            },
+            "skill": {
+              "type": "string",
+              "description": "Optional SKILL.md name being applied at this step (e.g. 'skill-sdd-create-feature-spec')."
+            }
+          }
+        }
       }
     ],
     "chatSkills": [
@@ -851,22 +884,16 @@
         "category": "AC/DC"
       },
       {
-        "command": "frwAgenticCoding.refreshSkills",
-        "title": "Refresh Skills",
-        "category": "AC/DC",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "frwAgenticCoding.refreshRules",
-        "title": "Refresh Rules",
-        "category": "AC/DC",
-        "icon": "$(refresh)"
-      },
-      {
         "command": "frwAgenticCoding.refreshAgents",
         "title": "Refresh Agents",
         "category": "AC/DC",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "frwAgenticCoding.resetAgentFlow",
+        "title": "Reset Agent Flow",
+        "category": "AC/DC",
+        "icon": "$(clear-all)"
       },
       {
         "command": "acdc.setAgentPlaceholder",
@@ -892,15 +919,10 @@
           "contextualTitle": "AC⚡DC"
         },
         {
-          "id": "frwSkills",
-          "name": "Skills",
-          "icon": "$(rocket)",
-          "contextualTitle": "AC⚡DC"
-        },
-        {
-          "id": "frwRules",
-          "name": "Rules",
-          "icon": "$(law)",
+          "type": "webview",
+          "id": "frwAgentFlow",
+          "name": "Agent Flow",
+          "icon": "$(pulse)",
           "contextualTitle": "AC⚡DC"
         }
       ]
@@ -908,18 +930,13 @@
     "menus": {
       "view/title": [
         {
-          "command": "frwAgenticCoding.refreshSkills",
-          "when": "view == frwSkills",
-          "group": "navigation"
-        },
-        {
-          "command": "frwAgenticCoding.refreshRules",
-          "when": "view == frwRules",
-          "group": "navigation"
-        },
-        {
           "command": "frwAgenticCoding.refreshAgents",
           "when": "view == frwAgents",
+          "group": "navigation"
+        },
+        {
+          "command": "frwAgenticCoding.resetAgentFlow",
+          "when": "view == frwAgentFlow",
           "group": "navigation"
         }
       ]
@@ -1093,6 +1110,8 @@
     "lint": "eslint src",
     "vsix": "vsce package --no-dependencies",
     "sync:sources": "pwsh -File automation/scripts/Sync-ExternalSources.ps1 -Clean",
+    "normalize:agents": "pwsh -File automation/scripts/Normalize-AgentTools.ps1",
+    "inject:flow-reporting": "pwsh -File automation/scripts/Inject-FlowReporting.ps1",
     "validate:source-contract": "pwsh -File automation/scripts/Validate-SourceContractsFromCatalog.ps1",
     "validate:source-contract:strict": "pwsh -File automation/scripts/Validate-SourceContractsFromCatalog.ps1 -RequireAtLeastOneContract",
     "sync:mcp-sources": "pwsh -File automation/scripts/Sync-McpKnowledgeSources.ps1 -Clean",
@@ -1100,7 +1119,7 @@
     "validate:contribution-paths": "node automation/scripts/Validate-ContributionPaths.mjs",
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
-    "pipeline:assets": "npm run sync:sources && npm run generate:contributions && npm run apply:contributions",
+    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run inject:flow-reporting && npm run generate:contributions && npm run apply:contributions",
     "pipeline:mcp": "npm run sync:mcp-sources"
   },
   "devDependencies": {

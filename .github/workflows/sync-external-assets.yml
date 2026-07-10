@@ -35,6 +35,11 @@ jobs:
         run: |
           ./automation/scripts/Normalize-AgentTools.ps1
 
+      - name: Inject Agent Flow reporting protocol
+        shell: pwsh
+        run: |
+          ./automation/scripts/Inject-FlowReporting.ps1
+
       - name: Validate agent handoff integrity
         shell: pwsh
         run: |
