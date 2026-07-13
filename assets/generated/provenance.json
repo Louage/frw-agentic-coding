@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T10:14:58.3300902+02:00",
+  "generatedAt": "2026-07-13T06:06:11.9126413+00:00",
   "sources": [
     {
       "id": "aldc-community",
@@ -16,7 +16,7 @@
       "owner": "microsoft",
       "repo": "BCQuality",
       "branch": "main",
-      "commit": "4119417ce4db7cd5423671fb726459c485549f6c",
+      "commit": "3aa3581f9563b64e6fa370cc722dbca23775f225",
       "priority": 30,
       "sourceKind": "extension-assets",
       "declarationMode": "adapter"

@@ -1,56 +1,47 @@
 {
-  "generatedAt": "2026-07-08T18:56:08.6824396+02:00",
+  "generatedAt": "2026-07-13T06:06:22.7189816+00:00",
   "chatSkills": [
     {
-      "path": "./assets/generated/aldc-community/skills/skill-agent-instructions/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-agent-task-patterns/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-agent-toolkit/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-api/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-contribution-assistant/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-copilot/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-debug/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-estimation/SKILL.md"
-    },
-    {
       "path": "./assets/generated/aldc-community/skills/skill-events/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-manifest/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-migrate/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-pages/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-performance/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-permissions/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/skills/skill-sdd-create-feature-spec/SKILL.md"
     },
     {
       "path": "./assets/generated/aldc-community/skills/skill-sdd-finalise-feature/SKILL.md"
     },
     {
+      "path": "./assets/generated/aldc-community/skills/skill-contribution-assistant/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-pages/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-migrate/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-setup-constitution/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-translate/SKILL.md"
+    },
+    {
       "path": "./assets/generated/aldc-community/skills/skill-sdd-generate-docs/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-debug/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-agent-instructions/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-sdd-create-feature-spec/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-copilot/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-agent-toolkit/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-estimation/SKILL.md"
     },
     {
       "path": "./assets/generated/aldc-community/skills/skill-sdd-implement-feature/SKILL.md"
@@ -59,22 +50,28 @@
       "path": "./assets/generated/aldc-community/skills/skill-sdd-run-al-tests/SKILL.md"
     },
     {
-      "path": "./assets/generated/aldc-community/skills/skill-sdd-setup-constitution/SKILL.md"
+      "path": "./assets/generated/aldc-community/skills/skill-agent-task-patterns/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/skills/skill-performance/SKILL.md"
     },
     {
       "path": "./assets/generated/aldc-community/skills/skill-testing/SKILL.md"
     },
     {
-      "path": "./assets/generated/aldc-community/skills/skill-translate/SKILL.md"
+      "path": "./assets/generated/aldc-community/skills/skill-api/SKILL.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-breaking-changes-review-microsoft-skills-review-al-breaking-changes-review-md/SKILL.md"
+      "path": "./assets/generated/aldc-community/skills/skill-permissions/SKILL.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-code-review-microsoft-skills-review-al-code-review-md/SKILL.md"
+      "path": "./assets/generated/aldc-community/skills/skill-manifest/SKILL.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-error-handling-review-microsoft-skills-review-al-error-handling-review-md/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-code-review-microsoft-skills-review-al-code-review-md/SKILL.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-events-review-microsoft-skills-review-al-events-review-md/SKILL.md"
@@ -83,25 +80,28 @@
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-interfaces-review-microsoft-skills-review-al-interfaces-review-md/SKILL.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-performance-review-microsoft-skills-review-al-performance-review-md/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-privacy-review-microsoft-skills-review-al-privacy-review-md/SKILL.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-security-review-microsoft-skills-review-al-security-review-md/SKILL.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-style-review-microsoft-skills-review-al-style-review-md/SKILL.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-ui-review-microsoft-skills-review-al-ui-review-md/SKILL.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-performance-review-microsoft-skills-review-al-performance-review-md/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-breaking-changes-review-microsoft-skills-review-al-breaking-changes-review-md/SKILL.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-upgrade-review-microsoft-skills-review-al-upgrade-review-md/SKILL.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-privacy-review-microsoft-skills-review-al-privacy-review-md/SKILL.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-web-services-review-microsoft-skills-review-al-web-services-review-md/SKILL.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-style-review-microsoft-skills-review-al-style-review-md/SKILL.md"
     }
   ],
   "chatInstructions": [
@@ -130,27 +130,6 @@
       "path": "./assets/generated/aldc-community/instructions/al-testing.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/keep-copilot-help-url-to-two-path-levels.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/choose-access-modifiers-deliberately.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/deprecate-public-members-with-the-obsolete-lifecycle.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-change-published-procedure-signatures.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-expose-sensitive-data-through-public-api.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-modify-code-already-marked-obsolete.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/obsolete-table-fields-instead-of-deleting-them.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/error-handling/collect-validation-errors-with-errorbehavior.instructions.md"
     },
     {
@@ -169,61 +148,154 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/error-handling/table-event-subscriber-rolls-back-whole-batch.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/add-new-event-parameters-at-the-end.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/avoid-strsubstno-prebuild-before-error.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/avoid-loosely-typed-event-parameters.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/data-classification-is-table-field-property.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/avoid-raising-events-inside-try-functions.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/data-classification-required-on-pii-fields.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/choose-static-vs-manual-subscribers-deliberately.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/error-direct-substitution-safe-for-telemetry.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-add-ishandled-to-an-existing-event.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/error-vs-message-telemetry-logging.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-bypass-critical-operations-with-ishandled.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/featuretelemetry-customdimensions-no-pii.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-publish-events-inside-loops.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/flowfield-flowfilter-classification-systemmetadata.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/initialize-ishandled-to-false-before-publishing.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/getlasterrortext-customer-content-in-errors.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/name-event-parameters-without-abbreviations.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/in-memory-data-not-a-privacy-concern.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/name-events-by-publisher-position.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/migration-destination-classification.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefer-reusing-or-extending-existing-events.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/no-pii-in-telemetry-message-string.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefer-this-over-includesender-in-codeunit-events.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/page-display-is-not-a-privacy-concern.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefix-temporary-record-event-parameters-with-temp.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/privacy-notice-consent-for-external-data-transfer.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/preserve-onafter-execution-when-ishandled-skips-the-body.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/register-integration-in-privacy-notice-registrations.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/publish-thin-onbefore-onafter-integration-events.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/resolve-tobeclassified-before-release.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/use-ishandled-to-make-base-behaviour-overridable.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/session-logmessage-requires-dataclassification.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/assign-codeunit-to-interface-for-testability.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/table-level-data-classification-cascades.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/prefer-interface-over-case-branching.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/control-add-in-accessibility-is-developer-responsibility.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/set-defaultimplementation-on-enum.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/control-add-in-has-no-bc-color-tokens.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/cosmetic-styles-need-no-textual-context.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/default-descending-sort-on-historical-pages.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/factbox-design.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/fasttab-field-importance.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/grid-data-table-heuristic.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-caption-quality-is-not-an-accessibility-issue.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-labeled-first-child-exception.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-show-caption-false-outside-grid-is-not-a-violation.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/layout-table-with-captions-is-valid.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/no-nested-grids.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/on-drill-down-on-non-editable-fields-renders-as-link.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/page-background-tasks.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/prefer-actionref-syntax-for-promoted-actions.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/promoted-action-groups.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/semantic-style-in-cuegroup-exception.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/semantic-styles-need-independent-textual-meaning.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/set-selection-filter-list-scope.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-false-allowed-on-non-editable-fields.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-in-promptdialog-prompt-area.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-in-repeater-allowed.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-on-editable-fields.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/split-button-standard-groups.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/standalone-content-in-layout-table.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/style-expr-text-vs-boolean.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/tabular-intent-requires-data-table-conditions.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/choose-access-modifiers-deliberately.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/deprecate-public-members-with-the-obsolete-lifecycle.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-change-published-procedure-signatures.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-expose-sensitive-data-through-public-api.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-modify-code-already-marked-obsolete.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/obsolete-table-fields-instead-of-deleting-them.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/addloadfields-in-report-onpredataitem.instructions.md"
@@ -358,55 +430,88 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-tryfunction-for-error-catching-not-rollback.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/avoid-strsubstno-prebuild-before-error.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/asserterror-needs-expectederror-and-code.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/data-classification-is-table-field-property.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/transactionmodel-attribute-governs-test-transactions.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/data-classification-required-on-pii-fields.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/ui-handlers-in-tests.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/error-direct-substitution-safe-for-telemetry.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/use-library-codeunits-for-test-fixtures.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/error-vs-message-telemetry-logging.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/disable-write-operations-on-read-only-api-pages.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/featuretelemetry-customdimensions-no-pii.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-only-committed-data-from-api-reads.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/flowfield-flowfilter-classification-systemmetadata.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-operations-as-bound-actions.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/getlasterrortext-customer-content-in-errors.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-systemid-as-the-api-key.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/in-memory-data-not-a-privacy-concern.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/set-required-api-page-properties.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/migration-destination-classification.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/version-apis-by-adding-not-mutating-published-versions.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/no-pii-in-telemetry-message-string.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/telemetry/default-telemetryscope-to-extensionpublisher.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/page-display-is-not-a-privacy-concern.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/add-new-event-parameters-at-the-end.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/privacy-notice-consent-for-external-data-transfer.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/avoid-loosely-typed-event-parameters.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/register-integration-in-privacy-notice-registrations.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/avoid-raising-events-inside-try-functions.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/resolve-tobeclassified-before-release.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/choose-static-vs-manual-subscribers-deliberately.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/session-logmessage-requires-dataclassification.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-add-ishandled-to-an-existing-event.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/table-level-data-classification-cascades.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-bypass-critical-operations-with-ishandled.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/do-not-publish-events-inside-loops.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/initialize-ishandled-to-false-before-publishing.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/name-event-parameters-without-abbreviations.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/name-events-by-publisher-position.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefer-reusing-or-extending-existing-events.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefer-this-over-includesender-in-codeunit-events.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/prefix-temporary-record-event-parameters-with-temp.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/preserve-onafter-execution-when-ishandled-skips-the-body.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/publish-thin-onbefore-onafter-integration-events.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/use-ishandled-to-make-base-behaviour-overridable.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/keep-copilot-help-url-to-two-path-levels.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/al-has-no-built-in-htmlencode.instructions.md"
@@ -482,6 +587,72 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/validatetablerelation-false-on-user-input.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/assign-codeunit-to-interface-for-testability.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/prefer-interface-over-case-branching.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/interfaces/set-defaultimplementation-on-enum.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/breaking-changes-only-on-tables-without-data.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/datatransfer-for-bulk-init.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/datatransfer-skips-triggers-and-subscribers.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/do-not-block-upgrade-on-data-errors.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/enum-values-additive-at-end.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/first-install-dataversion-zero-check.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/guard-database-reads.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/hybrid-migration-codeunits-not-standard-upgrade.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/initvalue-does-not-update-existing-rows.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/minimize-onvalidate-upgrade-triggers.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/no-external-calls-in-upgrade.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/no-series-bc24-migration.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/obsolete-pending-to-removed-staging.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/obsoletion-requires-reason-and-tag.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/register-upgrade-tags-with-subscribers.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/skip-nonessential-work-via-execution-context.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/triggers-call-helpers-not-implementations.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/upgrade-codeunit-subtype.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/use-upgrade-tags-not-version-checks.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/abouttitle-abouttext-teaching-tips.instructions.md"
@@ -587,168 +758,6 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/xmldoc-for-public-library-procedures.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/telemetry/default-telemetryscope-to-extensionpublisher.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/transactionmodel-attribute-governs-test-transactions.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/control-add-in-accessibility-is-developer-responsibility.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/control-add-in-has-no-bc-color-tokens.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/cosmetic-styles-need-no-textual-context.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/default-descending-sort-on-historical-pages.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/factbox-design.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/fasttab-field-importance.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/grid-data-table-heuristic.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-caption-quality-is-not-an-accessibility-issue.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-labeled-first-child-exception.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/group-show-caption-false-outside-grid-is-not-a-violation.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/layout-table-with-captions-is-valid.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/no-nested-grids.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/on-drill-down-on-non-editable-fields-renders-as-link.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/page-background-tasks.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/prefer-actionref-syntax-for-promoted-actions.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/promoted-action-groups.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/semantic-style-in-cuegroup-exception.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/semantic-styles-need-independent-textual-meaning.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/set-selection-filter-list-scope.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-false-allowed-on-non-editable-fields.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-in-promptdialog-prompt-area.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-in-repeater-allowed.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/show-caption-on-editable-fields.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/split-button-standard-groups.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/standalone-content-in-layout-table.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/style-expr-text-vs-boolean.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/tabular-intent-requires-data-table-conditions.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/breaking-changes-only-on-tables-without-data.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/datatransfer-for-bulk-init.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/datatransfer-skips-triggers-and-subscribers.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/do-not-block-upgrade-on-data-errors.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/enum-values-additive-at-end.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/first-install-dataversion-zero-check.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/guard-database-reads.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/hybrid-migration-codeunits-not-standard-upgrade.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/initvalue-does-not-update-existing-rows.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/minimize-onvalidate-upgrade-triggers.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/no-external-calls-in-upgrade.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/no-series-bc24-migration.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/obsolete-pending-to-removed-staging.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/obsoletion-requires-reason-and-tag.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/register-upgrade-tags-with-subscribers.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/skip-nonessential-work-via-execution-context.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/triggers-call-helpers-not-implementations.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/upgrade-codeunit-subtype.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/use-upgrade-tags-not-version-checks.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/disable-write-operations-on-read-only-api-pages.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-only-committed-data-from-api-reads.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-operations-as-bound-actions.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/expose-systemid-as-the-api-key.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/set-required-api-page-properties.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/version-apis-by-adding-not-mutating-published-versions.instructions.md"
     }
   ],
   "chatPromptFiles": [

@@ -1,4 +1,4 @@
-﻿# Extension Manifest — Lead Tracking
+# Extension Manifest — Lead Tracking
 
 | Field | Value |
 |-------|-------|
