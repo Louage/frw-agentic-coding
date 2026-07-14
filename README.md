@@ -105,6 +105,6 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 Set the repository clients check in settings:
 
 ```jsonc
-"frwAgenticCoding.update.repository": "Louage/frw-agentic-coding",
-"frwAgenticCoding.update.checkOnStartup": true
+"acdc.update.repository": "Louage/frw-agentic-coding",
+"acdc.update.checkOnStartup": true
 ```
