@@ -1,8 +1,8 @@
 {
-  "name": "frw-agentic-coding",
+  "name": "acdc",
   "displayName": "Agentic Coding⚡Direct Coding",
   "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
-  "version": "1.0.11",
+  "version": "1.1.0",
   "publisher": "theframework",
   "private": true,
   "license": "UNLICENSED",
@@ -101,6 +101,67 @@
             "skill": {
               "type": "string",
               "description": "Optional SKILL.md name being applied at this step (e.g. 'skill-sdd-create-feature-spec')."
+            }
+          }
+        }
+      },
+      {
+        "name": "frw_get_sdd_config",
+        "displayName": "Get SDD Configuration",
+        "modelDescription": "Returns the current Spec-Driven Development configuration for this workspace: the plans folder location, the spec folder naming format, the spec file naming format, and the git branch naming format — plus the reference of every template variable that can appear in those formats (dates, sequences, GUID, USER, HOST, env vars, `{req_name}`, `{slug}`, `{type}`, ...). ALWAYS call this tool BEFORE creating a spec folder, a spec file, or a git branch, so you honour the workspace conventions instead of hardcoding `.github/plans/` or naming shapes.",
+        "toolReferenceName": "frwSddConfig",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(settings-gear)",
+        "userDescription": "Show the configured SDD paths and naming formats used by agents.",
+        "tags": [
+          "frw",
+          "sdd",
+          "spec",
+          "plans",
+          "branch"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "frw_render_sdd_path",
+        "displayName": "Render SDD Path",
+        "modelDescription": "Renders the configured spec folder, spec file, and git branch names for a given requirement, substituting workspace-configured templates and the standard template variables (dates, sequences, GUID, USER, HOST, ...). Call this INSTEAD of manually building paths like `.github/plans/{req_name}/{req_name}.spec.md` — the result reflects the user's `acdc.*` SDD settings. Provide `req_name` (kebab-case) and, when creating a spec file, `type` (`spec`, `architecture`, `test-plan`, ...). Optional: `slug`, `seq`, `env`.",
+        "toolReferenceName": "frwRenderSddPath",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(folder-opened)",
+        "userDescription": "Render workspace-configured SDD folder, file, and branch paths for a requirement.",
+        "tags": [
+          "frw",
+          "sdd",
+          "spec",
+          "plans",
+          "branch"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "req_name": {
+              "type": "string",
+              "description": "Requirement name in kebab-case (e.g. 'customer-loyalty-points')."
+            },
+            "slug": {
+              "type": "string",
+              "description": "Optional short slug used by `{slug}`. Defaults to `req_name`."
+            },
+            "type": {
+              "type": "string",
+              "description": "Contract type when rendering a spec file: 'spec', 'architecture', 'test-plan', 'plan', 'delivery'."
+            },
+            "seq": {
+              "type": "number",
+              "description": "Optional sequence number for `{seq}` / `{00seq}` / `{000seq}` variables."
+            },
+            "env": {
+              "type": "string",
+              "description": "Optional environment name (`dev`, `staging`, `prod`) for the `{ENV}` variable."
             }
           }
         }
@@ -899,6 +960,16 @@
         "command": "acdc.setAgentPlaceholder",
         "title": "Set Agent Placeholder…",
         "category": "AC/DC"
+      },
+      {
+        "command": "acdc.pickSddPlansRoot",
+        "title": "Pick SDD Plans Root Folder…",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.showSddHelp",
+        "title": "Show SDD Settings Reference",
+        "category": "AC/DC"
       }
     ],
     "viewsContainers": {
@@ -943,22 +1014,25 @@
     },
     "configuration": [
       {
-        "title": "AC⚡DC",
+        "title": "Update",
         "order": 1,
         "properties": {
           "acdc.update.repository": {
             "type": "string",
             "default": "Louage/frw-agentic-coding",
+            "order": 3,
             "markdownDescription": "The private GitHub repository (in `owner/repo` form) that publishes new `.vsix` releases of this extension. Used by the in-editor update check."
           },
           "acdc.update.checkOnStartup": {
             "type": "boolean",
             "default": true,
+            "order": 1,
             "description": "Check the configured GitHub repository for a newer release when VS Code starts."
           },
           "acdc.update.includePrereleases": {
             "type": "boolean",
             "default": false,
+            "order": 2,
             "description": "Also consider GitHub pre-releases when checking for updates."
           }
         }
@@ -969,6 +1043,7 @@
         "properties": {
           "acdc.alBaseCode.repositories": {
             "type": "array",
+            "order": 1,
             "default": [
               {
                 "repository": "https://github.com/StefanMaron/MSDyn365BC.Sandbox.Code.History",
@@ -1005,6 +1080,7 @@
           "acdc.alBaseCode.syncOnStartup": {
             "type": "boolean",
             "default": false,
+            "order": 2,
             "markdownDescription": "When enabled, keeps the AL source folders up to date on startup: missing folders are cloned (after you approve), and existing folders are pulled to the latest commit of their branch (read-only, never pushed)."
           }
         }
@@ -1015,6 +1091,7 @@
         "properties": {
           "acdc.agents.placeholders": {
             "type": "object",
+            "order": 1,
             "default": {
               "reviewAgent": "AL Code Review Subagent",
               "architectAgent": "AL Architecture & Design Specialist",
@@ -1027,6 +1104,36 @@
               "type": "string",
               "description": "Display name of the agent or tool this placeholder resolves to."
             }
+          }
+        }
+      },
+      {
+        "title": "Spec-Driven Development (SDD) Paths",
+        "order": 4,
+        "properties": {
+          "acdc.plansRoot": {
+            "type": "string",
+            "default": ".github/plans",
+            "order": 1,
+            "markdownDescription": "Workspace-relative folder for SDD artifacts (spec, architecture, plan, test-plan, ...). Default: `.github/plans`.\n\n**[▶ Pick folder…](command:acdc.pickSddPlansRoot)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSddHelp)**"
+          },
+          "acdc.specFolderFormat": {
+            "type": "string",
+            "default": "{req_name}",
+            "order": 2,
+            "markdownDescription": "Template for per-requirement folder names under `plansRoot`. Supports date/time, sequence, identity and `{req_name}` / `{slug}` variables.\n\nExamples: `{req_name}`, `SDD-{YYYYMMDD}-{slug}`, `{000seq}-{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
+          },
+          "acdc.specFileFormat": {
+            "type": "string",
+            "default": "{req_name}.{type}.md",
+            "order": 3,
+            "markdownDescription": "Template for spec file names. `{type}` is `spec`, `architecture`, `test-plan`, `plan` or `delivery`.\n\nExamples: `{req_name}.{type}.md`, `{YYYYMMDD}-{slug}.{type}.md`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
+          },
+          "acdc.branchFormat": {
+            "type": "string",
+            "default": "feature/{slug}",
+            "order": 4,
+            "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
           }
         }
       }

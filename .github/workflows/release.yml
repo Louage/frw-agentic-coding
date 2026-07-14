@@ -98,12 +98,12 @@ jobs:
 
       - name: Package VSIX
         if: steps.check-tag.outputs.skipped == 'false'
-        run: npx @vscode/vsce package --no-dependencies -o frw-agentic-coding-${{ steps.version.outputs.tag }}.vsix
+        run: npx @vscode/vsce package --no-dependencies -o acdc-${{ steps.version.outputs.tag }}.vsix
 
       - name: Create GitHub Release
         if: steps.check-tag.outputs.skipped == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          files: frw-agentic-coding-*.vsix
+          files: acdc-*.vsix
           generate_release_notes: true

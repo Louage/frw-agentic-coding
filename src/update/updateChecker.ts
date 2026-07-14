@@ -3,7 +3,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { promises as fs } from "fs";
 
-const EXTENSION_ID = "theframework.frw-agentic-coding";
+const EXTENSION_ID = "theframework.acdc";
 
 interface GitHubReleaseAsset {
   id: number;
@@ -165,7 +165,7 @@ async function getLatestRelease(
         Authorization: `Bearer ${token}`,
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "frw-agentic-coding",
+        "User-Agent": "acdc",
       },
     }
   );
@@ -192,7 +192,7 @@ async function downloadAsset(
       Authorization: `Bearer ${token}`,
       Accept: "application/octet-stream",
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "frw-agentic-coding",
+      "User-Agent": "acdc",
     },
   });
 

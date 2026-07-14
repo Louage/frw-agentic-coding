@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
 import { ListAgentPlaceholdersTool } from "./tools/listAgentPlaceholdersTool";
 import { UpdateAgentFlowTool } from "./tools/updateAgentFlowTool";
+import { GetSddConfigTool } from "./tools/getSddConfigTool";
+import { RenderSddPathTool } from "./tools/renderSddPathTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
 import { AgentFlowViewProvider } from "./views/agentFlowViewProvider";
 import {
@@ -77,7 +79,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.lm.registerTool(
       "frw_update_agent_flow",
       new UpdateAgentFlowTool(flowState, output)
-    )
+    ),
+    vscode.lm.registerTool("frw_get_sdd_config", new GetSddConfigTool()),
+    vscode.lm.registerTool("frw_render_sdd_path", new RenderSddPathTool())
   );
 
   // Validate placeholder values on startup and on configuration change.
@@ -189,6 +193,36 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // 3c. Command: pick a workspace folder and store its relative path in
+  //     `acdc.plansRoot`. Wired into the setting's markdownDescription
+  //     as a clickable "Pick folder…" link.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.pickSddPlansRoot", async () => {
+      await pickSddPlansRootCommand();
+    })
+  );
+
+  // 3d. Command: open the SDD settings help document as a Markdown preview.
+  //     Wired into each `acdc.*` SDD setting description as a "Details…" link
+  //     so we can keep the inline descriptions short.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.showSddHelp", async () => {
+      const helpUri = vscode.Uri.joinPath(
+        context.extensionUri,
+        "assets",
+        "help",
+        "sdd-settings-help.md"
+      );
+      try {
+        await vscode.commands.executeCommand("markdown.showPreview", helpUri);
+      } catch {
+        // Markdown preview extension not enabled — fall back to opening the file.
+        const doc = await vscode.workspace.openTextDocument(helpUri);
+        await vscode.window.showTextDocument(doc);
+      }
+    })
+  );
+
   // 4. AL Base Code / ISV Code: mount external BC/ISV source folders for AI context.
   context.subscriptions.push(
     vscode.commands.registerCommand("acdc.manageAlBaseCode", () =>
@@ -284,6 +318,134 @@ async function setAgentPlaceholderCommand(
   void vscode.window.showInformationMessage(
     `\${${keyPick.label}} now resolves to "${valuePick.label}".`
   );
+}
+
+/**
+ * Opens a folder picker rooted in the first workspace folder and stores the
+ * selected folder as a workspace-relative POSIX path in `acdc.plansRoot`.
+ *
+ * Scope selection: the update is written to the same scope that already
+ * defines the setting (Workspace wins over User), falling back to Workspace
+ * when a workspace is open and User otherwise. After saving, the correct
+ * settings editor scope is opened and scrolled to the setting so the value
+ * is visibly reflected in the input.
+ *
+ * Out-of-workspace folders: the user can (a) add the folder to the current
+ * workspace (multi-root), (b) store an absolute path anyway, or (c) cancel.
+ */
+async function pickSddPlansRootCommand(): Promise<void> {
+  const folders = vscode.workspace.workspaceFolders;
+  const defaultUri = folders && folders.length > 0 ? folders[0].uri : undefined;
+
+  const picked = await vscode.window.showOpenDialog({
+    canSelectFiles: false,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: "Use as SDD plans root",
+    title: "Select the folder that holds Spec-Driven Development artifacts",
+    defaultUri,
+  });
+  if (!picked || picked.length === 0) {
+    return;
+  }
+  const selected = picked[0];
+
+  let value: string | undefined;
+
+  if (folders && folders.length > 0) {
+    // Try each root — pick the shortest relative path if the folder lives
+    // inside one of them.
+    const relativeMatches = folders
+      .map((f) => ({ folder: f, rel: toWorkspaceRelativePosix(f.uri.fsPath, selected.fsPath) }))
+      .filter((m): m is { folder: vscode.WorkspaceFolder; rel: string } => m.rel !== undefined)
+      .sort((a, b) => a.rel.length - b.rel.length);
+
+    if (relativeMatches.length > 0) {
+      const best = relativeMatches[0];
+      const rel = best.rel === "" ? "." : best.rel;
+      // In multi-root workspaces the setting is window-scoped, so we need to
+      // qualify with the folder name when it's not the first root.
+      value =
+        folders.length > 1 && best.folder !== folders[0]
+          ? `${best.folder.name}/${rel === "." ? "" : rel}`.replace(/\/$/, "")
+          : rel;
+    } else {
+      // Out of workspace — offer to add it, or store absolute path.
+      const proceed = await vscode.window.showWarningMessage(
+        `The chosen folder is outside the current workspace (${selected.fsPath}). ` +
+          `Add it to the workspace, or store the absolute path? Absolute paths are less portable across machines.`,
+        { modal: true },
+        "Add to Workspace",
+        "Use absolute path"
+      );
+      if (!proceed) {
+        return;
+      }
+      if (proceed === "Add to Workspace") {
+        const added = vscode.workspace.updateWorkspaceFolders(
+          vscode.workspace.workspaceFolders?.length ?? 0,
+          0,
+          { uri: selected }
+        );
+        if (!added) {
+          void vscode.window.showErrorMessage(
+            `Failed to add "${selected.fsPath}" to the workspace.`
+          );
+          return;
+        }
+        // The added folder becomes a new workspace root. In a single-root
+        // workspace we ended up in multi-root territory; in either case the
+        // plans root IS that folder, so store its basename as folder-qualified
+        // relative path.
+        const basename = selected.path.split("/").filter(Boolean).pop() ?? selected.fsPath;
+        value = basename;
+      } else {
+        value = selected.fsPath.replace(/\\/g, "/");
+      }
+    }
+  } else {
+    value = selected.fsPath.replace(/\\/g, "/");
+  }
+
+  // Determine the scope: honour the existing scope if one is set, otherwise
+  // prefer Workspace when a workspace is open.
+  const config = vscode.workspace.getConfiguration();
+  const inspect = config.inspect<string>("acdc.plansRoot");
+  let target: vscode.ConfigurationTarget;
+  if (inspect?.workspaceValue !== undefined) {
+    target = vscode.ConfigurationTarget.Workspace;
+  } else if (inspect?.globalValue !== undefined) {
+    target = vscode.ConfigurationTarget.Global;
+  } else {
+    target = folders && folders.length > 0
+      ? vscode.ConfigurationTarget.Workspace
+      : vscode.ConfigurationTarget.Global;
+  }
+
+  await config.update("acdc.plansRoot", value, target);
+
+  const scopeLabel =
+    target === vscode.ConfigurationTarget.Workspace ? "workspace" : "user";
+  void vscode.window.showInformationMessage(
+    `SDD plans root set to "${value}" (${scopeLabel} setting).`
+  );
+}
+
+/**
+ * Returns the POSIX relative path from `root` to `child`, or `undefined` when
+ * `child` is not a descendant of `root`. Comparison is case-insensitive on
+ * Windows to match the OS filesystem semantics.
+ */
+function toWorkspaceRelativePosix(root: string, child: string): string | undefined {
+  const norm = (p: string): string => p.replace(/\\/g, "/").replace(/\/+$/g, "");
+  const rootN = norm(root);
+  const childN = norm(child);
+  const rootCmp = process.platform === "win32" ? rootN.toLowerCase() : rootN;
+  const childCmp = process.platform === "win32" ? childN.toLowerCase() : childN;
+  if (childCmp === rootCmp) { return ""; }
+  const prefix = rootCmp + "/";
+  if (!childCmp.startsWith(prefix)) { return undefined; }
+  return childN.slice(prefix.length);
 }
 
 async function selectAgentInChat(
