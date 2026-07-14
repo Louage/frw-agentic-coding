@@ -967,8 +967,8 @@
         "category": "AC/DC"
       },
       {
-        "command": "acdc.showSddHelp",
-        "title": "Show SDD Settings Reference",
+        "command": "acdc.showSettingsHelp",
+        "title": "Show Settings Reference",
         "category": "AC/DC"
       }
     ],
@@ -1014,6 +1014,7 @@
     },
     "configuration": [
       {
+        "id": "acdc.update",
         "title": "Update",
         "order": 1,
         "properties": {
@@ -1038,6 +1039,7 @@
         }
       },
       {
+        "id": "acdc.alBaseCode",
         "title": "AL Base Code / ISV Code",
         "order": 2,
         "properties": {
@@ -1052,7 +1054,7 @@
                 "enabled": false
               }
             ],
-            "markdownDescription": "**[▶ Open the AL Base Code / ISV Code table editor](command:acdc.manageAlBaseCode)** — recommended instead of editing JSON. Provides a table with a live branch picker and folder defaults.\n\nRead-only AL source repositories (Business Central base app and ISV products such as Continia or Tasklet) mounted into the workspace so agents can search and read real AL code. Mounted source folders are added to `git.ignoredRepositories` so they don't clutter the Source Control view.\n\nEach entry: `repository` (git URL — leave empty for a **manual** folder you update yourself, e.g. an ISV file download), `branch`, `folder` (leave empty to use the portable per-user default under `%LOCALAPPDATA%\\acdc-sources`), `enabled`.",
+            "markdownDescription": "Read-only AL/BC & ISV source repositories mounted into the workspace so agents can read real AL code. **[▶ Open table editor](command:acdc.manageAlBaseCode)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Read-only AL source repositories (BC base app and ISV products) mounted so agents can search real AL code. Click to open the full reference.\")**",
             "items": {
               "type": "object",
               "properties": {
@@ -1086,6 +1088,7 @@
         }
       },
       {
+        "id": "acdc.agents",
         "title": "Agent Placeholders",
         "order": 3,
         "properties": {
@@ -1099,7 +1102,7 @@
               "conductorAgent": "AL Development Conductor",
               "auditorAgent": "Dredd — AL Independent Auditor"
             },
-            "markdownDescription": "Maps placeholder names to the concrete agent (or tool) display names they resolve to. These placeholders can appear in agent prose, prompts, and skills as `${placeholderName}` and are resolved at runtime by the extension.\n\n**[▶ Set via quick pick](command:acdc.setAgentPlaceholder)** — shows a live dropdown of all agents currently loaded in the workspace; recommended over editing JSON.\n\n**Example**: set `reviewAgent` to `@Dredd` so every `${reviewAgent}` in agent files resolves to `@Dredd` when content is served through the extension.\n\nThe extension ships sensible defaults; override only the roles you want to customize. A warning is shown in the **AC⚡DC** output channel if a resolved value does not match a known agent.",
+            "markdownDescription": "Maps `${placeholderName}` tokens used in agent prose/prompts/skills to concrete agent display names, resolved at runtime. **[▶ Set via quick pick](command:acdc.setAgentPlaceholder)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Maps placeholder names to concrete agent display names resolved at runtime. Click to open the full reference.\")**",
             "additionalProperties": {
               "type": "string",
               "description": "Display name of the agent or tool this placeholder resolves to."
@@ -1108,6 +1111,7 @@
         }
       },
       {
+        "id": "acdc.sdd",
         "title": "Spec-Driven Development (SDD) Paths",
         "order": 4,
         "properties": {
@@ -1115,25 +1119,25 @@
             "type": "string",
             "default": ".github/plans",
             "order": 1,
-            "markdownDescription": "Workspace-relative folder for SDD artifacts (spec, architecture, plan, test-plan, ...). Default: `.github/plans`.\n\n**[▶ Pick folder…](command:acdc.pickSddPlansRoot)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSddHelp)**"
+            "markdownDescription": "Workspace-relative folder for SDD artifacts (spec, architecture, plan, test-plan, ...). Default: `.github/plans`.\n\n**[▶ Pick folder…](command:acdc.pickSddPlansRoot)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Workspace-relative folder where AC⚡DC agents create spec artifacts. Click to open the full reference.\")**"
           },
           "acdc.specFolderFormat": {
             "type": "string",
             "default": "{req_name}",
             "order": 2,
-            "markdownDescription": "Template for per-requirement folder names under `plansRoot`. Supports date/time, sequence, identity and `{req_name}` / `{slug}` variables.\n\nExamples: `{req_name}`, `SDD-{YYYYMMDD}-{slug}`, `{000seq}-{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
+            "markdownDescription": "Template for per-requirement folder names under `plansRoot`. Supports date/time, sequence, identity and `{req_name}` / `{slug}` variables.\n\nExamples: `{req_name}`, `SDD-{YYYYMMDD}-{slug}`, `{000seq}-{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for the per-requirement spec folder name. Click to open the full variable reference.\")**"
           },
           "acdc.specFileFormat": {
             "type": "string",
             "default": "{req_name}.{type}.md",
             "order": 3,
-            "markdownDescription": "Template for spec file names. `{type}` is `spec`, `architecture`, `test-plan`, `plan` or `delivery`.\n\nExamples: `{req_name}.{type}.md`, `{YYYYMMDD}-{slug}.{type}.md`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
+            "markdownDescription": "Template for spec file names. `{type}` is `spec`, `architecture`, `test-plan`, `plan` or `delivery`.\n\nExamples: `{req_name}.{type}.md`, `{YYYYMMDD}-{slug}.{type}.md`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for spec file names inside a spec folder. Click to open the full variable reference.\")**"
           },
           "acdc.branchFormat": {
             "type": "string",
             "default": "feature/{slug}",
             "order": 4,
-            "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSddHelp)**"
+            "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for git branch names created for a spec-driven requirement. Click to open the full variable reference.\")**"
           }
         }
       }

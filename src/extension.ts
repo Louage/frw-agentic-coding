@@ -202,23 +202,28 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // 3d. Command: open the SDD settings help document as a Markdown preview.
-  //     Wired into each `acdc.*` SDD setting description as a "Details…" link
-  //     so we can keep the inline descriptions short.
+  // 3d. Command: open the settings help document as a Markdown preview.
+  //     Wired into each `acdc.*` setting description as a "Details…" link so we
+  //     can keep the inline descriptions short (VS Code always shows the full
+  //     markdownDescription, so long text is moved here).
   context.subscriptions.push(
-    vscode.commands.registerCommand("acdc.showSddHelp", async () => {
+    vscode.commands.registerCommand("acdc.showSettingsHelp", async () => {
       const helpUri = vscode.Uri.joinPath(
         context.extensionUri,
         "assets",
         "help",
-        "sdd-settings-help.md"
+        "settings-help.md"
       );
       try {
-        await vscode.commands.executeCommand("markdown.showPreview", helpUri);
+        await vscode.commands.executeCommand("markdown.showPreviewToSide", helpUri);
       } catch {
-        // Markdown preview extension not enabled — fall back to opening the file.
+        // Markdown preview extension not enabled — fall back to opening the file
+        // beside the current editor so the Settings tab stays open.
         const doc = await vscode.workspace.openTextDocument(helpUri);
-        await vscode.window.showTextDocument(doc);
+        await vscode.window.showTextDocument(doc, {
+          viewColumn: vscode.ViewColumn.Beside,
+          preview: false,
+        });
       }
     })
   );
