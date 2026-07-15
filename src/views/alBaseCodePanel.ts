@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import {
   type AlSourceEntry,
+  effectiveFolder,
   getEntries,
   saveEntries,
   listRemoteBranches,
@@ -19,6 +20,10 @@ export class AlBaseCodePanel {
 
   static show(output: vscode.OutputChannel): void {
     if (AlBaseCodePanel.current) {
+      // Fully rebuild the webview HTML so recent script/UI changes take effect
+      // even when the panel was previously opened in this session (webviews
+      // otherwise cache the initial HTML with retainContextWhenHidden).
+      AlBaseCodePanel.current.reloadWebview();
       AlBaseCodePanel.current.panel.reveal(vscode.ViewColumn.Active);
       AlBaseCodePanel.current.postState();
       return;
@@ -30,6 +35,10 @@ export class AlBaseCodePanel {
       { enableScripts: true, retainContextWhenHidden: true }
     );
     AlBaseCodePanel.current = new AlBaseCodePanel(panel, output);
+  }
+
+  private reloadWebview(): void {
+    this.panel.webview.html = this.getHtml();
   }
 
   private constructor(
@@ -50,6 +59,43 @@ export class AlBaseCodePanel {
     });
   }
 
+  private validateEntries(entries: AlSourceEntry[]): string[] {
+    const errors: string[] = [];
+    entries.forEach((entry, index) => {
+      const row = index + 1;
+      const repository = (entry.repository ?? "").trim();
+      const branch = (entry.branch ?? "").trim();
+      const baseFolder = (entry.folder ?? "").trim();
+
+      if (!repository) {
+        if (branch) {
+          errors.push(`Row ${row}: Branch requires a repository.`);
+        }
+        if (baseFolder) {
+          const validation = validateFolder(baseFolder, { forClone: false });
+          if (!validation.ok) {
+            errors.push(`Row ${row}: ${validation.reason}`);
+          }
+        }
+        return;
+      }
+
+      if (!branch) {
+        errors.push(`Row ${row}: Branch is required when repository is set.`);
+      }
+      if (!baseFolder) {
+        errors.push(`Row ${row}: Base folder is required when repository is set.`);
+        return;
+      }
+
+      const validation = validateFolder(effectiveFolder(entry));
+      if (!validation.ok) {
+        errors.push(`Row ${row}: ${validation.reason}`);
+      }
+    });
+    return errors;
+  }
+
   private async handleMessage(message: unknown): Promise<void> {
     if (!message || typeof message !== "object") {
       return;
@@ -58,6 +104,7 @@ export class AlBaseCodePanel {
       type?: string;
       index?: number;
       url?: string;
+      branch?: string;
       folder?: string;
       entries?: AlSourceEntry[];
     };
@@ -90,7 +137,7 @@ export class AlBaseCodePanel {
 
       case "suggestFolder": {
         const index = msg.index ?? -1;
-        const folder = suggestDefaultFolder(msg.url ?? "");
+        const folder = suggestDefaultFolder(msg.url ?? "", msg.branch ?? "");
         void this.panel.webview.postMessage({
           type: "folderSuggested",
           index,
@@ -102,10 +149,11 @@ export class AlBaseCodePanel {
       case "browseFolder": {
         const index = msg.index ?? -1;
         const url = msg.url ?? "";
+        const branch = msg.branch ?? "";
         const defaultUri = msg.folder
           ? vscode.Uri.file(msg.folder)
           : url
-            ? vscode.Uri.file(suggestDefaultFolder(url))
+            ? vscode.Uri.file(suggestDefaultFolder(url, branch))
             : undefined;
         const picked = await vscode.window.showOpenDialog({
           canSelectFolders: true,
@@ -116,7 +164,16 @@ export class AlBaseCodePanel {
         });
         if (picked && picked[0]) {
           const folder = picked[0].fsPath;
-          const validation = validateFolder(folder, { forClone: !!url });
+          const validation = url
+            ? validateFolder(
+                effectiveFolder({
+                  repository: url,
+                  branch,
+                  folder,
+                  enabled: true,
+                })
+              )
+            : validateFolder(folder, { forClone: false });
           void this.panel.webview.postMessage({
             type: "folderPicked",
             index,
@@ -130,9 +187,19 @@ export class AlBaseCodePanel {
 
       case "validateFolder": {
         const index = msg.index ?? -1;
-        const validation = validateFolder(msg.folder ?? "", {
-          forClone: !!(msg.url ?? ""),
-        });
+        const repository = msg.url ?? "";
+        const branch = msg.branch ?? "";
+        const folder = msg.folder ?? "";
+        const validation = repository
+          ? validateFolder(
+              effectiveFolder({
+                repository,
+                branch,
+                folder,
+                enabled: true,
+              })
+            )
+          : validateFolder(folder, { forClone: false });
         void this.panel.webview.postMessage({
           type: "folderValidated",
           index,
@@ -143,7 +210,15 @@ export class AlBaseCodePanel {
       }
 
       case "save": {
-        await saveEntries(msg.entries ?? []);
+        const entries = msg.entries ?? [];
+        const errors = this.validateEntries(entries);
+        if (errors.length > 0) {
+          vscode.window.showWarningMessage(
+            `Cannot save AL Base Code settings: ${errors[0]}`
+          );
+          return;
+        }
+        await saveEntries(entries);
         vscode.window.showInformationMessage(
           "AL Base Code / ISV Code settings saved."
         );
@@ -152,17 +227,25 @@ export class AlBaseCodePanel {
       }
 
       case "apply": {
-        await saveEntries(msg.entries ?? []);
+        const entries = msg.entries ?? [];
+        const errors = this.validateEntries(entries);
+        if (errors.length > 0) {
+          vscode.window.showWarningMessage(
+            `Cannot apply AL Base Code settings: ${errors[0]}`
+          );
+          return;
+        }
+        await saveEntries(entries);
         const results = await syncAlBaseCode(this.output, {
           promptBeforeClone: true,
         });
         const cloned = results.filter((r) => r.outcome === "cloned").length;
         const pulled = results.filter((r) => r.outcome === "pulled").length;
         const manual = results.filter((r) => r.outcome === "skipped").length;
-        const errors = results.filter((r) => r.outcome === "error");
-        if (errors.length > 0) {
+        const syncErrors = results.filter((r) => r.outcome === "error");
+        if (syncErrors.length > 0) {
           vscode.window.showWarningMessage(
-            `AL Base Code: ${errors.length} error(s). Check the AC⚡DC output.`
+            `AL Base Code: ${syncErrors.length} error(s). Check the AC⚡DC output.`
           );
         } else {
           const manualNote = manual > 0 ? `, ${manual} manual mounted` : "";
@@ -201,7 +284,7 @@ export class AlBaseCodePanel {
       }
       h1 { font-size: 1.2em; margin: 0 0 4px; }
       p.hint { color: var(--vscode-descriptionForeground); margin: 0 0 12px; }
-      table { width: 100%; border-collapse: collapse; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
       th, td {
         text-align: left;
         padding: 6px 8px;
@@ -241,24 +324,45 @@ export class AlBaseCodePanel {
       .toolbar { margin-top: 12px; display: flex; gap: 8px; }
       .error { color: var(--vscode-errorForeground, #f14c4c); font-size: 0.85em; margin-top: 2px; }
       .checkbox-cell { text-align: center; width: 60px; }
-      .branch-cell { min-width: 160px; }
-      .actions-cell { white-space: nowrap; width: 90px; }
+      .repository-cell { width: 18%; }
+      .branch-cell { width: 10%; }
+      .base-cell { width: 34%; }
+      .repo-cell { width: 16%; }
+      .derived-cell { width: 10%; }
+      .checkbox-cell { width: 6%; }
+      .actions-cell { white-space: nowrap; width: 6%; }
       .loading { color: var(--vscode-descriptionForeground); font-style: italic; font-size: 0.85em; }
+      input[readonly] {
+        opacity: 0.8;
+        background: var(--vscode-input-background);
+      }
     </style>
   </head>
   <body>
-    <h1>AL Base Code / ISV Code</h1>
+    <h1>AL Base Code / ISV Code <span style="font-size:0.7em;color:var(--vscode-descriptionForeground);">(build ${nonce.slice(0, 6)})</span></h1>
     <p class="hint">
       Read-only AL source repositories (BC base app + ISV products) mounted for agent grounding.
+      Target path is resolved as <b>Base Folder / Repo Folder / Branch Folder</b>.
       Missing folders are cloned after you approve; existing folders are pulled to the latest commit (never pushed).
       Leave <b>Repository</b> empty for a <b>manual</b> source (e.g. an ISV file download): the extension only mounts the folder and never updates it — you maintain it yourself.
     </p>
     <table>
+      <colgroup>
+        <col style="width:18%" />
+        <col style="width:10%" />
+        <col style="width:34%" />
+        <col style="width:16%" />
+        <col style="width:10%" />
+        <col style="width:6%" />
+        <col style="width:6%" />
+      </colgroup>
       <thead>
         <tr>
-          <th>Repository</th>
+          <th class="repository-cell">Repository</th>
           <th class="branch-cell">Branch</th>
-          <th>Folder</th>
+          <th class="base-cell">Base Folder</th>
+          <th class="repo-cell">Repo Folder</th>
+          <th class="derived-cell">Branch Folder</th>
           <th class="checkbox-cell">Enabled</th>
           <th class="actions-cell"></th>
         </tr>
@@ -266,17 +370,144 @@ export class AlBaseCodePanel {
       <tbody id="rows"></tbody>
     </table>
     <div class="toolbar">
-      <button id="add" class="secondary">+ Add source</button>
-      <button id="save" class="secondary">Save</button>
-      <button id="apply">Save &amp; Apply</button>
+      <button id="add" type="button" data-action="add" class="secondary">+ Add source</button>
+      <button id="save" type="button" class="secondary">Save</button>
+      <button id="apply" type="button">Save &amp; Apply</button>
     </div>
 
     <script nonce="${nonce}">
+      window.onerror = function (message, source, lineno, colno, error) {
+        try {
+          const h1 = document.querySelector("h1");
+          if (h1) {
+            h1.style.color = "var(--vscode-errorForeground,#f14c4c)";
+            h1.textContent = "AL Base Code (script error): " + message + " @ " + lineno + ":" + colno;
+          }
+        } catch (e) { /* ignore */ }
+        return false;
+      };
+
       const vscode = acquireVsCodeApi();
       let entries = [];
+      const folderErrors = {};
+      const branchLoadTimers = {};
 
       function h(html) {
         return html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function repoFolderFromRepository(url) {
+        const trimmed = (url || "").trim().replace(/\\.git$/i, "").replace(/\\/+$/, "");
+        const segments = trimmed.split(/[\\\\/]/);
+        return segments.length ? (segments[segments.length - 1] || "") : "";
+      }
+
+      function branchFolderFromBranch(branch) {
+        return (branch || "").trim().replace(/[\\\\/:*?"<>|]+/g, "_");
+      }
+
+      function setDerivedFolders(idx) {
+        const e = entries[idx];
+        const repoFolder = (e.repository || "").trim() ? repoFolderFromRepository(e.repository) : "";
+        const branchFolder = (e.repository || "").trim() && (e.branch || "").trim()
+          ? branchFolderFromBranch(e.branch)
+          : "";
+        const repoEl = document.querySelector('input[data-repo-folder="' + idx + '"]');
+        const branchEl = document.querySelector('input[data-branch-folder="' + idx + '"]');
+        if (repoEl) repoEl.value = repoFolder;
+        if (branchEl) branchEl.value = branchFolder;
+      }
+
+      function postValidateFolder(idx) {
+        vscode.postMessage({
+          type: "validateFolder",
+          index: idx,
+          folder: entries[idx].folder,
+          url: entries[idx].repository,
+          branch: entries[idx].branch,
+        });
+      }
+
+      function ensureBaseFolder(idx) {
+        if ((entries[idx].repository || "").trim() && !(entries[idx].folder || "").trim()) {
+          vscode.postMessage({
+            type: "suggestFolder",
+            index: idx,
+            url: entries[idx].repository,
+            branch: entries[idx].branch,
+          });
+        }
+      }
+
+      function requestBranches(idx, immediate) {
+        const repository = (entries[idx].repository || "").trim();
+        const status = document.querySelector('[data-branch-status="' + idx + '"]');
+        if (!repository) {
+          if (status) status.textContent = "";
+          return;
+        }
+        if (branchLoadTimers[idx]) {
+          clearTimeout(branchLoadTimers[idx]);
+        }
+        const run = () => {
+          if (status) {
+            status.className = "loading";
+            status.textContent = "Loading branches…";
+          }
+          vscode.postMessage({ type: "listBranches", index: idx, url: repository });
+        };
+        if (immediate) {
+          run();
+          return;
+        }
+        branchLoadTimers[idx] = setTimeout(run, 350);
+      }
+
+      function rowValidationMessage(idx) {
+        const e = entries[idx];
+        const repository = (e.repository || "").trim();
+        const branch = (e.branch || "").trim();
+        const baseFolder = (e.folder || "").trim();
+
+        if (!repository) {
+          if (branch) {
+            return "Branch requires a repository.";
+          }
+          return folderErrors[idx] || "";
+        }
+        if (!baseFolder) {
+          return "Base folder is required when repository is set.";
+        }
+        if (!branch) {
+          return "Branch is required when repository is set.";
+        }
+        return folderErrors[idx] || "";
+      }
+
+      function updateRowValidation(idx) {
+        const errEl = document.querySelector('[data-folder-error="' + idx + '"]');
+        const message = rowValidationMessage(idx);
+        if (errEl) errEl.textContent = message;
+        return !message;
+      }
+
+      function updateActionState() {
+        const saveButton = document.getElementById("save");
+        const applyButton = document.getElementById("apply");
+        let valid = true;
+        entries.forEach((e, idx) => {
+          const repository = (e.repository || "").trim();
+          const branch = (e.branch || "").trim();
+          const baseFolder = (e.folder || "").trim();
+          const message = rowValidationMessage(idx);
+          const isBlank = !repository && !branch && !baseFolder;
+          if (!isBlank && !!message) {
+            valid = false;
+          }
+          updateRowValidation(idx);
+        });
+        saveButton.disabled = !valid;
+        applyButton.disabled = !valid;
       }
 
       function render() {
@@ -284,9 +515,11 @@ export class AlBaseCodePanel {
         tbody.innerHTML = "";
         entries.forEach((e, i) => {
           const manual = !(e.repository || "").trim();
+          const repoFolder = manual ? "" : repoFolderFromRepository(e.repository || "");
+          const branchFolder = manual ? "" : branchFolderFromBranch(e.branch || "");
           const tr = document.createElement("tr");
           tr.innerHTML =
-            '<td>' +
+            '<td class="repository-cell">' +
               '<input type="text" data-field="repository" data-index="' + i + '" value="' + h(e.repository || "") + '" placeholder="(leave empty for a manual folder)" />' +
             '</td>' +
             '<td class="branch-cell">' +
@@ -297,22 +530,42 @@ export class AlBaseCodePanel {
               '</select>' +
               '<div class="branch-status" data-branch-status="' + i + '"></div>' +
             '</td>' +
-            '<td>' +
+            '<td class="base-cell">' +
               '<div class="folder-cell">' +
-                '<input type="text" data-field="folder" data-index="' + i + '" value="' + h(e.folder || "") + '" placeholder="' + (manual ? 'folder you maintain yourself' : '(default under %LOCALAPPDATA%)') + '" />' +
+                '<input type="text" data-field="folder" data-index="' + i + '" value="' + h(e.folder || "") + '" placeholder="' + (manual ? 'folder you maintain yourself' : '(required base folder)') + '" />' +
                 '<button class="secondary" data-browse="' + i + '">…</button>' +
               '</div>' +
               '<div class="error" data-folder-error="' + i + '"></div>' +
+            '</td>' +
+            '<td class="repo-cell">' +
+              '<input type="text" data-repo-folder="' + i + '" value="' + h(repoFolder) + '" readonly />' +
+            '</td>' +
+            '<td class="derived-cell">' +
+              '<input type="text" data-branch-folder="' + i + '" value="' + h(branchFolder) + '" readonly />' +
             '</td>' +
             '<td class="checkbox-cell">' +
               '<input type="checkbox" data-field="enabled" data-index="' + i + '" ' + (e.enabled ? "checked" : "") + ' />' +
             '</td>' +
             '<td class="actions-cell">' +
-              '<button class="secondary" data-branches="' + i + '"' + (manual ? ' disabled' : '') + '>Branches</button>' +
+              '<button class="secondary" data-branches="' + i + '"' + (manual ? ' disabled' : '') + '>Refresh</button>' +
               '<button class="row-remove" data-remove="' + i + '">Remove</button>' +
             '</td>';
           tbody.appendChild(tr);
         });
+
+        entries.forEach((_, i) => {
+          setDerivedFolders(i);
+          updateRowValidation(i);
+        });
+        updateActionState();
+      }
+
+      function addSourceRow() {
+        entries.push({ repository: "", branch: "", folder: "", enabled: false });
+        render();
+        const idx = entries.length - 1;
+        const repoInput = document.querySelector('input[data-field="repository"][data-index="' + idx + '"]');
+        if (repoInput) repoInput.focus();
       }
 
       function updateRowManualState(idx) {
@@ -330,11 +583,16 @@ export class AlBaseCodePanel {
         }
         if (branchesBtn) branchesBtn.disabled = manual;
         const folderInput = document.querySelector('input[data-field="folder"][data-index="' + idx + '"]');
-        if (folderInput) folderInput.placeholder = manual ? 'folder you maintain yourself' : '(default under %LOCALAPPDATA%)';
+        if (folderInput) {
+          folderInput.placeholder = manual
+            ? 'folder you maintain yourself'
+            : '(required base folder)';
+        }
+        setDerivedFolders(idx);
+        updateActionState();
       }
 
-      document.addEventListener("input", (ev) => {
-        const t = ev.target;
+      function handleFieldUpdate(t) {
         const field = t.getAttribute("data-field");
         if (field === null) return;
         const idx = parseInt(t.getAttribute("data-index"), 10);
@@ -343,42 +601,107 @@ export class AlBaseCodePanel {
         } else {
           entries[idx][field] = t.value;
         }
+
         if (field === "repository") {
+          if (!(entries[idx].repository || "").trim()) {
+            entries[idx].branch = "";
+            folderErrors[idx] = "";
+          } else {
+            ensureBaseFolder(idx);
+            requestBranches(idx, false);
+          }
           updateRowManualState(idx);
+          postValidateFolder(idx);
         }
+
+        if (field === "branch") {
+          ensureBaseFolder(idx);
+          setDerivedFolders(idx);
+          postValidateFolder(idx);
+        }
+
         if (field === "folder") {
-          vscode.postMessage({ type: "validateFolder", index: idx, folder: t.value, url: entries[idx].repository });
+          const repository = (entries[idx].repository || "").trim();
+          if (repository && !(entries[idx].folder || "").trim()) {
+            ensureBaseFolder(idx);
+            return;
+          }
+          postValidateFolder(idx);
         }
+
+        updateActionState();
+      }
+
+      document.addEventListener("input", (ev) => {
+        const t = ev.target;
+        if (!t || typeof t.getAttribute !== "function") return;
+        handleFieldUpdate(t);
+      });
+
+      document.addEventListener("change", (ev) => {
+        const t = ev.target;
+        if (!t || typeof t.getAttribute !== "function") return;
+        handleFieldUpdate(t);
       });
 
       document.addEventListener("click", (ev) => {
-        const t = ev.target;
-        if (t.hasAttribute("data-browse")) {
-          const idx = parseInt(t.getAttribute("data-browse"), 10);
-          vscode.postMessage({ type: "browseFolder", index: idx, url: entries[idx].repository, folder: entries[idx].folder });
-        } else if (t.hasAttribute("data-branches")) {
-          const idx = parseInt(t.getAttribute("data-branches"), 10);
-          const status = document.querySelector('[data-branch-status="' + idx + '"]');
-          if (status) status.className = "loading", status.textContent = "Loading branches…";
-          if (!entries[idx].folder) {
-            vscode.postMessage({ type: "suggestFolder", index: idx, url: entries[idx].repository });
-          }
-          vscode.postMessage({ type: "listBranches", index: idx, url: entries[idx].repository });
-        } else if (t.hasAttribute("data-remove")) {
-          const idx = parseInt(t.getAttribute("data-remove"), 10);
+        const rawTarget = ev.target;
+        const el = rawTarget instanceof Element
+          ? rawTarget
+          : (rawTarget && rawTarget.parentElement ? rawTarget.parentElement : null);
+        if (!el) return;
+
+        // Add source is bound via a direct onclick handler further below to
+        // guarantee a single insertion; do NOT also handle it here or the
+        // bubbled click will insert a second row.
+        const browseBtn = el.closest("[data-browse]");
+        if (browseBtn) {
+          const idx = parseInt(browseBtn.getAttribute("data-browse"), 10);
+          vscode.postMessage({
+            type: "browseFolder",
+            index: idx,
+            url: entries[idx].repository,
+            branch: entries[idx].branch,
+            folder: entries[idx].folder,
+          });
+          return;
+        }
+
+        const branchBtn = el.closest("[data-branches]");
+        if (branchBtn) {
+          const idx = parseInt(branchBtn.getAttribute("data-branches"), 10);
+          ensureBaseFolder(idx);
+          requestBranches(idx, true);
+          return;
+        }
+
+        const removeBtn = el.closest("[data-remove]");
+        if (removeBtn) {
+          const idx = parseInt(removeBtn.getAttribute("data-remove"), 10);
           entries.splice(idx, 1);
+          delete folderErrors[idx];
           render();
         }
       });
 
-      document.getElementById("add").addEventListener("click", () => {
-        entries.push({ repository: "", branch: "", folder: "", enabled: false });
-        render();
-      });
+      const addButton = document.getElementById("add");
+      if (addButton) {
+        addButton.onclick = function (ev) {
+          if (ev) ev.preventDefault();
+          try {
+            addSourceRow();
+          } catch (err) {
+            const h1 = document.querySelector("h1");
+            if (h1) h1.textContent = "Add failed: " + (err && err.message ? err.message : err);
+          }
+        };
+      }
       document.getElementById("save").addEventListener("click", () => {
+        if (document.getElementById("save").disabled) return;
         vscode.postMessage({ type: "save", entries: entries });
       });
       document.getElementById("apply").addEventListener("click", () => {
+        if (document.getElementById("apply").disabled) return;
         vscode.postMessage({ type: "apply", entries: entries });
       });
 
@@ -386,36 +709,52 @@ export class AlBaseCodePanel {
         const m = ev.data;
         if (m.type === "state") {
           entries = (m.entries || []).map((e) => ({ repository: e.repository || "", branch: e.branch || "", folder: e.folder || "", enabled: !!e.enabled }));
+          Object.keys(folderErrors).forEach((key) => delete folderErrors[key]);
           render();
+          entries.forEach((e, idx) => {
+            if ((e.repository || "").trim()) {
+              requestBranches(idx, false);
+              postValidateFolder(idx);
+            }
+          });
         } else if (m.type === "branches") {
           const idx = m.index;
           const status = document.querySelector('[data-branch-status="' + idx + '"]');
           const select = document.querySelector('select[data-field="branch"][data-index="' + idx + '"]');
           if (m.error) {
-            if (status) status.className = "error", status.textContent = m.error;
+            if (status) {
+              status.className = "error";
+              status.textContent = m.error;
+            }
             return;
           }
           if (status) status.textContent = "";
           if (select) {
             const current = entries[idx].branch;
-            select.innerHTML = '<option value="">(pick a branch)</option>' +
-              m.branches.map((b) => '<option value="' + h(b) + '"' + (b === current ? " selected" : "") + '>' + h(b) + '</option>').join("");
+            const options = ['<option value="">(pick a branch)</option>'];
+            (m.branches || []).forEach((b) => {
+              options.push('<option value="' + h(b) + '"' + (b === current ? ' selected' : '') + '>' + h(b) + '</option>');
+            });
+            select.innerHTML = options.join("");
           }
         } else if (m.type === "folderSuggested") {
-          if (!entries[m.index].folder) {
+          if (!(entries[m.index].folder || "").trim()) {
             entries[m.index].folder = m.folder;
             const input = document.querySelector('input[data-field="folder"][data-index="' + m.index + '"]');
             if (input) input.value = m.folder;
           }
+          setDerivedFolders(m.index);
+          postValidateFolder(m.index);
+          updateActionState();
         } else if (m.type === "folderPicked") {
           entries[m.index].folder = m.folder;
           const input = document.querySelector('input[data-field="folder"][data-index="' + m.index + '"]');
           if (input) input.value = m.folder;
-          const err = document.querySelector('[data-folder-error="' + m.index + '"]');
-          if (err) err.textContent = m.valid ? "" : (m.reason || "");
+          folderErrors[m.index] = m.valid ? "" : (m.reason || "");
+          updateActionState();
         } else if (m.type === "folderValidated") {
-          const err = document.querySelector('[data-folder-error="' + m.index + '"]');
-          if (err) err.textContent = m.valid ? "" : (m.reason || "");
+          folderErrors[m.index] = m.valid ? "" : (m.reason || "");
+          updateActionState();
         }
       });
 

@@ -12,7 +12,7 @@ export interface AlSourceEntry {
   repository: string;
   /** Branch to check out. */
   branch: string;
-  /** Local folder the repository is cloned into. */
+  /** Base folder under which repo/branch subfolders are resolved. */
   folder: string;
   /** Whether this source is cloned/pulled and mounted in the workspace. */
   enabled: boolean;
@@ -38,7 +38,7 @@ export async function saveEntries(entries: AlSourceEntry[]): Promise<void> {
   const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
   await config.update(
     REPOS_KEY,
-    entries.map(normalizeEntry),
+    entries.map((entry) => normalizeAndResolveEntry(entry)),
     vscode.ConfigurationTarget.Workspace
   );
 }
@@ -56,6 +56,17 @@ function normalizeEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
     folder: (entry.folder ?? "").trim(),
     enabled: Boolean(entry.enabled),
   };
+}
+
+function normalizeAndResolveEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
+  const normalized = normalizeEntry(entry);
+  if (normalized.repository && !normalized.folder) {
+    normalized.folder = suggestDefaultFolder(
+      normalized.repository,
+      normalized.branch
+    );
+  }
+  return normalized;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,9 +88,29 @@ export function repoNameFromUrl(url: string): string {
   return segment || "al-source";
 }
 
-/** Proposes a default clone folder under %LOCALAPPDATA%\acdc-sources\<repo>. */
-export function suggestDefaultFolder(url: string): string {
-  return path.join(getSourcesBaseDir(), repoNameFromUrl(url));
+/** Proposes a default base folder under %LOCALAPPDATA%\acdc-sources. */
+export function suggestDefaultFolder(url: string, branch = ""): string {
+  void url;
+  void branch;
+  return getSourcesBaseDir();
+}
+
+function branchFolderName(branch: string): string {
+  const value = branch.trim();
+  if (!value) {
+    return "";
+  }
+  // Branch names may contain path separators (feature/x) and Windows-invalid
+  // path characters. Convert to a stable single-folder segment.
+  return value.replace(/[\\/:*?"<>|]+/g, "_").trim();
+}
+
+export function repoFolderName(repositoryUrl: string): string {
+  return repoNameFromUrl(repositoryUrl);
+}
+
+export function branchFolderDisplayName(branch: string): string {
+  return branchFolderName(branch);
 }
 
 /**
@@ -90,13 +121,15 @@ export function suggestDefaultFolder(url: string): string {
  */
 export function effectiveFolder(entry: AlSourceEntry): string {
   const explicit = entry.folder.trim();
-  if (explicit) {
+  if (!entry.repository.trim()) {
     return explicit;
   }
-  if (!entry.repository.trim()) {
-    return "";
-  }
-  return suggestDefaultFolder(entry.repository);
+  const baseFolder = explicit || suggestDefaultFolder(entry.repository, entry.branch);
+  const repoFolder = repoFolderName(entry.repository);
+  const branchFolder = branchFolderName(entry.branch);
+  return branchFolder
+    ? path.join(baseFolder, repoFolder, branchFolder)
+    : path.join(baseFolder, repoFolder);
 }
 
 /**
@@ -165,10 +198,23 @@ export function validateFolder(
   }
   const enclosing = findEnclosingGitRepo(value);
   if (enclosing) {
-    return {
-      ok: false,
-      reason: `Folder is inside another git repository (${enclosing}). Choose a location outside any repo to avoid polluting it.`,
-    };
+    // Enclosing git repos INSIDE our managed sources root are expected: they
+    // are typically leftover Base/Repo clones from before the Base/Repo/Branch
+    // layout was introduced. Sharing that clone across branch subfolders is
+    // intentional (branch subfolders live next to the enclosing .git).
+    const managedRoot = normalizePath(getSourcesBaseDir());
+    const enclosingNormalized = normalizePath(enclosing);
+    const isInsideManagedRoot =
+      enclosingNormalized === managedRoot ||
+      enclosingNormalized.startsWith(managedRoot + path.sep) ||
+      enclosingNormalized.startsWith(managedRoot + "/") ||
+      enclosingNormalized.startsWith(managedRoot + "\\");
+    if (!isInsideManagedRoot) {
+      return {
+        ok: false,
+        reason: `Folder is inside another git repository (${enclosing}). Choose a location outside any repo to avoid polluting it.`,
+      };
+    }
   }
   return { ok: true };
 }
@@ -375,14 +421,18 @@ async function checkoutBranch(folder: string, branch: string): Promise<void> {
 
 function mountName(entry: AlSourceEntry): string {
   const label = entry.repository.trim()
-    ? repoNameFromUrl(entry.repository)
+    ? entry.branch.trim()
+      ? `${repoNameFromUrl(entry.repository)} [${entry.branch.trim()}]`
+      : repoNameFromUrl(entry.repository)
     : path.basename(entry.folder.trim()) || "al-source";
   return `${MOUNT_PREFIX}${label}`;
 }
 
 function entryLabel(entry: AlSourceEntry): string {
   return entry.repository.trim()
-    ? repoNameFromUrl(entry.repository)
+    ? entry.branch.trim()
+      ? `${repoNameFromUrl(entry.repository)} [${entry.branch.trim()}]`
+      : repoNameFromUrl(entry.repository)
     : path.basename(entry.folder.trim()) || "al-source";
 }
 
