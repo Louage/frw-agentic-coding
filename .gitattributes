@@ -1,0 +1,37 @@
+# Normalize line endings to LF for all text files on commit.
+# Without this, the weekly external-sync workflow (which writes LF from Linux
+# runners) produces PRs where ~half the diff is pure CRLF↔LF churn on files
+# previously committed from Windows. See PR #27 for the pathological case.
+
+* text=auto eol=lf
+
+# Explicit rules per file type (defensive; makes intent visible)
+*.md         text eol=lf
+*.json       text eol=lf
+*.jsonc      text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.ts         text eol=lf
+*.js         text eol=lf
+*.mjs        text eol=lf
+*.cjs        text eol=lf
+*.py         text eol=lf
+*.sh         text eol=lf
+*.txt        text eol=lf
+*.al         text eol=lf
+*.gitignore  text eol=lf
+*.vscodeignore    text eol=lf
+*.code-workspace  text eol=lf
+
+# PowerShell tolerates LF; keep LF for consistency across runners.
+*.ps1        text eol=lf
+
+# Binary assets — never touch line endings.
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary
+*.webp       binary
+*.vsix       binary
+*.zip        binary
