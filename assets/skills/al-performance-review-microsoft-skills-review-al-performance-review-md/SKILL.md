@@ -35,10 +35,21 @@ Discard files that are not applicable. Retain conditionally applicable files (an
 Narrow the relevant files to the subset that applies to the changes under review. For each relevant file, compute overlap against:
 
 - The changed AL object names and types — especially tables, pages with SourceTable bindings, reports, queries, and codeunits performing record iteration.
-- The changed procedures and triggers, weighted toward those that perform loops, Find/FindSet/FindFirst calls, CalcFields, CalcSums, FlowField access, or cross-table navigation.
-- Tokens extracted from the diff that relate to data access and hot-path costs (`SetRange`, `SetFilter`, `SetLoadFields`, `SetCurrentKey`, `FindSet`, `ReadIsolation`, `LockTable`, `ModifyAll`, `DeleteAll`, `TextBuilder`, `Dictionary`, `temporary`, `repeat`, `until`, `CalcFields`, `CalcSums`).
+- The changed procedures and triggers, weighted toward those that perform loops, Find/FindSet/FindFirst calls, CalcFields, SetAutoCalcFields, CalcSums, FlowField access, Commit calls, checkpoint helpers, record copying, RecordRef conversion, Modify/Delete calls, or cross-table navigation.
+- Tokens extracted from the diff that relate to data access and hot-path costs (`SetRange`, `SetFilter`, `SetLoadFields`, `SetCurrentKey`, `FindSet`, `ReadIsolation`, `LockTable`, `ModifyAll`, `DeleteAll`, `Modify`, `Delete`, `Commit`, `checkpoint`, `Copy`, `RecordRef`, `GetTable`, `TextBuilder`, `Dictionary`, `temporary`, `repeat`, `until`, `CalcFields`, `SetAutoCalcFields`, `CalcSums`, `FlowField`, `Visible`).
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
+
+Apply these targeted cues even when simple token overlap would rank the article below the worklist cutoff:
+
+- Worklist `use-setautocalcfields-for-per-row-flowfields.md` when a record loop calls `CalcFields`, or when every row reads the same FlowField for a comparison, branch, or per-record action. Worklist `calcsums-instead-of-calcfields-in-loop.md` instead when the loop only accumulates one set total.
+- Worklist `hidden-flowfields-still-calculate-before-bc26-opt-in.md` when a page control directly sources a FlowField and sets `Visible = false` or a visibility expression. Suppress it when the target is known to have BC26's **Calculate only visible FlowFields** feature enabled, or when the FlowField is cheap and intentionally preloaded.
+- Worklist `avoid-commit-inside-loops.md` only when `Commit()` is inside a record-iteration body or a helper invoked once per row. Do not match one `Commit()` after a bounded checkpoint helper returns, a `Commit()` outside iteration, or comments and documentation that merely mention commits.
+- Worklist `avoid-cloning-records-before-modify-delete-in-loops.md` when an iteration calls `Copy` or `RecordRef.GetTable` before `Modify`/`Delete`, or passes the iterated record without `var` to a helper that writes that record. Do not worklist it from `Modify`, `Delete`, or `RecordRef` alone; exclude a direct write on the iterator, a read-only copy, a temporary record, a different target table, and a `RecordRef` opened and iterated directly.
+- Worklist `use-tryfunction-for-error-catching-not-rollback.md` only when writes occur inside a try method and the code or surrounding flow expects an error to roll them back. A bare try-method call whose Boolean result is ignored belongs exclusively to `error-handling/ignored-tryfunction-return-disables-try-semantics.md`; do not worklist the performance article from that call shape alone.
+- For `LockTable` in a pure read helper, select exactly one owner. Use `do-not-locktable-in-read-only-procedure.md` when the helper needs no stronger isolation and should remove the lock. Use `prefer-readisolation-over-locktable-for-reads.md` instead when the code explicitly requires committed-read semantics and `ReadIsolation` is the replacement. Never emit both findings for the same call.
+
+These targeted inclusions and exclusions override generic token overlap. Do not retain an excluded article solely because the diff contains one of its keywords.
 
 Once the candidate worklist is known, resolve layer-precedence conflicts per READ. Drop lower-precedence files whose normative guidance (`## Best Practice` or `## Anti Pattern`) directly contradicts a higher-precedence candidate, and record each dropped file in `suppressed` with `reason: "layer-precedence"`. Files that would have been candidates but are hidden because their layer is disabled in consumer configuration are recorded with `reason: "configuration"`. Files that never became candidates are NOT recorded in `suppressed`.
 
@@ -50,7 +61,7 @@ For each worklist entry, evaluate the diff against the file's `## Best Practice`
 
 - When the diff contains a clear match for an Anti Pattern, emit a finding with severity `major` or `blocker`, a message summarizing the anti-pattern, `location` pointing to the offending line or range, and a `references` entry pointing to the knowledge file. Use `blocker` only when the knowledge file states the anti-pattern violates a platform-level guarantee (for example, documented query timeouts or transaction size limits). When the file does not make such a claim, the ceiling is `major`.
 - When the diff contains code that contradicts a Best Practice without being a full anti-pattern, emit `minor` with the same reference shape.
-- When the skill cannot detect a violation but the file is clearly applicable to the change, emit `info` citing the file. Repository-wide observations MAY omit `location`.
+- Applicability alone is not a finding. Emit `info` only for a concrete, non-actionable observation the article explicitly defines; otherwise emit nothing when no violation is present.
 
 Set `confidence` to:
 
@@ -74,7 +85,7 @@ Outcome selection:
 
 ## Output
 
-Output conforms to the DO output contract. A populated example:
+Output conforms to the DO output contract. Every finding this skill emits MUST set `findings[].domain` to `"Performance"`. A populated example:
 
 ```json
 {
@@ -86,31 +97,33 @@ Output conforms to the DO output contract. A populated example:
   },
   "findings": [
     {
-      "id": "microsoft/knowledge/performance/filter-before-find.md",
+      "id": "microsoft/knowledge/performance/apply-filters-before-iterating.md",
       "severity": "major",
-      "message": "FindSet is called on a record variable without any prior SetRange/SetFilter. This forces a full-table scan.",
+      "message": "The Country/Region Code predicate is evaluated inside the loop instead of with SetRange before FindSet, so every row crosses the database boundary.",
       "location": {
         "file": "src/Sales/PostingRoutines.Codeunit.al",
         "line": 140,
         "range": { "start-line": 140, "end-line": 144 }
       },
       "references": [
-        { "path": "microsoft/knowledge/performance/filter-before-find.md" }
+        { "path": "microsoft/knowledge/performance/apply-filters-before-iterating.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Performance"
     },
     {
-      "id": "community/knowledge/performance/call-setloadfields-before-filters.md",
+      "id": "microsoft/knowledge/performance/use-setloadfields-for-partial-records.md",
       "severity": "minor",
-      "message": "SetLoadFields is called after SetRange. Per the referenced guidance the call must come before filters to be folded into the query plan.",
+      "message": "The loop reads only a small subset of fields from a wide table without SetLoadFields, transferring every column for each row.",
       "location": {
         "file": "src/Sales/PostingRoutines.Codeunit.al",
         "line": 152
       },
       "references": [
-        { "path": "community/knowledge/performance/call-setloadfields-before-filters.md" }
+        { "path": "microsoft/knowledge/performance/use-setloadfields-for-partial-records.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Performance"
     }
   ],
   "suppressed": []

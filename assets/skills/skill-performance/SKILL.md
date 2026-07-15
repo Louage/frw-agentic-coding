@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-performance
 description: "AL performance optimization patterns for Business Central. Use when optimizing queries with SetLoadFields, working with FlowFields and CalcFields, profiling codeunits, or resolving performance issues."
 ---

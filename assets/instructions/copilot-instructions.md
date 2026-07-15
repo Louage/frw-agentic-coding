@@ -4,7 +4,7 @@
 
 ## Overview
 
-This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.1** skills-based architecture: **4 agents + 11 skills + 6 workflows + 7 instructions**.
+This workspace contains AL (Application Language) code for Microsoft Dynamics 365 Business Central. It uses the **ALDC Core v1.2** skills-based architecture: **5 agents + 17 skills (11 ALDC + 6 Lean SDD) + 6 workflows + 7 instructions**.
 
 ## Core Principles
 
@@ -51,7 +51,7 @@ Lean SDD feature?          → @AL Lean SDD
 | External integrations | Few or none | Many |
 | BCQuality audit | Via AGENTS.md instructions (auto) | Full citation chain + CI |
 | Token cost | Low | Higher |
-| Spec location | `specs/SDD/YYYY-MM-DD-<slug>/` | `specs/Plans/YYYY-MM-DD-<slug>/` |
+| Spec location | `specs/SDD/YYYY-MM-DD-<slug>/` | `specs/Plans/YYYY-MM-DD-{req_name}/` |
 
 ## Workflows
 

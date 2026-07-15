@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/security/compose-permission-sets-with-included-sets.md
+description: Imported BCQuality rule from microsoft/knowledge/security/compose-permission-sets-with-included-sets.md
 ---
 
 # Compose permission sets with IncludedPermissionSets
 
-Source: community/knowledge/security/compose-permission-sets-with-included-sets.md
+Source: microsoft/knowledge/security/compose-permission-sets-with-included-sets.md
 
 # Compose permission sets with IncludedPermissionSets
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 

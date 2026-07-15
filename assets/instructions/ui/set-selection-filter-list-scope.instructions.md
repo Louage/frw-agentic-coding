@@ -3,9 +3,11 @@ applyTo: '**/*.al'
 description: Imported BCQuality rule from microsoft/knowledge/ui/set-selection-filter-list-scope.md
 ---
 
-# set-selection-filter-list-scope
+# Preserve list scope after `SetSelectionFilter`
 
 Source: microsoft/knowledge/ui/set-selection-filter-list-scope.md
+
+# Preserve list scope after `SetSelectionFilter`
 
 ## Description
 

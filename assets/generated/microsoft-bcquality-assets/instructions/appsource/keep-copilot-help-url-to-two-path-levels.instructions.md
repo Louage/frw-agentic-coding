@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/appsource/keep-copilot-help-url-to-two-path-levels.md
+description: Imported BCQuality rule from microsoft/knowledge/appsource/keep-copilot-help-url-to-two-path-levels.md
 ---
 
 # Keep the Copilot help URL to two path levels
 
-Source: community/knowledge/appsource/keep-copilot-help-url-to-two-path-levels.md
+Source: microsoft/knowledge/appsource/keep-copilot-help-url-to-two-path-levels.md
 
 # Keep the Copilot help URL to two path levels
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 
