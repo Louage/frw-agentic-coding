@@ -7,7 +7,8 @@ import { FlowStateService } from "../workflows/flowStateService";
  */
 interface IUpdateAgentFlowInput {
   step?: string;
-  action?: "start" | "complete" | "reset";
+  action?: "start" | "complete" | "reset" | "handoff";
+  agent?: string;
   skill?: string;
 }
 
@@ -58,6 +59,21 @@ export class UpdateAgentFlowTool
       );
     }
 
+    if (action === "handoff") {
+      const agent = input.agent?.trim();
+      if (!agent) {
+        return textResult(
+          "No handoff target provided. Pass { action: \"handoff\", agent: \"...\" } and optionally step/skill."
+        );
+      }
+      this.stateService.handoffToAgent(agent, step, skill || undefined);
+      return textResult(
+        step
+          ? `Handed off to "${agent}" and started step "${step}".`
+          : `Handed off to "${agent}".`
+      );
+    }
+
     // action === "start"
     if (!step) {
       return textResult(
@@ -83,6 +99,13 @@ export class UpdateAgentFlowTool
     }
     if (action === "complete") {
       return { invocationMessage: "Completing current flow step…" };
+    }
+    if (action === "handoff") {
+      return {
+        invocationMessage: input.agent
+          ? `Handing off flow to ${input.agent}…`
+          : "Handing off flow…",
+      };
     }
     return {
       invocationMessage: input.step

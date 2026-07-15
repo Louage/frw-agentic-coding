@@ -95,8 +95,12 @@
             },
             "action": {
               "type": "string",
-              "enum": ["start", "complete", "reset"],
-              "description": "'start' (default) marks the step as current in-progress. 'complete' pushes the current step to history and clears the active step. 'reset' clears the entire flow history for this agent."
+              "enum": ["start", "complete", "reset", "handoff"],
+              "description": "'start' (default) marks the step as current in-progress. 'complete' pushes the current step to history and clears the active step. 'reset' clears the entire flow history for this agent. 'handoff' switches ownership to another agent while preserving history (provide `agent`, optional `step`/`skill`)."
+            },
+            "agent": {
+              "type": "string",
+              "description": "Target agent display name for `action: handoff` (e.g. 'AL Implementation Specialist')."
             },
             "skill": {
               "type": "string",
@@ -1107,6 +1111,12 @@
               "type": "string",
               "description": "Display name of the agent or tool this placeholder resolves to."
             }
+          },
+          "acdc.agents.enableHooksOverlay": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "markdownDescription": "Enable optional Agent Hooks overlay ingestion for the Agent Flow sidebar. When enabled, AC⚡DC reads lifecycle events from `%TEMP%/acdc-agent-flow-hooks.jsonl` (or `/tmp/...`) so session and subagent boundaries can be tracked deterministically in addition to normal agent self-reporting."
           }
         }
       },
