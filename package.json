@@ -1088,6 +1088,17 @@
             "default": false,
             "order": 2,
             "markdownDescription": "When enabled, keeps the AL source folders up to date on startup: missing folders are cloned (after you approve), and existing folders are pulled to the latest commit of their branch (read-only, never pushed)."
+          },
+          "acdc.alBaseCode.accessMode": {
+            "type": "string",
+            "enum": ["workspace", "mcp"],
+            "enumDescriptions": [
+              "Mount cloned AL sources as read-only workspace folders (visible in the Explorer).",
+              "Expose cloned AL sources through a filesystem MCP server registered in the workspace's .vscode/mcp.json (available to AI agents; no Explorer clutter)."
+            ],
+            "default": "workspace",
+            "order": 3,
+            "markdownDescription": "How enabled AL source folders are exposed. `workspace` adds them as read-only workspace folders. `mcp` registers an aggregate filesystem MCP server (`acdc-al-sources`) in the workspace's `.vscode/mcp.json`. Only one mode per workspace — switching triggers a confirm dialog and performs the migration immediately.\n\n**Why workspace scope and not user-profile scope?** VS Code has no stable API exposing the currently active profile to an extension, so the user-profile `mcp.json` cannot be targeted reliably from within an extension. Workspace `.vscode/mcp.json` is unambiguous and always loaded."
           }
         }
       },

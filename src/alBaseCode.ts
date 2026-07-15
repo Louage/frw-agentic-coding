@@ -21,8 +21,17 @@ export interface AlSourceEntry {
 const CONFIG_SECTION = "acdc";
 const REPOS_KEY = "alBaseCode.repositories";
 const SYNC_ON_STARTUP_KEY = "alBaseCode.syncOnStartup";
+const ACCESS_MODE_KEY = "alBaseCode.accessMode";
 const MOUNT_PREFIX = "[AL Src] ";
 const SOURCES_SUBDIR = "acdc-sources";
+/**
+ * MCP server id we own inside the workspace `.vscode/mcp.json`. A single
+ * aggregate filesystem server exposes every enabled source folder. Fixed
+ * (not per-workspace-unique) because the file itself is already per-workspace.
+ */
+const MCP_SERVER_ID = "acdc-al-sources";
+
+export type AccessMode = "workspace" | "mcp";
 
 // ---------------------------------------------------------------------------
 // Settings access
@@ -47,6 +56,19 @@ export function isSyncOnStartupEnabled(): boolean {
   return vscode.workspace
     .getConfiguration(CONFIG_SECTION)
     .get<boolean>(SYNC_ON_STARTUP_KEY, false);
+}
+
+export function getAccessMode(): AccessMode {
+  const raw = vscode.workspace
+    .getConfiguration(CONFIG_SECTION)
+    .get<string>(ACCESS_MODE_KEY, "workspace");
+  return raw === "mcp" ? "mcp" : "workspace";
+}
+
+export async function setAccessMode(mode: AccessMode): Promise<void> {
+  await vscode.workspace
+    .getConfiguration(CONFIG_SECTION)
+    .update(ACCESS_MODE_KEY, mode, vscode.ConfigurationTarget.Workspace);
 }
 
 function normalizeEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
@@ -477,6 +499,30 @@ export async function syncGitIgnoredRepositories(): Promise<void> {
 }
 
 /**
+ * Removes every ignored-repositories entry pointing at one of our managed
+ * folders. Used when switching to MCP mode, where we no longer mount those
+ * folders as workspace roots and therefore have no reason to hide them from SCM.
+ */
+export async function clearOurGitIgnoredRepositories(): Promise<void> {
+  const entries = getEntries();
+  const ourFolders = entries.map(effectiveFolder).filter(Boolean);
+  if (ourFolders.length === 0) { return; }
+
+  const gitConfig = vscode.workspace.getConfiguration("git");
+  const existing = gitConfig.get<string[]>("ignoredRepositories", []) ?? [];
+  const isOurs = (p: string) =>
+    ourFolders.some((f) => normalizePath(f) === normalizePath(p));
+  const preserved = existing.filter((p) => !isOurs(p));
+  if (preserved.length !== existing.length) {
+    await gitConfig.update(
+      "ignoredRepositories",
+      preserved,
+      vscode.ConfigurationTarget.Workspace
+    );
+  }
+}
+
+/**
  * Mounts enabled+cloned folders as read-only workspace roots and unmounts
  * disabled ones that we previously added.
  */
@@ -541,6 +587,290 @@ export function applyWorkspaceMounts(output: vscode.OutputChannel): {
   return { added, removed };
 }
 
+/**
+ * Unmounts every workspace folder we own (prefix `[AL Src] `). Used when
+ * switching from workspace mode → MCP mode so leftovers don't linger.
+ */
+export function unmountAllOurWorkspaceMounts(
+  output: vscode.OutputChannel
+): { removed: string[] } {
+  const currentFolders = vscode.workspace.workspaceFolders ?? [];
+  const toRemove: number[] = [];
+  const removed: string[] = [];
+  currentFolders.forEach((f, i) => {
+    if (f.name.startsWith(MOUNT_PREFIX)) {
+      toRemove.push(i);
+      removed.push(f.name.slice(MOUNT_PREFIX.length));
+    }
+  });
+  toRemove.sort((a, b) => b - a);
+  for (const idx of toRemove) {
+    vscode.workspace.updateWorkspaceFolders(idx, 1);
+  }
+  for (const label of removed) {
+    output.appendLine(`[alBaseCode] Unmounted (mode switch): ${label}`);
+  }
+  return { removed };
+}
+
+// ---------------------------------------------------------------------------
+// MCP filesystem server mounting
+// ---------------------------------------------------------------------------
+
+interface McpJsonShape {
+  servers?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/**
+ * Resolves the target `.vscode/mcp.json` path for this workspace.
+ *
+ * NOTE — why workspace scope and NOT user-profile scope: VS Code does not
+ * expose a stable API to identify the currently active profile from within
+ * an extension. Extensions installed at the default level share their
+ * `globalStorageUri` across profiles by design, so writes derived from that
+ * URI land in the default profile's `mcp.json` regardless of which named
+ * profile the user is actually in. Rather than shipping brittle heuristics
+ * and an override setting to paper over the gap, we write to the workspace's
+ * `.vscode/mcp.json`, which is unambiguous and always loaded by VS Code.
+ *
+ * Returns undefined when no workspace folder is open (nothing to write to).
+ */
+function getWorkspaceMcpJsonPath(): string | undefined {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) { return undefined; }
+  return path.join(folder.uri.fsPath, ".vscode", "mcp.json");
+}
+
+/** Public accessor used by the webview panel's "Reveal mcp.json" button. */
+export function getMcpTargetPath(): string | undefined {
+  return getWorkspaceMcpJsonPath();
+}
+
+function logMcpTarget(output: vscode.OutputChannel): void {
+  const target = getWorkspaceMcpJsonPath() ?? "(no workspace folder)";
+  output.appendLine(`[alBaseCode] MCP: target file = ${target}`);
+}
+
+interface McpJsonReadResult {
+  parsed: McpJsonShape;
+  existed: boolean;
+  parseError?: string;
+}
+
+function readMcpJson(filePath: string): McpJsonReadResult {
+  if (!fs.existsSync(filePath)) {
+    return { parsed: {}, existed: false };
+  }
+  const raw = fs.readFileSync(filePath, "utf8");
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { parsed: {}, existed: true };
+  }
+  try {
+    const parsed = JSON.parse(trimmed) as McpJsonShape;
+    return { parsed: parsed ?? {}, existed: true };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    return {
+      parsed: {},
+      existed: true,
+      parseError: reason,
+    };
+  }
+}
+
+function writeMcpJson(filePath: string, content: McpJsonShape): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const serialized = JSON.stringify(content, null, 2) + "\n";
+  fs.writeFileSync(filePath, serialized, "utf8");
+}
+
+/**
+ * True when the mcp.json payload contains no user data worth preserving:
+ * `servers` empty or absent, and no other top-level keys. Used to decide
+ * whether to delete the file entirely after removing our entry.
+ */
+function isMcpJsonEmpty(shape: McpJsonShape): boolean {
+  const otherKeys = Object.keys(shape).filter((k) => k !== "servers");
+  if (otherKeys.length > 0) { return false; }
+  const servers = shape.servers;
+  if (!servers || typeof servers !== "object") { return true; }
+  return Object.keys(servers as Record<string, unknown>).length === 0;
+}
+
+/**
+ * Writes/updates our aggregate filesystem MCP server in the workspace's
+ * `.vscode/mcp.json`, pointing at every enabled entry's effective folder.
+ * When there are no enabled folders, removes the server entry entirely (and
+ * deletes the file if nothing else remains).
+ *
+ * Workspace scope is a deliberate choice: user-profile `mcp.json` cannot be
+ * targeted reliably from a VS Code extension (see `getWorkspaceMcpJsonPath`
+ * for the full explanation).
+ *
+ * Only touches our own server key — all other user-authored servers are
+ * preserved. Refuses to overwrite if the existing file doesn't parse as JSON
+ * (comments/trailing commas), to avoid destroying user content.
+ */
+export function applyMcpMounts(output: vscode.OutputChannel): {
+  added: string[];
+  removed: string[];
+  error?: string;
+} {
+  const mcpPath = getWorkspaceMcpJsonPath();
+  if (!mcpPath) {
+    const reason = "No workspace folder is open — cannot write .vscode/mcp.json.";
+    output.appendLine(`[alBaseCode] ${reason}`);
+    return { added: [], removed: [], error: reason };
+  }
+  logMcpTarget(output);
+
+  const entries = getEntries();
+  const enabledFolders: string[] = [];
+  for (const entry of entries) {
+    if (!entry.enabled) { continue; }
+    const folder = effectiveFolder(entry);
+    if (!folder || !fs.existsSync(folder)) { continue; }
+    enabledFolders.push(folder);
+  }
+
+  const { parsed, existed, parseError } = readMcpJson(mcpPath);
+  if (parseError) {
+    const reason = `Cannot update ${mcpPath}: file exists but is not valid JSON (${parseError}). Remove comments/trailing commas or delete the file, then try again.`;
+    output.appendLine(`[alBaseCode] ${reason}`);
+    return { added: [], removed: [], error: reason };
+  }
+
+  const servers: Record<string, unknown> =
+    parsed.servers && typeof parsed.servers === "object"
+      ? { ...(parsed.servers as Record<string, unknown>) }
+      : {};
+
+  const hadOurs = Object.prototype.hasOwnProperty.call(servers, MCP_SERVER_ID);
+  const added: string[] = [];
+  const removed: string[] = [];
+
+  if (enabledFolders.length === 0) {
+    if (hadOurs) {
+      delete servers[MCP_SERVER_ID];
+      removed.push(MCP_SERVER_ID);
+      output.appendLine(
+        `[alBaseCode] MCP: removed '${MCP_SERVER_ID}' (no enabled folders).`
+      );
+    }
+  } else {
+    servers[MCP_SERVER_ID] = {
+      type: "stdio",
+      command: "npx",
+      args: [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        ...enabledFolders,
+      ],
+    };
+    if (hadOurs) {
+      output.appendLine(
+        `[alBaseCode] MCP: updated '${MCP_SERVER_ID}' → ${enabledFolders.length} folder(s).`
+      );
+    } else {
+      added.push(MCP_SERVER_ID);
+      output.appendLine(
+        `[alBaseCode] MCP: added '${MCP_SERVER_ID}' → ${enabledFolders.length} folder(s).`
+      );
+    }
+  }
+
+  const nextParsed: McpJsonShape = { ...parsed, servers };
+  const somethingChanged = added.length > 0 || removed.length > 0;
+  const needsInitialWrite = !existed && enabledFolders.length > 0;
+  if (somethingChanged || needsInitialWrite) {
+    // If after our edits the file is empty of any content worth keeping,
+    // delete it rather than leaving a `{ "servers": {} }` shell behind.
+    if (existed && isMcpJsonEmpty(nextParsed)) {
+      try {
+        fs.unlinkSync(mcpPath);
+        output.appendLine(`[alBaseCode] MCP: deleted empty ${mcpPath}.`);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        output.appendLine(`[alBaseCode] MCP delete failed: ${reason}`);
+        return { added, removed, error: reason };
+      }
+    } else {
+      try {
+        writeMcpJson(mcpPath, nextParsed);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        output.appendLine(`[alBaseCode] MCP write failed: ${reason}`);
+        return { added: [], removed: [], error: reason };
+      }
+    }
+  }
+
+  return { added, removed };
+}
+
+/**
+ * Removes our aggregate MCP server entry from the workspace's `.vscode/mcp.json`
+ * (used when switching from MCP → workspace, or when there are no enabled
+ * sources). Leaves other user-authored servers untouched. Deletes the file
+ * entirely when nothing else remains.
+ */
+export function unmountAllOurMcpMounts(
+  output: vscode.OutputChannel
+): { removed: string[]; error?: string } {
+  const mcpPath = getWorkspaceMcpJsonPath();
+  if (!mcpPath || !fs.existsSync(mcpPath)) {
+    return { removed: [] };
+  }
+  logMcpTarget(output);
+
+  const { parsed, parseError } = readMcpJson(mcpPath);
+  if (parseError) {
+    const reason = `Cannot clean ${mcpPath}: file exists but is not valid JSON (${parseError}).`;
+    output.appendLine(`[alBaseCode] ${reason}`);
+    return { removed: [], error: reason };
+  }
+
+  if (
+    !parsed.servers ||
+    typeof parsed.servers !== "object" ||
+    !Object.prototype.hasOwnProperty.call(parsed.servers, MCP_SERVER_ID)
+  ) {
+    return { removed: [] };
+  }
+
+  const nextServers = { ...(parsed.servers as Record<string, unknown>) };
+  delete nextServers[MCP_SERVER_ID];
+  const nextParsed: McpJsonShape = { ...parsed, servers: nextServers };
+
+  if (isMcpJsonEmpty(nextParsed)) {
+    try {
+      fs.unlinkSync(mcpPath);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      output.appendLine(`[alBaseCode] MCP delete failed: ${reason}`);
+      return { removed: [], error: reason };
+    }
+    output.appendLine(
+      `[alBaseCode] MCP: removed '${MCP_SERVER_ID}' and deleted empty ${mcpPath}.`
+    );
+    return { removed: [MCP_SERVER_ID] };
+  }
+
+  try {
+    writeMcpJson(mcpPath, nextParsed);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    output.appendLine(`[alBaseCode] MCP cleanup failed: ${reason}`);
+    return { removed: [], error: reason };
+  }
+  output.appendLine(
+    `[alBaseCode] MCP: removed '${MCP_SERVER_ID}' (mode switch).`
+  );
+  return { removed: [MCP_SERVER_ID] };
+}
+
 // ---------------------------------------------------------------------------
 // High-level sync
 // ---------------------------------------------------------------------------
@@ -566,8 +896,23 @@ export async function syncAlBaseCode(
     }
     results.push(await ensureClonedOrPulled(entry, output, options));
   }
-  applyWorkspaceMounts(output);
-  await syncGitIgnoredRepositories();
+
+  // Dispatch mounting on access mode. Only one mode per workspace: whichever
+  // is active gets applied, and the alternate mode's leftovers are cleaned up
+  // so switching between modes is idempotent.
+  const mode = getAccessMode();
+  if (mode === "mcp") {
+    unmountAllOurWorkspaceMounts(output);
+    applyMcpMounts(output);
+    // In MCP mode our folders are NOT workspace roots, so the git.ignore
+    // scrubber has nothing to do (and would leave stale entries behind if
+    // called). Explicitly clear anything we previously added.
+    await clearOurGitIgnoredRepositories();
+  } else {
+    unmountAllOurMcpMounts(output);
+    applyWorkspaceMounts(output);
+    await syncGitIgnoredRepositories();
+  }
   return results;
 }
 
@@ -633,6 +978,16 @@ export async function syncOnStartup(
   } else {
     // Even without full sync, keep the checked-out branch correct for this project.
     await ensureConfiguredBranchesOnStartup(output);
-    await syncGitIgnoredRepositories();
+    const mode = getAccessMode();
+    if (mode === "mcp") {
+      // In MCP mode: re-assert the mcp.json entry (folders may have appeared
+      // since last session) and make sure no stale workspace mounts survive.
+      unmountAllOurWorkspaceMounts(output);
+      applyMcpMounts(output);
+      await clearOurGitIgnoredRepositories();
+    } else {
+      unmountAllOurMcpMounts(output);
+      await syncGitIgnoredRepositories();
+    }
   }
 }

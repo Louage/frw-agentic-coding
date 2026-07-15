@@ -52,6 +52,40 @@ When enabled, keeps the AL source folders up to date on startup: missing folders
 cloned (after you approve), and existing folders are pulled to the latest commit of
 their branch (read-only, never pushed).
 
+### `acdc.alBaseCode.accessMode`
+
+How enabled AL source folders are exposed. **Only one mode per workspace** — no mixing.
+
+- `workspace` (default) — folders are added as read-only workspace roots (prefix
+  `[AL Src] …`), visible in the Explorer. Same behaviour as before this setting existed.
+- `mcp` — folders are exposed through a single aggregate filesystem MCP server
+  named `acdc-al-sources`, written to this workspace's `.vscode/mcp.json`.
+  Nothing appears in the Explorer; AI agents can still read the sources.
+  Repositories are still cloned/pulled — only the mount step changes.
+
+When switching back to `workspace` mode (or disabling every source) the
+`acdc-al-sources` entry is removed, and `.vscode/mcp.json` itself is deleted if
+nothing else remains in it.
+
+Switching mode via the table editor's dropdown prompts a confirmation and performs
+the migration immediately — no Save & Apply needed for the switch itself.
+
+**Why workspace scope and not user-profile scope?**
+VS Code does not expose the currently active profile via any stable extension
+API. Extensions installed at the default level share their `globalStorageUri`
+across profiles by design, so any user-profile write derived from that URI lands
+in the *default* profile's file regardless of which named profile you're actually
+in. Rather than shipping brittle heuristics and an override setting to paper over
+that gap, this extension writes at workspace scope — the workspace `.vscode/mcp.json`
+is unambiguous, is always loaded by VS Code, and stays scoped to the project it
+belongs to.
+
+**Token-cost note.** `workspace` mode gives agents access to VS Code's grep and
+semantic search, which return small targeted snippets. `mcp` mode uses the
+filesystem server whose search matches filenames only — agents typically fall back
+to whole-file reads, which usually consumes noticeably more tokens per task.
+Prefer `mcp` when you value a clean Explorer over search efficiency.
+
 ---
 
 ## Agent Placeholders
