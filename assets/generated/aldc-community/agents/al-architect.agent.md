@@ -393,9 +393,9 @@ Execute the sequence in **§🚨 Critical: Automatic Architecture Document Creat
 ### Directory & File Naming
 
 `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.architecture.md` (kebab-case req_name — derive it per the rule in §🚨 Critical: Automatic Architecture Document Creation, action 1):
-- `specs/Plans/2026-07-08-customer-loyalty/customer-loyalty.architecture.md`
-- `specs/Plans/2026-07-08-sales-approval-workflow/sales-approval-workflow.architecture.md`
-- `specs/Plans/2026-07-08-api-integration-crm/api-integration-crm.architecture.md`
+- `specs/Plans/customer-loyalty/customer-loyalty.architecture.md`
+- `specs/Plans/sales-approval-workflow/sales-approval-workflow.architecture.md`
+- `specs/Plans/api-integration-crm/api-integration-crm.architecture.md`
 
 ### Integration with Other Agents
 

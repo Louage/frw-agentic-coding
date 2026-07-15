@@ -36,7 +36,7 @@ Narrow the relevant files to the subset that applies to the changes under review
 
 - The changed AL object names and types — especially codeunits that publish events or host event subscribers, posting/release/validation routines that should expose extension points, and test codeunits that bind subscribers.
 - The changed procedures and triggers, weighted toward event publisher methods, methods carrying the `[EventSubscriber(...)]` attribute, routines that raise `OnBefore`/`OnAfter` events, and any procedure that calls `BindSubscription`/`UnbindSubscription`.
-- Tokens extracted from the diff that relate to events and the publish/subscribe model (`IntegrationEvent`, `BusinessEvent`, `EventSubscriber`, `IsHandled`, `BindSubscription`, `UnbindSubscription`, `EventSubscriberInstance`, `OnBefore`, `OnAfter`, `Manual`, `IncludeSender`, `Sender`, `this`, `RecordRef`, `xRec`, `temporary`, `Temp`, `repeat`).
+- Tokens extracted from the diff that relate to events and the publish/subscribe model (`IntegrationEvent`, `BusinessEvent`, `InternalEvent`, `EventSubscriber`, `IsHandled`, `BindSubscription`, `UnbindSubscription`, `EventSubscriberInstance`, `OnBefore`, `OnAfter`, `Manual`, `IncludeSender`, `GlobalVarAccess`, `Isolated`, `local`, `internal`, `Sender`, `this`, `RecordRef`, `xRec`, `temporary`, `Temp`, `repeat`).
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
 
@@ -50,13 +50,15 @@ The following targeted checks map diff signals to specific `events` articles. Tr
 
 - `IsHandled` raised without an immediately preceding `IsHandled := false;`, or one `IsHandled` variable reused across several raises with no reset between them — `initialize-ishandled-to-false-before-publishing`.
 - `if IsHandled then exit;` in a routine that also raises a paired `OnAfter…` event later, so the after-event is skipped whenever the call is handled — `preserve-onafter-execution-when-ishandled-skips-the-body`.
-- A parameter added before existing parameters on a changed event signature instead of appended at the end — `add-new-event-parameters-at-the-end`.
+- Any parameter added to a public Business/Integration event procedure, regardless of position; do not flag additions or reordering on `local`/`internal` publishers merely because a new parameter was not appended — `add-new-event-parameters-at-the-end`.
+- A shipped Business/Integration event renamed or removed, or an existing parameter renamed, removed, retyped, or changed to/from `var`, based on the mistaken assumption that `local` or `internal` prevents dependent subscription; parameter order alone is not a subscriber-contract violation — `treat-local-and-internal-events-as-subscriber-contracts`.
+- Any change to `IncludeSender` or `GlobalVarAccess` on a shipped event at any target version, or to `Isolated` on BC20/runtime 9.0 or later, including a change intended to modernize the publisher — `do-not-change-shipped-event-attribute-flags`.
 - Publisher names that do not encode firing position (`OnBefore`/`OnAfter<Routine>` at the boundaries, `On<Routine>OnBefore`/`OnAfter<Context>` mid-routine) — `name-events-by-publisher-position`.
 - Two consecutive `OnBefore`/`OnAfter` raises with no logic between them, or a near-duplicate event differing only by an extra parameter — `prefer-reusing-or-extending-existing-events`.
 - An event raised between `repeat` and `until` inside a record loop — `do-not-publish-events-inside-loops`.
 - A `temporary` record event parameter whose name does not start with `Temp` — `prefix-temporary-record-event-parameters-with-temp`.
 - Abbreviated event parameter names (`SalesHdr`, `DocNo`, `Amt`) instead of full table names and spelled-out values — `name-event-parameters-without-abbreviations`.
-- `[IntegrationEvent(true, …)]` (`IncludeSender`) on a codeunit event used only to expose the publisher, where `this` could be passed as a typed `Sender` parameter (Business Central 2024 release wave 2 and later) — `prefer-this-over-includesender-in-codeunit-events`.
+- `[IntegrationEvent(true, …)]` (`IncludeSender`) on a newly added codeunit event used only to expose the publisher, where `this` could be passed as a typed `Sender` parameter (Business Central 2024 release wave 2 and later) — `prefer-this-over-includesender-in-codeunit-events`.
 - A `RecordRef` event parameter, or a passed-through `xRec`, where a concrete typed record fits — `avoid-loosely-typed-event-parameters`.
 - A `var IsHandled` added to a pre-existing event rather than introduced through a new `OnBefore` publisher — `do-not-add-ishandled-to-an-existing-event`.
 - An `if IsHandled then exit;` whose skipped body performs posting, ledger-entry creation, number-series consumption, or integrity/permission validation — `do-not-bypass-critical-operations-with-ishandled`.
@@ -67,7 +69,7 @@ For each worklist entry, evaluate the diff against the file's `## Best Practice`
 
 - When the diff contains a clear match for an Anti Pattern, emit a finding with severity `major` or `blocker`, a message summarizing the anti-pattern, `location` pointing to the offending line or range, and a `references` entry pointing to the knowledge file. Use `blocker` only when the knowledge file states the anti-pattern violates a platform-level guarantee. When the file does not make such a claim, the ceiling is `major`.
 - When the diff contains code that contradicts a Best Practice without being a full anti-pattern, emit `minor` with the same reference shape.
-- When the skill cannot detect a violation but the file is clearly applicable to the change, emit `info` citing the file. Repository-wide observations MAY omit `location`.
+- Applicability alone is not a finding. Emit `info` only for a concrete, non-actionable observation the article explicitly defines; otherwise emit nothing when no violation is present.
 
 Set `confidence` to:
 
@@ -91,7 +93,7 @@ Outcome selection:
 
 ## Output
 
-Output conforms to the DO output contract. A populated example:
+Output conforms to the DO output contract. Every finding this skill emits MUST set `findings[].domain` to `"Events"`. A populated example:
 
 ```json
 {
@@ -114,7 +116,8 @@ Output conforms to the DO output contract. A populated example:
       "references": [
         { "path": "microsoft/knowledge/events/publish-thin-onbefore-onafter-integration-events.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Events"
     },
     {
       "id": "microsoft/knowledge/events/use-ishandled-to-make-base-behaviour-overridable.md",
@@ -127,7 +130,8 @@ Output conforms to the DO output contract. A populated example:
       "references": [
         { "path": "microsoft/knowledge/events/use-ishandled-to-make-base-behaviour-overridable.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Events"
     }
   ],
   "suppressed": []

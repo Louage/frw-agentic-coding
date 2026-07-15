@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/security/prefer-oauth2-over-api-keys-for-external-http-calls.md
+description: Imported BCQuality rule from microsoft/knowledge/security/prefer-oauth2-over-api-keys-for-external-http-calls.md
 ---
 
 # Prefer OAuth2 over API keys for external HTTP calls
 
-Source: community/knowledge/security/prefer-oauth2-over-api-keys-for-external-http-calls.md
+Source: microsoft/knowledge/security/prefer-oauth2-over-api-keys-for-external-http-calls.md
 
 # Prefer OAuth2 over API keys for external HTTP calls
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 

@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/security/secrets-isolated-storage.md
+description: Imported BCQuality rule from microsoft/knowledge/security/secrets-isolated-storage.md
 ---
 
 # A secret belongs in IsolatedStorage, never in a table field
 
-Source: community/knowledge/security/secrets-isolated-storage.md
+Source: microsoft/knowledge/security/secrets-isolated-storage.md
 
 # A secret belongs in IsolatedStorage, never in a table field
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 
@@ -17,8 +15,12 @@ API keys, OAuth tokens, client secrets, and connection strings must not be store
 
 ## Best Practice
 
-Persist every credential with `IsolatedStorage`, write it at the point of capture, and read it only when needed. For the per-secret details — choosing the right `DataScope`, encrypting at rest, and typing the value as `SecretText` so it cannot leak into logs — follow `isolatedstorage-datascope-module-vs-company`, `isolatedstorage-setencrypted-for-sensitive-values`, and `secrettext-for-credentials`.
+Persist every credential in `IsolatedStorage`, write it at the point of capture, and read it only when needed. Prefer `SetEncrypted` when the value fits its documented length limit. On BC24 and later, carry the value through the `SecretText` overloads; on earlier releases, keep any required `Text` handling inside a `[NonDebuggable]` boundary. Choose the `DataScope` that matches the credential's lifetime. See `isolatedstorage-datascope-module-vs-company`, `isolatedstorage-setencrypted-for-sensitive-values`, and `secrettext-for-credentials` for those separate concerns.
+
+See sample: `secrets-isolated-storage.good.al`.
 
 ## Anti Pattern
 
 A "Setup" or "Connection" table carrying a `Text` field named `API Key`, `Password`, or `Client Secret`. The value is now readable by any object with table permission, ships in RapidStart packages and Excel exports, and appears in record snapshots — a credential disclosure that no amount of encryption-in-transit elsewhere makes up for. Reviewer signal: a secret-shaped field declared on a table instead of an `IsolatedStorage` call.
+
+See sample: `secrets-isolated-storage.bad.al`.

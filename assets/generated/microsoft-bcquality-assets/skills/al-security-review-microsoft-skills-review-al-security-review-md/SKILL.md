@@ -36,9 +36,16 @@ Narrow the relevant files to the subset that applies to the changes under review
 
 - The changed AL object names and types — especially permission sets, codeunits handling authentication or authorization, objects touching `Isolated Storage`, `OAuth2` flows, web service endpoints, API pages, event publishers, and RecordRef helpers.
 - The changed procedures and triggers, weighted toward those that call `HttpClient`, validate or compose URLs, write to telemetry, read or write secrets, unwrap SecretText, manipulate record-level security, expose var Boolean guard parameters, or bypass the permission model (for example, `RecordRef.Open`, `Record.WritePermission`, direct table access from a non-owning app).
-- Tokens extracted from the diff that relate to security concerns (`IsolatedStorage`, `SetEncrypted`, `OAuth2`, `SecretText`, `Unwrap`, `NonDebuggable`, `Password`, `Token`, `HttpClient`, `Uri`, `AreURIsHaveSameHost`, `IsValidURIPattern`, `RecordRef`, `RecordId`, `Open`, `IntegrationEvent`, `SkipValidation`, `HasAccess`, `Permission`, `UserSecurityId`, `Commit`).
+- Tokens extracted from the diff that relate to security concerns (`IsolatedStorage`, `SetEncrypted`, `OAuth2`, `SecretText`, `Unwrap`, `NonDebuggable`, `Password`, `Token`, `HttpClient`, `Uri`, `AreURIsHaveSameHost`, `IsValidURIPattern`, `RecordRef`, `RecordId`, `TransferFields`, `Codeunit.Run`, `Access = Internal`, `internalsVisibleTo`, `Open`, `IntegrationEvent`, `SkipValidation`, `HasAccess`, `Permission`, `UserSecurityId`, `Commit`).
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
+
+Always worklist `internal-access-is-not-a-security-boundary.md` when changed comments or code rely on `Access = Internal` or `internalsVisibleTo` to protect a sensitive operation, or an internal `OnRun` codeunit performs privileged work without an independent authorization boundary. Do not flag `internal` used only to keep implementation details out of the supported API.
+
+For secret values, select the most specific sink owner:
+
+- When a `Text`/`Code` credential is declared, passed, returned, or unwrapped without a visible HTTP URI/header/body sink, use `secrettext-for-credentials.md`.
+- When that value is interpolated into a URI, authorization header, or HTTP body and sent through `HttpClient`, use `secrettext-with-httpclient.md` as the primary finding. It supersedes the generic credential-type article at that location; keep the latter only as a supporting reference when useful.
 
 Once the candidate worklist is known, resolve layer-precedence conflicts per READ. Drop lower-precedence files whose normative guidance (`## Best Practice` or `## Anti Pattern`) directly contradicts a higher-precedence candidate, and record each dropped file in `suppressed` with `reason: "layer-precedence"`. Files that would have been candidates but are hidden because their layer is disabled in consumer configuration are recorded with `reason: "configuration"`. Files that never became candidates are NOT recorded in `suppressed`.
 
@@ -50,7 +57,7 @@ For each worklist entry, evaluate the diff against the file's `## Best Practice`
 
 - When the diff contains a clear match for an Anti Pattern, emit a finding with severity `major` or `blocker`, a message summarizing the anti-pattern, `location` pointing to the offending line or range, and a `references` entry pointing to the knowledge file. Use `blocker` only when the knowledge file states the anti-pattern violates a platform-level guarantee (for example, documented secret-handling rules, permission-model invariants, or data-protection requirements). When the file does not make such a claim, the ceiling is `major`.
 - When the diff contains code that contradicts a Best Practice without being a full anti-pattern, emit `minor` with the same reference shape.
-- When the skill cannot detect a violation but the file is clearly applicable to the change, emit `info` citing the file. Repository-wide observations MAY omit `location`.
+- Applicability alone is not a finding. Emit `info` only for a concrete, non-actionable observation the article explicitly defines; otherwise emit nothing when no violation is present.
 
 Set `confidence` to:
 
@@ -74,7 +81,7 @@ Outcome selection:
 
 ## Output
 
-Output conforms to the DO output contract. A populated example:
+Output conforms to the DO output contract. Every finding this skill emits MUST set `findings[].domain` to `"Security"`. A populated example:
 
 ```json
 {
@@ -86,7 +93,7 @@ Output conforms to the DO output contract. A populated example:
   },
   "findings": [
     {
-      "id": "microsoft/knowledge/security/use-secrettext-for-credentials.md",
+      "id": "microsoft/knowledge/security/secrettext-for-credentials.md",
       "severity": "blocker",
       "message": "A bearer token is declared as a Text parameter and passed through the HTTP request path as plain text. The referenced guidance requires credentials to flow as SecretText end-to-end.",
       "location": {
@@ -95,22 +102,24 @@ Output conforms to the DO output contract. A populated example:
         "range": { "start-line": 85, "end-line": 89 }
       },
       "references": [
-        { "path": "microsoft/knowledge/security/use-secrettext-for-credentials.md" }
+        { "path": "microsoft/knowledge/security/secrettext-for-credentials.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Security"
     },
     {
-      "id": "microsoft/knowledge/security/never-hardcode-secrets-in-al.md",
+      "id": "microsoft/knowledge/security/secrets-isolated-storage.md",
       "severity": "minor",
-      "message": "An API key is assigned from a string literal rather than retrieved from IsolatedStorage or Key Vault at runtime.",
+      "message": "A setup table stores an API key in an ordinary Text field, exposing it through table reads and exports. Persist it in IsolatedStorage instead.",
       "location": {
-        "file": "src/Integration/ApiClient.Codeunit.al",
-        "line": 201
+        "file": "src/Integration/ExternalServiceSetup.Table.al",
+        "line": 12
       },
       "references": [
-        { "path": "microsoft/knowledge/security/never-hardcode-secrets-in-al.md" }
+        { "path": "microsoft/knowledge/security/secrets-isolated-storage.md" }
       ],
-      "confidence": "medium"
+      "confidence": "medium",
+      "domain": "Security"
     }
   ],
   "suppressed": []

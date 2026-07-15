@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/ui/page-background-tasks.md
+description: Imported BCQuality rule from microsoft/knowledge/ui/page-background-tasks.md
 ---
 
 # Offload Slow Read-Only Page Calculations To Background Tasks
 
-Source: community/knowledge/ui/page-background-tasks.md
+Source: microsoft/knowledge/ui/page-background-tasks.md
 
 # Offload Slow Read-Only Page Calculations To Background Tasks
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 Pages that compute statistics, aggregates, or external lookups inline block the page from rendering until the calculation finishes, producing a visible freeze on FactBoxes, cue tiles, and calculated fields. Business Central provides page background tasks: `CurrPage.EnqueueBackgroundTask` runs a dedicated codeunit in a read-only child session and returns values via `OnPageBackgroundTaskCompleted`, so the page opens immediately and fills in computed values as they arrive. This matters because users should never wait on a calculation they may not need. The mechanism has specific rules that are easy to get wrong, which is why it warrants an explicit pattern.

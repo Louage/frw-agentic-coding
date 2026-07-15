@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/security/do-not-grant-rights-beyond-a-users-entitlement.md
+description: Imported BCQuality rule from microsoft/knowledge/security/do-not-grant-rights-beyond-a-users-entitlement.md
 ---
 
 # Do not grant rights beyond a user's entitlement
 
-Source: community/knowledge/security/do-not-grant-rights-beyond-a-users-entitlement.md
+Source: microsoft/knowledge/security/do-not-grant-rights-beyond-a-users-entitlement.md
 
 # Do not grant rights beyond a user's entitlement
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 
@@ -18,8 +16,6 @@ Entitlements are license-level caps on what a user can access, derived automatic
 ## Best Practice
 
 When designing a permission set that ships with an extension, consult the entitlement model for the target user population before finalizing the grants. Every object and tabledata right the set expects to grant should be reachable within the intended entitlement tier; if it is not, the set needs to be scoped to licenses that permit it, or the feature needs a different access path.
-
-See sample: `do-not-grant-rights-beyond-a-users-entitlement.good.al`.
 
 ## Anti Pattern
 

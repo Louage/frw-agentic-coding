@@ -36,7 +36,7 @@ Narrow the relevant files to the subset that applies to the changes under review
 
 - The changed AL object names and types — especially `interface` objects, codeunits and enums declared with the `implements` keyword, and consumers that declare or assign an `Interface` variable.
 - The changed procedures and triggers, weighted toward factory or dispatch routines that resolve a variant to behaviour, setter-injection procedures that take an `Interface` parameter, and `case`-over-enum blocks that select between strategies.
-- Tokens extracted from the diff that relate to interfaces and enum-backed implementation (`interface`, `implements`, `Implementation`, `DefaultImplementation`, `UnknownValueImplementation`, `enum`, `Extensible`, `Interface`, `case`, and the `case <enum> of` anti-pattern signal — a `case` over an enum value whose branches choose between variant computations).
+- Tokens extracted from the diff that relate to interfaces and enum-backed implementation (`interface`, `extends`, `implements`, `Implementation`, `DefaultImplementation`, `UnknownValueImplementation`, `enum`, `Extensible`, `Interface`, `case`, and the `case <enum> of` anti-pattern signal — a `case` over an enum value whose branches choose between variant computations).
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
 
@@ -44,13 +44,23 @@ Once the candidate worklist is known, resolve layer-precedence conflicts per REA
 
 When the post-conflict worklist is empty because no applicable interfaces knowledge exists, or because configuration suppressed every candidate, emit `outcome: "no-knowledge"`. When the worklist is empty because no applicable interfaces knowledge matched the changes, emit `outcome: "completed"` with an empty `findings` array.
 
+### Interface-compatibility checks
+
+The following targeted checks map diff signals to specific `interfaces` articles. Treat each as a candidate-selection cue: when the signal appears in the changed code, add the named article to the worklist and evaluate it in Action.
+
+- `DefaultImplementation` used as the only fallback where a persisted ordinal may no longer match any declared enum value, or a persisted enum lacks `UnknownValueImplementation` on BC18 or later — `handle-unknown-enum-ordinals-with-unknownvalueimplementation`.
+- A method added directly to an interface that exists in the baseline, instead of adding a BC25+ interface that `extends` it or a versioned sibling for older targets — `extend-published-interfaces-dont-edit-them`.
+- A declared enum value with no `Implementation` and no enum-level `DefaultImplementation` — `set-defaultimplementation-on-enum`.
+
+For `set-defaultimplementation-on-enum`, inspect the complete containing enum before emitting. An enum-level `DefaultImplementation = <Interface> = <Codeunit>;` conclusively covers every declared value that omits its own `Implementation`; do not flag such a value and do not replace the intentional fallback with a per-value mapping.
+
 ## Action
 
 For each worklist entry, evaluate the diff against the file's `## Best Practice` and `## Anti Pattern` sections. Emit findings as follows:
 
 - When the diff contains a clear match for an Anti Pattern, emit a finding with severity `major` or `blocker`, a message summarizing the anti-pattern, `location` pointing to the offending line or range, and a `references` entry pointing to the knowledge file. Use `blocker` only when the knowledge file states the anti-pattern violates a platform-level guarantee. When the file does not make such a claim, the ceiling is `major`.
 - When the diff contains code that contradicts a Best Practice without being a full anti-pattern, emit `minor` with the same reference shape.
-- When the skill cannot detect a violation but the file is clearly applicable to the change, emit `info` citing the file. Repository-wide observations MAY omit `location`.
+- Applicability alone is not a finding. Emit `info` only for a concrete, non-actionable observation the article explicitly defines; otherwise emit nothing when no violation is present.
 
 Set `confidence` to:
 
@@ -74,7 +84,7 @@ Outcome selection:
 
 ## Output
 
-Output conforms to the DO output contract. A populated example:
+Output conforms to the DO output contract. Every finding this skill emits MUST set `findings[].domain` to `"Interfaces"`. A populated example:
 
 ```json
 {
@@ -97,7 +107,8 @@ Output conforms to the DO output contract. A populated example:
       "references": [
         { "path": "microsoft/knowledge/interfaces/prefer-interface-over-case-branching.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Interfaces"
     },
     {
       "id": "microsoft/knowledge/interfaces/set-defaultimplementation-on-enum.md",
@@ -110,7 +121,8 @@ Output conforms to the DO output contract. A populated example:
       "references": [
         { "path": "microsoft/knowledge/interfaces/set-defaultimplementation-on-enum.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Interfaces"
     }
   ],
   "suppressed": []

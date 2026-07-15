@@ -35,8 +35,11 @@ Discard files that are not applicable. Retain conditionally applicable files (an
 Narrow the relevant files to the subset that applies to the changes under review. For each relevant file, compute overlap against:
 
 - The changed AL object names and types — especially codeunits with `Subtype = Upgrade` or `Subtype = Install`, tables and tableextensions adding or changing fields, enums and enumextensions, and objects under `Hybrid*`/`Migration`/`Upgrade` namespaces.
-- The changed triggers and procedures, weighted toward `OnUpgradePerCompany`, `OnUpgradePerDatabase`, `OnValidateUpgradePerCompany`, `OnValidateUpgradePerDatabase`, `OnInstallAppPerCompany`, and the `OnGetPerCompanyUpgradeTags`/`OnGetPerDatabaseUpgradeTags` subscribers.
-- Tokens extracted from the diff that relate to upgrade concerns (`Subtype = Upgrade`, `Upgrade Tag`, `HasUpgradeTag`, `SetUpgradeTag`, `OnValidateUpgrade`, `DataTransfer`, `CopyFields`, `InitValue`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `DataVersion`, `ExecutionContext`, `PrimaryKey`, `key(`, `field(`, `value(`, `enum`, `enumextension`, `HybridSL`, `HybridGP`, `HybridBC`, `HybridBaseDeployment`).
+- The changed triggers and procedures, weighted toward `OnCheckPreconditionsPerCompany`/`PerDatabase`, `OnUpgradePerCompany`/`PerDatabase`, `OnValidateUpgradePerCompany`/`PerDatabase`, `OnInstallAppPerCompany`/`PerDatabase`, the `OnGetPerCompanyUpgradeTags`/`OnGetPerDatabaseUpgradeTags` subscribers, and helper procedures transitively reachable from those entry points.
+- Tokens extracted from the diff that relate to upgrade concerns (`Subtype = Upgrade`, `Subtype = Install`, `Upgrade Tag`, `HasUpgradeTag`, `SetUpgradeTag`, `OnCheckPreconditions`, `OnUpgrade`, `OnValidateUpgrade`, `OnInstallApp`, `DataTransfer`, `CopyFields`, `Insert`, `Modify`, `Delete`, `Rename`, `InitValue`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `DataVersion`, `ExecutionContext`, `PrimaryKey`, `key(`, `field(`, `value(`, `enum`, `enumextension`, `HybridSL`, `HybridGP`, `HybridBC`, `HybridBaseDeployment`).
+- For each `OnCheckPreconditions...` and `OnValidateUpgrade...` trigger, build the best available call graph from surrounding unchanged source as well as changed hunks, tracing resolved calls through reachable local or internal helpers. Worklist the check-only rule when a database write occurs either directly in the trigger or in any helper procedure reachable from it. Writes include `Insert`, `Modify`, `ModifyAll`, `Delete`, `DeleteAll`, `Rename`, and `DataTransfer`. Also perform the reverse check when a PR changes a writing helper body: worklist the rule when that helper is invoked directly or transitively by an unchanged check or validation trigger.
+- Treat a direct write or a fully resolved call chain as high-confidence evidence. When cross-object dispatch, unavailable declarations, or an incomplete call graph prevents proving the complete chain, cap confidence at `medium`, name the unresolved edge in the finding, and do not claim a violation without a resolved path from a check or validation trigger to a write.
+- Worklist the install-versus-upgrade rule when migration helpers are reachable only from an install codeunit.
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone. When the diff contains no upgrade-related changes by any of the above signals, return `outcome: "not-applicable"` without evaluating files.
 
@@ -50,11 +53,11 @@ For each worklist entry, evaluate the diff against the file's `## Best Practice`
 
 - When the diff contains a clear match for an Anti Pattern, emit a finding with severity `major` or `blocker`, a message summarizing the anti-pattern, `location` pointing to the offending line or range, and a `references` entry pointing to the knowledge file. Use `blocker` for irreversible data corruption (enum-ordinal shift, unguarded reads that abort the upgrade) and for changes that would ship to customers without a migration path (new InitValue on an existing table without upgrade code).
 - When the diff contains code that contradicts a Best Practice without being a full anti-pattern, emit `minor` with the same reference shape.
-- When the skill cannot detect a violation but the file is clearly applicable to the change, emit `info` citing the file.
+- Applicability alone is not a finding. Emit `info` only for a concrete, non-actionable observation the article explicitly defines; otherwise emit nothing when no violation is present.
 
 Set `confidence` to:
 
-- `high` when the detection is based on an unambiguous pattern match.
+- `high` when the detection is based on an unambiguous pattern match and any required helper reachability is fully established.
 - `medium` when detection relies on heuristics or when any frontmatter dimension was `unknown`.
 - `low` when the finding is an advisory derived only from applicability.
 
@@ -74,7 +77,7 @@ Outcome selection:
 
 ## Output
 
-Output conforms to the DO output contract. A populated example:
+Output conforms to the DO output contract. Every finding this skill emits MUST set `findings[].domain` to `"Upgrade"`. A populated example:
 
 ```json
 {
@@ -86,7 +89,7 @@ Output conforms to the DO output contract. A populated example:
   },
   "findings": [
     {
-      "id": "microsoft/knowledge/upgrade/enum-changes-must-be-additive-at-the-end.md",
+      "id": "microsoft/knowledge/upgrade/enum-values-additive-at-end.md",
       "severity": "blocker",
       "message": "A new enum value was inserted at ordinal 1, shifting every subsequent value by one. Rows that store the old ordinal 1 will silently resolve to the new value. Per the referenced guidance, enum values must be appended at the end.",
       "location": {
@@ -94,9 +97,10 @@ Output conforms to the DO output contract. A populated example:
         "line": 7
       },
       "references": [
-        { "path": "microsoft/knowledge/upgrade/enum-changes-must-be-additive-at-the-end.md" }
+        { "path": "microsoft/knowledge/upgrade/enum-values-additive-at-end.md" }
       ],
-      "confidence": "high"
+      "confidence": "high",
+      "domain": "Upgrade"
     }
   ],
   "suppressed": []

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T16:46:10.9087415+00:00",
+  "generatedAt": "2026-07-15T15:38:18.1982568+00:00",
   "sources": [
     {
       "id": "bc-code-intelligence",
@@ -14,7 +14,7 @@
       "owner": "microsoft",
       "repo": "BCQuality",
       "branch": "main",
-      "commit": "4119417ce4db7cd5423671fb726459c485549f6c",
+      "commit": "186d8a131465475c79244d994acb872cd5c0d4bf",
       "usage": "knowledge-layer"
     }
   ]

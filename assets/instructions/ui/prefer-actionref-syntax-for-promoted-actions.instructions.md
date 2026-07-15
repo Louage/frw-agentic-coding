@@ -1,15 +1,13 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/ui/prefer-actionref-syntax-for-promoted-actions.md
+description: Imported BCQuality rule from microsoft/knowledge/ui/prefer-actionref-syntax-for-promoted-actions.md
 ---
 
 # Promote Actions With The Modern `actionref` Syntax, Never The Legacy `Promoted` Properties
 
-Source: community/knowledge/ui/prefer-actionref-syntax-for-promoted-actions.md
+Source: microsoft/knowledge/ui/prefer-actionref-syntax-for-promoted-actions.md
 
 # Promote Actions With The Modern `actionref` Syntax, Never The Legacy `Promoted` Properties
-
-> Contributions welcome — open a PR to refine or extend this article.
 
 ## Description
 Business Central 2022 release wave 2 (v21) introduced the `area(Promoted)` block with `actionref` as the way to promote page actions, separating an action's definition from its promotion. The older approach set `Promoted`, `PromotedCategory`, `PromotedOnly`, and `PromotedIsBig` directly on each action. The two syntaxes cannot be mixed within a single page or page extension, and choosing the legacy one entangles definition with presentation, making the action bar harder to maintain and to extend.

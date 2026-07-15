@@ -1,4 +1,4 @@
-﻿---
+---
 description: "Index of ALDC role-based agent specialists for AL development in Business Central."
 ---
 
