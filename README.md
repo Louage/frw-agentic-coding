@@ -94,6 +94,27 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 
 - **The Framework: Check for extension updates** — manual update check.
 
+## Agent Flow Hooks Overlay (Optional)
+
+The Agent Flow sidebar is primarily driven by agent self-reporting to the temp
+file `acdc-agent-flow.txt`. This repository also includes an optional hooks
+overlay that records deterministic lifecycle boundaries (session start, subagent
+start/stop, stop) to a JSONL stream in the OS temp folder.
+
+Files:
+
+- `.github/hooks/acdc-flow.json`
+- `.github/hooks/write-flow-hook-event.cjs`
+
+How to enable:
+
+1. Ensure hook files are loaded by VS Code (default includes `.github/hooks`).
+2. Enable extension setting `acdc.agents.enableHooksOverlay`.
+
+When enabled, AC⚡DC reads `%TEMP%/acdc-agent-flow-hooks.jsonl` (Windows) or
+`/tmp/acdc-agent-flow-hooks.jsonl` (macOS/Linux) and overlays deterministic
+boundary events onto the sidebar flow.
+
 ## Release
 
 1. Update `CHANGELOG.md`.

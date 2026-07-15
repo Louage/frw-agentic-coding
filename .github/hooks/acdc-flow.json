@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/write-flow-hook-event.cjs"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/write-flow-hook-event.cjs"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/write-flow-hook-event.cjs"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/write-flow-hook-event.cjs"
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/write-flow-hook-event.cjs"
+      }
+    ]
+  }
+}

@@ -27,9 +27,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("AC⚡DC");
   context.subscriptions.push(output);
 
+  const hooksOverlayEnabled = vscode.workspace
+    .getConfiguration("acdc.agents")
+    .get<boolean>("enableHooksOverlay", true);
+
   // Flow-state service: authoritative store for the sidebar "Agent Flow" view.
   // Registered before any tools/views so both can wire against it.
-  const flowState = new FlowStateService(context, output);
+  const flowState = new FlowStateService(context, output, { hooksOverlayEnabled });
   context.subscriptions.push({ dispose: () => flowState.dispose() });
 
   // One-shot: remove any leftover `.vscode/acdc-agent-flow.txt` files from
@@ -103,6 +107,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("acdc.agents.placeholders")) {
         void validatePlaceholders();
+      }
+      if (e.affectsConfiguration("acdc.agents.enableHooksOverlay")) {
+        const enabled = vscode.workspace
+          .getConfiguration("acdc.agents")
+          .get<boolean>("enableHooksOverlay", true);
+        flowState.setHooksOverlayEnabled(enabled);
       }
     })
   );

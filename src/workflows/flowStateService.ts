@@ -7,6 +7,8 @@ import * as path from "path";
  */
 export interface IFlowHistoryStep {
   label: string;
+  /** Agent display name that owned this step when completed. */
+  agentDisplayName?: string;
   /** Optional SKILL.md name that was applied at this step. */
   skill?: string;
   /** ISO timestamp for ordering / tooltips. */
@@ -18,6 +20,8 @@ export interface IFlowHistoryStep {
  */
 export interface IFlowActiveStep {
   label: string;
+  /** Agent display name that owns the active step. */
+  agentDisplayName?: string;
   skill?: string;
   startedAt: string;
 }
@@ -106,28 +110,80 @@ export class FlowStateService {
     os.tmpdir(),
     FlowStateService.FLOW_FILE_BASENAME
   );
+  /** Hook-emitted JSONL events consumed as a deterministic overlay (optional). */
+  static readonly HOOK_EVENTS_FILE_BASENAME = "acdc-agent-flow-hooks.jsonl";
+  static readonly HOOK_EVENTS_FILE_ABSOLUTE = path.join(
+    os.tmpdir(),
+    FlowStateService.HOOK_EVENTS_FILE_BASENAME
+  );
 
   private readonly onDidChangeEmitter = new vscode.EventEmitter<IFlowState | undefined>();
   readonly onDidChange = this.onDidChangeEmitter.event;
 
   private state: IFlowState | undefined;
   private watcher: vscode.FileSystemWatcher | undefined;
+  private hookWatcher: vscode.FileSystemWatcher | undefined;
   private watcherList: vscode.FileSystemWatcher[] = [];
   private readonly activitySubs: vscode.Disposable[] = [];
   private activityDebounce: NodeJS.Timeout | undefined;
   private lastActivityLabel: string | undefined;
   private activityEnabled = false;
+  private hooksOverlayEnabled = false;
+  private hookLinesSeen = 0;
+
+  private readonly hookSubagentStack: string[] = [];
+
+  private static flowTempDirectories(): string[] {
+    const dirs = new Set<string>();
+    const add = (p: string | undefined) => {
+      if (!p) {
+        return;
+      }
+      const t = p.trim();
+      if (!t) {
+        return;
+      }
+      dirs.add(path.resolve(t));
+    };
+
+    add(os.tmpdir());
+    add(process.env.TEMP);
+    add(process.env.TMP);
+
+    if (process.platform === "win32") {
+      add(path.join(process.env.SystemRoot ?? "C:\\Windows", "Temp"));
+    }
+
+    return Array.from(dirs);
+  }
+
+  private static flowFileCandidates(): vscode.Uri[] {
+    return FlowStateService
+      .flowTempDirectories()
+      .map((dir) => vscode.Uri.file(path.join(dir, FlowStateService.FLOW_FILE_BASENAME)));
+  }
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly output?: vscode.OutputChannel
+    private readonly output?: vscode.OutputChannel,
+    options?: { hooksOverlayEnabled?: boolean }
   ) {
     this.state = context.workspaceState.get<IFlowState>(FlowStateService.STORAGE_KEY);
+    this.hooksOverlayEnabled = options?.hooksOverlayEnabled ?? false;
     this.setupFileWatcher();
+    this.setupHookWatcher();
     this.setupActivityTracker();
     // Load any existing file content immediately in case the watcher fires
     // no events before the user first opens the sidebar view.
     void this.readFlowFile();
+  }
+
+  setHooksOverlayEnabled(enabled: boolean): void {
+    this.hooksOverlayEnabled = enabled;
+    this.output?.appendLine(`[flow] hooks overlay ${enabled ? "enabled" : "disabled"}`);
+    if (enabled) {
+      void this.readHookEventsFile();
+    }
   }
 
   /**
@@ -198,6 +254,14 @@ export class FlowStateService {
       clearTimeout(this.activityDebounce);
     }
     this.activityDebounce = setTimeout(() => {
+      const passiveHandoffTarget = this.inferPassiveHandoffTarget();
+      if (passiveHandoffTarget && this.state?.agentDisplayName !== passiveHandoffTarget) {
+        this.output?.appendLine(
+          `[flow] passive handoff inferred: ${this.state?.agentDisplayName ?? "-"} -> ${passiveHandoffTarget}`
+        );
+        this.handoffToAgent(passiveHandoffTarget);
+      }
+
       // If the agent has explicitly reported a step, prefer that: only surface
       // activity when the current active label matches a prior activity (or
       // there is no active step yet).
@@ -209,12 +273,65 @@ export class FlowStateService {
       if (!this.state) {
         this.state = { agentDisplayName: "Active Agent", history: [] };
       }
+
       this.state.active = {
         label,
+        agentDisplayName: this.state.agentDisplayName,
         startedAt: new Date().toISOString(),
       };
       this.persist();
     }, 400);
+  }
+
+  private inferPassiveHandoffTarget(): string | undefined {
+    if (!this.state?.planned || this.state.planned.length === 0) {
+      return undefined;
+    }
+
+    const targets = new Map<string, string>();
+    for (const step of this.state.planned) {
+      if (step.kind !== "handoff") {
+        continue;
+      }
+      const name = step.agentName?.trim();
+      if (!name) {
+        continue;
+      }
+      targets.set(name.toLowerCase(), name);
+    }
+
+    if (targets.size !== 1) {
+      return undefined;
+    }
+
+    const [targetKey, targetName] = Array.from(targets.entries())[0];
+    if (!targetName) {
+      return undefined;
+    }
+
+    if (this.state.agentDisplayName.trim().toLowerCase() === targetKey) {
+      return undefined;
+    }
+
+    return targetName;
+  }
+
+  private inferHandoffTargetFromPrompt(prompt: string): string | undefined {
+    if (!this.state?.planned || this.state.planned.length === 0) {
+      return undefined;
+    }
+
+    const loweredPrompt = prompt.toLowerCase();
+    const candidates = this.state.planned
+      .filter((s) => s.kind === "handoff" && !!s.agentName)
+      .map((s) => s.agentName!.trim())
+      .filter((name) => name.length > 0);
+
+    const matches = candidates.filter((name) => loweredPrompt.includes(name.toLowerCase()));
+    if (matches.length === 1) {
+      return matches[0];
+    }
+    return undefined;
   }
 
   /**
@@ -230,32 +347,36 @@ export class FlowStateService {
    *      case where the agent writes the file in an unusual location.
    */
   private setupFileWatcher(): void {
-    const flowUri = vscode.Uri.file(FlowStateService.FLOW_FILE_ABSOLUTE);
-    const tmpDirUri = vscode.Uri.file(path.dirname(FlowStateService.FLOW_FILE_ABSOLUTE));
+    const candidates = FlowStateService.flowFileCandidates();
 
-    // ── Absolute-path filesystem watcher ────────────────────────────────────
-    const pattern = new vscode.RelativePattern(
-      tmpDirUri,
-      FlowStateService.FLOW_FILE_BASENAME
-    );
-    const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-    const onEvent = (uri: vscode.Uri) => {
-      this.output?.appendLine(`[flow] fs event: ${uri.fsPath}`);
-      void this.readFlowFile(uri);
-    };
-    watcher.onDidCreate(onEvent);
-    watcher.onDidChange(onEvent);
-    watcher.onDidDelete((uri) => {
-      this.output?.appendLine(`[flow] fs deleted: ${uri.fsPath}`);
-      if (this.state?.active) {
-        this.completeActive();
-      }
-    });
-    this.watcher = watcher;
-    this.output?.appendLine(`[flow] watching: ${flowUri.fsPath}`);
+    // ── Absolute-path filesystem watchers for each temp root ───────────────
+    for (const candidate of candidates) {
+      const dirUri = vscode.Uri.file(path.dirname(candidate.fsPath));
+      const pattern = new vscode.RelativePattern(
+        dirUri,
+        FlowStateService.FLOW_FILE_BASENAME
+      );
+      const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+      const onEvent = (uri: vscode.Uri) => {
+        this.output?.appendLine(`[flow] fs event: ${uri.fsPath}`);
+        void this.readFlowFile(uri);
+      };
+      watcher.onDidCreate(onEvent);
+      watcher.onDidChange(onEvent);
+      watcher.onDidDelete((uri) => {
+        this.output?.appendLine(`[flow] fs deleted: ${uri.fsPath}`);
+        if (this.state?.active) {
+          this.completeActive();
+        }
+      });
+      this.watcherList.push(watcher);
+      this.output?.appendLine(`[flow] watching: ${candidate.fsPath}`);
+    }
 
-    // Also read the file immediately in case it exists from a previous session.
-    void this.readFlowFile(flowUri);
+    this.watcher = this.watcherList[0];
+
+    // Read the freshest existing candidate at startup.
+    void this.readFlowFile();
 
     // ── Text-document fallback (matches by filename anywhere) ──────────────
     const isFlowFile = (uri: vscode.Uri): boolean =>
@@ -295,6 +416,144 @@ export class FlowStateService {
   }
 
   /**
+   * Watches optional hook events emitted to a dedicated JSONL temp file.
+   * This overlay is deterministic (session/subagent boundaries) and does not
+   * depend on the active agent explicitly reporting those boundaries.
+   */
+  private setupHookWatcher(): void {
+    const hookUri = vscode.Uri.file(FlowStateService.HOOK_EVENTS_FILE_ABSOLUTE);
+    const tmpDirUri = vscode.Uri.file(path.dirname(FlowStateService.HOOK_EVENTS_FILE_ABSOLUTE));
+    const pattern = new vscode.RelativePattern(
+      tmpDirUri,
+      FlowStateService.HOOK_EVENTS_FILE_BASENAME
+    );
+    const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+    const onEvent = (uri: vscode.Uri) => {
+      this.output?.appendLine(`[flow] hook fs event: ${uri.fsPath}`);
+      void this.readHookEventsFile(uri);
+    };
+    watcher.onDidCreate(onEvent);
+    watcher.onDidChange(onEvent);
+    watcher.onDidDelete((uri) => {
+      this.output?.appendLine(`[flow] hook file deleted: ${uri.fsPath}`);
+      this.hookLinesSeen = 0;
+      this.hookSubagentStack.length = 0;
+    });
+    this.hookWatcher = watcher;
+    void this.readHookEventsFile(hookUri);
+  }
+
+  private async readHookEventsFile(uri?: vscode.Uri): Promise<void> {
+    if (!this.hooksOverlayEnabled) {
+      return;
+    }
+    const target = uri ?? vscode.Uri.file(FlowStateService.HOOK_EVENTS_FILE_ABSOLUTE);
+    let raw: Uint8Array;
+    try {
+      raw = await vscode.workspace.fs.readFile(target);
+    } catch {
+      return;
+    }
+    const text = Buffer.from(raw).toString("utf8");
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    if (lines.length < this.hookLinesSeen) {
+      // File was truncated/rotated.
+      this.hookLinesSeen = 0;
+      this.hookSubagentStack.length = 0;
+    }
+
+    for (let i = this.hookLinesSeen; i < lines.length; i += 1) {
+      try {
+        const parsed = JSON.parse(lines[i]) as {
+          hook_event_name?: string;
+          agent_type?: string;
+          session_id?: string;
+          timestamp?: string;
+          prompt?: string;
+        };
+        this.applyHookEvent(parsed);
+      } catch {
+        // Skip malformed JSON lines.
+      }
+    }
+    this.hookLinesSeen = lines.length;
+  }
+
+  private applyHookEvent(event: {
+    hook_event_name?: string;
+    agent_type?: string;
+    session_id?: string;
+    timestamp?: string;
+    prompt?: string;
+  }): void {
+    const eventName = (event.hook_event_name ?? "").trim();
+    if (!eventName) {
+      return;
+    }
+    const when = event.timestamp ?? new Date().toISOString();
+
+    if (eventName === "SessionStart") {
+      const sessionSuffix = event.session_id ? ` (${event.session_id.slice(0, 8)})` : "";
+      this.startStep(`session-start${sessionSuffix}`);
+      return;
+    }
+
+    if (eventName === "SubagentStart") {
+      const subagent = (event.agent_type ?? "Subagent").trim();
+      if (!subagent) {
+        return;
+      }
+      this.hookSubagentStack.push(subagent);
+      this.handoffToAgent(subagent, `subagent-start: ${subagent}`);
+      this.state!.active!.startedAt = when;
+      this.persist();
+      return;
+    }
+
+    if (eventName === "UserPromptSubmit") {
+      const prompt = (event.prompt ?? "").trim();
+      const promptTarget = prompt.length > 0 ? this.inferHandoffTargetFromPrompt(prompt) : undefined;
+      if (promptTarget && this.state?.agentDisplayName !== promptTarget) {
+        this.output?.appendLine(
+          `[flow] prompt handoff inferred: ${this.state?.agentDisplayName ?? "-"} -> ${promptTarget}`
+        );
+        this.handoffToAgent(promptTarget, "reading-request");
+        this.state!.active!.startedAt = when;
+        this.persist();
+      }
+      return;
+    }
+
+    if (eventName === "SubagentStop") {
+      const subagent = (event.agent_type ?? this.hookSubagentStack[this.hookSubagentStack.length - 1] ?? "Subagent").trim();
+      if (this.state?.active) {
+        this.completeActive();
+      }
+      const idx = this.hookSubagentStack.lastIndexOf(subagent);
+      if (idx >= 0) {
+        this.hookSubagentStack.splice(idx, 1);
+      }
+      if (this.state) {
+        this.state.active = {
+          label: `subagent-stop: ${subagent}`,
+          agentDisplayName: subagent,
+          startedAt: when,
+        };
+        this.persist();
+      }
+      return;
+    }
+
+    if (eventName === "Stop") {
+      this.completeActive();
+    }
+  }
+
+  /**
    * Reads the flow file and syncs the in-memory state with its contents.
    * When called without an explicit URI, reads from the canonical absolute
    * path in the OS temp folder.
@@ -309,7 +568,43 @@ export class FlowStateService {
    * immediately after a step attaches that skill to the step.
    */
   private async readFlowFile(uri?: vscode.Uri): Promise<void> {
-    const target = uri ?? vscode.Uri.file(FlowStateService.FLOW_FILE_ABSOLUTE);
+    let target = uri;
+    if (!target) {
+      const candidates = FlowStateService.flowFileCandidates();
+      let newest: { uri: vscode.Uri; mtime: number } | undefined;
+      const existing: { uri: vscode.Uri; mtime: number }[] = [];
+      for (const candidate of candidates) {
+        try {
+          const stat = await vscode.workspace.fs.stat(candidate);
+          const mtime = stat.mtime ?? 0;
+          existing.push({ uri: candidate, mtime });
+          if (!newest || mtime > newest.mtime) {
+            newest = { uri: candidate, mtime };
+          }
+        } catch {
+          // Missing candidate is expected.
+        }
+      }
+      if (!newest) {
+        return;
+      }
+      target = newest.uri;
+
+      // Keep one authoritative temp file per session path to avoid divergent
+      // flows when `%TEMP%` and `C:\Windows\Temp` are both used.
+      for (const item of existing) {
+        if (item.uri.fsPath.toLowerCase() === newest.uri.fsPath.toLowerCase()) {
+          continue;
+        }
+        try {
+          await vscode.workspace.fs.delete(item.uri, { useTrash: false });
+          this.output?.appendLine(`[flow] dedup deleted stale temp file: ${item.uri.fsPath}`);
+        } catch {
+          // Best-effort dedupe only.
+        }
+      }
+    }
+
     let raw: Uint8Array;
     try {
       raw = await vscode.workspace.fs.readFile(target);
@@ -339,78 +634,97 @@ export class FlowStateService {
       return;
     }
 
-    // Optional `agent: <name>` header on the first line — used when Copilot
-    // hands off to a different chat participant so the sidebar can switch
-    // agents (and re-parse the planned roadmap) without a manual reselect.
-    const agentHeaderMatch = /^agent\s*:\s*(.+)$/i.exec(lines[0]);
-    let agentSwitched = false;
-    if (agentHeaderMatch) {
-      const declaredAgent = agentHeaderMatch[1].trim();
-      lines.shift(); // Consume the header line.
-      if (declaredAgent && declaredAgent !== this.state?.agentDisplayName) {
-        // New agent — reset history + let subscribers re-seed planned flow.
-        this.state = {
-          agentDisplayName: declaredAgent,
-          agentStableId: undefined,
-          history: [],
-        };
-        agentSwitched = true;
-        this.output?.appendLine(`[flow] agent switch detected from file: ${declaredAgent}`);
+    interface IParsedStep {
+      label: string;
+      skill?: string;
+      agentDisplayName: string;
+    }
+    const parseAgentLine = (line: string): string | undefined => {
+      const legacy = /^agent\s*:\s*(.+)$/i.exec(line);
+      if (legacy) {
+        return legacy[1].trim();
       }
-    }
+      const handoff = /^handoff\s*:\s*(.+)$/i.exec(line);
+      if (handoff) {
+        return handoff[1].trim();
+      }
+      const section = /^---\s*agent\s*:\s*(.+?)\s*---$/i.exec(line);
+      if (section) {
+        return section[1].trim();
+      }
+      return undefined;
+    };
 
-    if (lines.length === 0) {
-      // File only had the agent header — persist the switch and stop.
-      if (agentSwitched) { this.persist(); }
-      return;
-    }
-
-    // Extract optional "skill: <name>" annotations that follow a step line.
-    interface IParsedStep { label: string; skill?: string; }
+    const fallbackAgent = this.state?.agentDisplayName ?? "Active Agent";
+    let currentAgent = fallbackAgent;
     const steps: IParsedStep[] = [];
+
     for (const line of lines) {
+      const declaredAgent = parseAgentLine(line);
+      if (declaredAgent) {
+        currentAgent = declaredAgent;
+        continue;
+      }
+
       const skillMatch = /^skill\s*:\s*(.+)$/i.exec(line);
       if (skillMatch && steps.length > 0) {
         steps[steps.length - 1].skill = skillMatch[1].trim();
         continue;
       }
-      steps.push({ label: line });
+
+      steps.push({ label: line, agentDisplayName: currentAgent });
     }
 
     if (steps.length === 0) {
-      if (agentSwitched) { this.persist(); }
       return;
-    }
-
-    // Ensure there is some agent set — the file may arrive before the user
-    // activates an agent from the tree.
-    if (!this.state) {
-      this.state = { agentDisplayName: "Active Agent", history: [] };
     }
 
     const active = steps[steps.length - 1];
     const history = steps.slice(0, -1);
 
-    // Preserve existing timestamps where labels match; assign now() for new ones.
+    // Preserve existing timestamps by index+label+agent; assign now() for new ones.
     const now = new Date().toISOString();
-    const previousHistoryByLabel = new Map(this.state.history.map((h) => [h.label, h]));
-    this.state.history = history.map((s) => {
-      const prior = previousHistoryByLabel.get(s.label);
+    const previousHistory = this.state?.history ?? [];
+    const nextHistory = history.map((s, idx) => {
+      const prior = previousHistory[idx];
+      const sameAsPrior =
+        prior &&
+        prior.label === s.label &&
+        (prior.agentDisplayName ?? "") === s.agentDisplayName;
       return {
         label: s.label,
-        skill: s.skill ?? prior?.skill,
-        completedAt: prior?.completedAt ?? now,
+        agentDisplayName: s.agentDisplayName,
+        skill: s.skill ?? (sameAsPrior ? prior?.skill : undefined),
+        completedAt: sameAsPrior ? prior!.completedAt : now,
       };
     });
 
+    const previousActive = this.state?.active;
+
     const preserveStartedAt =
-      this.state.active && this.state.active.label === active.label
-        ? this.state.active.startedAt
+      previousActive &&
+      previousActive.label === active.label &&
+      (previousActive.agentDisplayName ?? "") === active.agentDisplayName
+        ? previousActive.startedAt
         : now;
-    this.state.active = {
-      label: active.label,
-      skill: active.skill,
-      startedAt: preserveStartedAt,
+
+    this.state = {
+      agentDisplayName: active.agentDisplayName,
+      agentStableId:
+        this.state?.agentDisplayName === active.agentDisplayName
+          ? this.state?.agentStableId
+          : undefined,
+      history: nextHistory,
+      planned:
+        this.state?.agentDisplayName === active.agentDisplayName
+          ? this.state?.planned
+          : undefined,
+      active: {
+        label: active.label,
+        agentDisplayName: active.agentDisplayName,
+        skill: active.skill,
+        startedAt: preserveStartedAt,
+      },
     };
 
     this.persist();
@@ -441,13 +755,15 @@ export class FlowStateService {
         agentStableId: stableId ?? this.state!.agentStableId,
       };
     } else {
+      const carriedHistory = this.state?.history ?? [];
       this.state = {
         agentDisplayName: displayName,
         agentStableId: stableId,
-        history: [],
+        history: carriedHistory,
       };
       // Different agent — clear any leftover file from the previous session.
-      void this.deleteFlowFile();
+      // Keep history; only clear active signal so the next write sets context.
+      this.state.active = undefined;
     }
     this.persist();
   }
@@ -489,12 +805,14 @@ export class FlowStateService {
     if (this.state.active) {
       this.state.history.push({
         label: this.state.active.label,
+        agentDisplayName: this.state.active.agentDisplayName,
         skill: this.state.active.skill,
         completedAt: new Date().toISOString(),
       });
     }
     this.state.active = {
       label,
+      agentDisplayName: this.state.agentDisplayName,
       skill,
       startedAt: new Date().toISOString(),
     };
@@ -511,6 +829,7 @@ export class FlowStateService {
     }
     this.state.history.push({
       label: this.state.active.label,
+      agentDisplayName: this.state.active.agentDisplayName,
       skill: this.state.active.skill,
       completedAt: new Date().toISOString(),
     });
@@ -545,17 +864,54 @@ export class FlowStateService {
   }
 
   /**
+   * Switches ownership to another agent without dropping history, then starts
+   * an optional step for the new agent.
+   */
+  handoffToAgent(displayName: string, step?: string, skill?: string): void {
+    const nextName = displayName.trim();
+    if (!nextName) {
+      return;
+    }
+    if (!this.state) {
+      this.state = {
+        agentDisplayName: nextName,
+        history: [],
+      };
+    } else {
+      if (this.state.active) {
+        this.completeActive();
+      }
+      this.state = {
+        ...this.state,
+        agentDisplayName: nextName,
+        agentStableId: undefined,
+        planned: undefined,
+      };
+    }
+    if (step) {
+      this.state.active = {
+        label: step,
+        agentDisplayName: nextName,
+        skill,
+        startedAt: new Date().toISOString(),
+      };
+    }
+    this.persist();
+  }
+
+  /**
    * Deletes the agent-flow signal file from the OS temp folder so the
    * transient signal does not linger between sessions. Silently ignores
    * errors — failure to delete never breaks the flow view.
    */
   async deleteFlowFile(): Promise<void> {
-    const uri = vscode.Uri.file(FlowStateService.FLOW_FILE_ABSOLUTE);
-    try {
-      await vscode.workspace.fs.delete(uri, { useTrash: false });
-      this.output?.appendLine(`[flow] deleted: ${uri.fsPath}`);
-    } catch {
-      // File missing — nothing to do.
+    for (const uri of FlowStateService.flowFileCandidates()) {
+      try {
+        await vscode.workspace.fs.delete(uri, { useTrash: false });
+        this.output?.appendLine(`[flow] deleted: ${uri.fsPath}`);
+      } catch {
+        // File missing — nothing to do.
+      }
     }
   }
 
@@ -588,6 +944,7 @@ export class FlowStateService {
 
   dispose(): void {
     this.watcher?.dispose();
+    this.hookWatcher?.dispose();
     this.watcherList.forEach((w) => w.dispose());
     if (this.activityDebounce) {
       clearTimeout(this.activityDebounce);
