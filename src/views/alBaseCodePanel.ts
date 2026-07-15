@@ -1,9 +1,13 @@
 import * as vscode from "vscode";
 import {
+  type AccessMode,
   type AlSourceEntry,
   effectiveFolder,
+  getAccessMode,
   getEntries,
+  getMcpTargetPath,
   saveEntries,
+  setAccessMode,
   listRemoteBranches,
   suggestDefaultFolder,
   validateFolder,
@@ -56,6 +60,8 @@ export class AlBaseCodePanel {
     void this.panel.webview.postMessage({
       type: "state",
       entries: getEntries(),
+      accessMode: getAccessMode(),
+      mcpTargetPath: getMcpTargetPath() ?? "",
     });
   }
 
@@ -107,6 +113,8 @@ export class AlBaseCodePanel {
       branch?: string;
       folder?: string;
       entries?: AlSourceEntry[];
+      accessMode?: string;
+      mcpTargetPath?: string;
     };
 
     switch (msg.type) {
@@ -218,6 +226,10 @@ export class AlBaseCodePanel {
           );
           return;
         }
+        const requestedMode = normalizeAccessMode(msg.accessMode);
+        if (requestedMode !== getAccessMode()) {
+          await setAccessMode(requestedMode);
+        }
         await saveEntries(entries);
         vscode.window.showInformationMessage(
           "AL Base Code / ISV Code settings saved."
@@ -235,6 +247,16 @@ export class AlBaseCodePanel {
           );
           return;
         }
+        const requestedMode = normalizeAccessMode(msg.accessMode);
+        const currentMode = getAccessMode();
+        if (requestedMode !== currentMode) {
+          const confirmed = await this.confirmModeSwitch(currentMode, requestedMode);
+          if (!confirmed) {
+            this.postState();
+            return;
+          }
+          await setAccessMode(requestedMode);
+        }
         await saveEntries(entries);
         const results = await syncAlBaseCode(this.output, {
           promptBeforeClone: true,
@@ -249,14 +271,106 @@ export class AlBaseCodePanel {
           );
         } else {
           const manualNote = manual > 0 ? `, ${manual} manual mounted` : "";
+          const modeNote =
+            requestedMode === "mcp"
+              ? " (MCP filesystem server updated)"
+              : "";
           vscode.window.showInformationMessage(
-            `AL Base Code applied: ${cloned} cloned, ${pulled} updated${manualNote}.`
+            `AL Base Code applied: ${cloned} cloned, ${pulled} updated${manualNote}${modeNote}.`
           );
         }
         this.postState();
         break;
       }
+
+      case "switchMode": {
+        // Live mode switch triggered by the dropdown. Migrates saved entries
+        // between mount styles WITHOUT touching pending row edits. If the user
+        // has unsaved rows in the table, they still need Save & Apply to commit
+        // those separately — but the mode migration always uses the persisted
+        // repositories, keeping the two concerns independent.
+        const requestedMode = normalizeAccessMode(msg.accessMode);
+        const currentMode = getAccessMode();
+        if (requestedMode === currentMode) {
+          this.postState();
+          break;
+        }
+        const confirmed = await this.confirmModeSwitch(currentMode, requestedMode);
+        if (!confirmed) {
+          // User cancelled → revert the dropdown by re-broadcasting the saved mode.
+          this.postState();
+          break;
+        }
+        await setAccessMode(requestedMode);
+        const results = await syncAlBaseCode(this.output, {
+          promptBeforeClone: true,
+        });
+        const syncErrors = results.filter((r) => r.outcome === "error");
+        if (syncErrors.length > 0) {
+          vscode.window.showWarningMessage(
+            `Access mode switched to '${requestedMode}' with ${syncErrors.length} error(s). Check the AC⚡DC output.`
+          );
+        } else {
+          const summary =
+            requestedMode === "mcp"
+              ? "Workspace folders unmounted; MCP filesystem server 'acdc-al-sources' written to this workspace's .vscode/mcp.json."
+              : "MCP server entry removed from this workspace's .vscode/mcp.json; sources mounted as workspace folders.";
+          vscode.window.showInformationMessage(
+            `Access mode switched to '${requestedMode}'. ${summary}`
+          );
+        }
+        this.postState();
+        break;
+      }
+
+      case "revealMcpFile": {
+        const target = getMcpTargetPath();
+        if (!target) {
+          vscode.window.showWarningMessage(
+            "MCP target path is not resolved yet — try switching to MCP mode first."
+          );
+          break;
+        }
+        try {
+          const uri = vscode.Uri.file(target);
+          // showTextDocument opens missing files as "untitled" via openTextDocument
+          // when they exist. If the file doesn't exist yet, reveal in Explorer
+          // is more useful than a hard error.
+          const fsStat = await vscode.workspace.fs
+            .stat(uri)
+            .then(() => true, () => false);
+          if (fsStat) {
+            const doc = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(doc, { preview: false });
+          } else {
+            await vscode.commands.executeCommand("revealFileInOS", uri);
+            vscode.window.showInformationMessage(
+              `MCP target file does not exist yet: ${target}. Switch to MCP mode with at least one enabled source to create it.`
+            );
+          }
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(`Cannot reveal MCP file: ${reason}`);
+        }
+        break;
+      }
     }
+  }
+
+  private async confirmModeSwitch(
+    from: AccessMode,
+    to: AccessMode
+  ): Promise<boolean> {
+    const detail =
+      to === "mcp"
+        ? "Enabled sources will be removed as workspace folders and exposed through an aggregate MCP filesystem server 'acdc-al-sources' registered in this workspace's .vscode/mcp.json.\n\nNote: user-profile mcp.json cannot be targeted from within a VS Code extension (no stable API exposes the active profile), so this extension writes at workspace scope only."
+        : "The MCP filesystem server entry 'acdc-al-sources' will be removed from this workspace's .vscode/mcp.json (the file itself is deleted if nothing else remains), and enabled sources will be added back as read-only workspace folders.";
+    const choice = await vscode.window.showWarningMessage(
+      `Switch AL Base Code access mode from '${from}' to '${to}'?`,
+      { modal: true, detail },
+      "Switch"
+    );
+    return choice === "Switch";
   }
 
   private getHtml(): string {
@@ -336,6 +450,27 @@ export class AlBaseCodePanel {
         opacity: 0.8;
         background: var(--vscode-input-background);
       }
+      .mode-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--vscode-panel-border, #3c3c3c);
+        border-radius: 3px;
+        background: var(--vscode-editor-inactiveSelectionBackground, transparent);
+        flex-wrap: wrap;
+      }
+      .mode-bar label { font-weight: 600; }
+      .mode-bar select { width: auto; min-width: 160px; }
+      .mode-hint { color: var(--vscode-descriptionForeground); font-size: 0.85em; }
+      .mode-cost {
+        flex-basis: 100%;
+        color: var(--vscode-descriptionForeground);
+        font-size: 0.8em;
+        font-style: italic;
+        margin-top: 2px;
+      }
     </style>
   </head>
   <body>
@@ -346,6 +481,17 @@ export class AlBaseCodePanel {
       Missing folders are cloned after you approve; existing folders are pulled to the latest commit (never pushed).
       Leave <b>Repository</b> empty for a <b>manual</b> source (e.g. an ISV file download): the extension only mounts the folder and never updates it — you maintain it yourself.
     </p>
+    <div class="mode-bar">
+      <label for="accessMode">Access mode:</label>
+      <select id="accessMode">
+        <option value="workspace">Workspace folder (visible in Explorer)</option>
+        <option value="mcp">MCP filesystem server (agent-only, no Explorer clutter)</option>
+      </select>
+      <button id="revealMcp" type="button" class="secondary" title="Open the resolved MCP target file in the editor" style="display:none">Reveal mcp.json</button>
+      <span id="modeHint" class="mode-hint"></span>
+      <span id="modeCost" class="mode-cost"></span>
+      <span id="modeTarget" class="mode-cost" style="display:none"></span>
+    </div>
     <table>
       <colgroup>
         <col style="width:18%" />
@@ -389,11 +535,46 @@ export class AlBaseCodePanel {
 
       const vscode = acquireVsCodeApi();
       let entries = [];
+      let accessMode = "workspace";
+      let mcpTargetPath = "";
       const folderErrors = {};
       const branchLoadTimers = {};
 
       function h(html) {
         return html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function updateModeUi() {
+        const select = document.getElementById("accessMode");
+        const hint = document.getElementById("modeHint");
+        const cost = document.getElementById("modeCost");
+        const reveal = document.getElementById("revealMcp");
+        const targetLine = document.getElementById("modeTarget");
+        if (select && select.value !== accessMode) {
+          select.value = accessMode;
+        }
+        if (hint) {
+          hint.textContent = accessMode === "mcp"
+            ? "Enabled sources are exposed via this workspace's .vscode/mcp.json (server: acdc-al-sources) — no workspace mounts. User-profile mcp.json is intentionally not used: VS Code has no stable API for extensions to identify the active profile."
+            : "Enabled sources are added as read-only workspace folders (prefix [AL Src]).";
+        }
+        if (cost) {
+          cost.textContent = accessMode === "mcp"
+            ? "Token cost: MCP filesystem searches by filename only — agents typically need to read whole files, which usually costs MORE tokens than workspace mode. Prefer this mode when you value a clean Explorer over search efficiency."
+            : "Token cost: workspace mode lets agents use grep/semantic search over sliced reads — usually the CHEAPER option for heavy AL search workloads.";
+        }
+        if (reveal) {
+          reveal.style.display = accessMode === "mcp" ? "" : "none";
+        }
+        if (targetLine) {
+          if (accessMode === "mcp" && mcpTargetPath) {
+            targetLine.style.display = "";
+            targetLine.textContent = "MCP target: " + mcpTargetPath;
+          } else {
+            targetLine.style.display = "none";
+            targetLine.textContent = "";
+          }
+        }
       }
 
       function repoFolderFromRepository(url) {
@@ -698,18 +879,44 @@ export class AlBaseCodePanel {
       }
       document.getElementById("save").addEventListener("click", () => {
         if (document.getElementById("save").disabled) return;
-        vscode.postMessage({ type: "save", entries: entries });
+        vscode.postMessage({ type: "save", entries: entries, accessMode: accessMode });
       });
       document.getElementById("apply").addEventListener("click", () => {
         if (document.getElementById("apply").disabled) return;
-        vscode.postMessage({ type: "apply", entries: entries });
+        vscode.postMessage({ type: "apply", entries: entries, accessMode: accessMode });
       });
+
+      const modeSelect = document.getElementById("accessMode");
+      if (modeSelect) {
+        modeSelect.addEventListener("change", () => {
+          const requested = modeSelect.value === "mcp" ? "mcp" : "workspace";
+          if (requested === accessMode) {
+            return;
+          }
+          // Optimistically update the hint so the user sees intent while the
+          // confirm dialog is up. If they cancel, the state broadcast from the
+          // extension will restore both the dropdown and the hint.
+          accessMode = requested;
+          updateModeUi();
+          vscode.postMessage({ type: "switchMode", accessMode: requested });
+        });
+      }
+
+      const revealBtn = document.getElementById("revealMcp");
+      if (revealBtn) {
+        revealBtn.addEventListener("click", () => {
+          vscode.postMessage({ type: "revealMcpFile" });
+        });
+      }
 
       window.addEventListener("message", (ev) => {
         const m = ev.data;
         if (m.type === "state") {
           entries = (m.entries || []).map((e) => ({ repository: e.repository || "", branch: e.branch || "", folder: e.folder || "", enabled: !!e.enabled }));
+          accessMode = m.accessMode === "mcp" ? "mcp" : "workspace";
+          mcpTargetPath = typeof m.mcpTargetPath === "string" ? m.mcpTargetPath : "";
           Object.keys(folderErrors).forEach((key) => delete folderErrors[key]);
+          updateModeUi();
           render();
           entries.forEach((e, idx) => {
             if ((e.repository || "").trim()) {
@@ -772,4 +979,8 @@ function getNonce(): string {
     value += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return value;
+}
+
+function normalizeAccessMode(raw: string | undefined): AccessMode {
+  return raw === "mcp" ? "mcp" : "workspace";
 }
