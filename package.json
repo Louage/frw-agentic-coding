@@ -1045,11 +1045,6 @@
         "category": "AC/DC"
       },
       {
-        "command": "acdc.runRepoScopedAction",
-        "title": "Run guarded repository action",
-        "category": "AC/DC"
-      },
-      {
         "command": "acdc.useAgent",
         "title": "Use Agent",
         "category": "AC/DC"
@@ -1065,8 +1060,8 @@
         "category": "AC/DC"
       },
       {
-        "command": "acdc.refreshAgents",
-        "title": "Refresh Agents",
+        "command": "acdc.reloadAgents",
+        "title": "Reload Agent List",
         "category": "AC/DC",
         "icon": "$(refresh)"
       },
@@ -1121,7 +1116,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "acdc.refreshAgents",
+          "command": "acdc.reloadAgents",
           "when": "view == acdc.agents",
           "group": "navigation"
         },

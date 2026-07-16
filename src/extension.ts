@@ -13,7 +13,6 @@ import {
 } from "./workflows/agentWorkflowService";
 import { FlowStateService } from "./workflows/flowStateService";
 import { checkForUpdates } from "./update/updateChecker";
-import { withRepositoryGuard } from "./workspaceRepoResolver";
 import {
   syncAlBaseCode,
   syncOnStartup,
@@ -144,7 +143,7 @@ export function activate(context: vscode.ExtensionContext): void {
       AgentFlowViewProvider.viewType,
       agentFlowProvider
     ),
-    vscode.commands.registerCommand("acdc.refreshAgents", () =>
+    vscode.commands.registerCommand("acdc.reloadAgents", () =>
       agentsProvider.refresh()
     ),
     vscode.commands.registerCommand("acdc.resetAgentFlow", () =>
@@ -170,20 +169,6 @@ export function activate(context: vscode.ExtensionContext): void {
           context,
           flowState,
           output
-        );
-      }
-    ),
-    vscode.commands.registerCommand(
-      "acdc.runRepoScopedAction",
-      async (explicitRepositoryName?: string) => {
-        await withRepositoryGuard(
-          "The Framework repository action",
-          async (folder) => {
-            vscode.window.showInformationMessage(
-              `Repository action target: ${folder.name} (${folder.uri.fsPath})`
-            );
-          },
-          explicitRepositoryName
         );
       }
     ),
