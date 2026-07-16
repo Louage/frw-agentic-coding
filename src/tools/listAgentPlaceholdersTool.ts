@@ -8,7 +8,7 @@ import { PlaceholderResolver } from "../placeholderResolver";
  * `architectAgent`) in the current workspace configuration.
  *
  * The tool declaration in package.json must match the name
- * `frw_list_agent_placeholders`.
+ * `acdc_list_agent_placeholders`.
  */
 export class ListAgentPlaceholdersTool
   implements vscode.LanguageModelTool<Record<string, never>>

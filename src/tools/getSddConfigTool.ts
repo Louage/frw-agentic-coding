@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { SddConfigResolver } from "../sddConfigResolver";
 
 /**
- * Language model tool `frw_get_sdd_config` — returns the current
+ * Language model tool `acdc_get_sdd_config` — returns the current
  * spec-driven-development path/naming configuration to AI agents, so they
  * can honour the workspace's plans-folder and naming conventions instead of
  * hardcoding `.github/plans/`, folder shapes, or branch names.
@@ -30,7 +30,7 @@ export class GetSddConfigTool
       "",
       "The current workspace resolves spec folders, spec file names, and git",
       "branch names as follows. **Read this before creating any folder, file,",
-      "or branch.** Use the `frw_render_sdd_path` tool to render concrete",
+      "or branch.** Use the `acdc_render_sdd_path` tool to render concrete",
       "paths — do NOT hardcode `.github/plans/` or naming shapes.",
       "",
       "| Setting | Value |",

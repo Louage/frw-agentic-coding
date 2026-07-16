@@ -24,7 +24,7 @@ interface IAgentFlowHandlers {
  * offline and inside VS Code's default webview CSP.
  */
 export class AgentFlowViewProvider implements vscode.WebviewViewProvider {
-  static readonly viewType = "frwAgentFlow";
+  static readonly viewType = "acdc.agentFlow";
 
   private view?: vscode.WebviewView;
 
@@ -256,7 +256,7 @@ function renderEmpty(): string {
   return `<div class="empty">
     No agent selected.<br /><br />
     Pick an agent from the <strong>Agents</strong> view above to start.<br /><br />
-    The active agent updates this flow via the <code>frwUpdateAgentFlow</code> tool as it moves through its workflow.
+    The active agent updates this flow via the <code>acdcUpdateAgentFlow</code> tool as it moves through its workflow.
   </div>`;
 }
 

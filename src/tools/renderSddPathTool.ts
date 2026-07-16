@@ -22,7 +22,7 @@ interface IRenderSddPathInput {
 }
 
 /**
- * Language model tool `frw_render_sdd_path` — renders the workspace-configured
+ * Language model tool `acdc_render_sdd_path` — renders the workspace-configured
  * spec folder, spec file, and git branch names for a given requirement.
  *
  * Agents must call this instead of hardcoding `.github/plans/{req_name}/…`

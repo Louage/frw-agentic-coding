@@ -47,7 +47,7 @@ $CoreTools = @(
     # "Agent Flow" view as it moves through phases of its workflow.
     # See automation/scripts/Inject-FlowReporting.ps1 for the matching body block
     # that tells the agent WHEN to call this tool.
-    "frw_update_agent_flow"
+    "acdc_update_agent_flow"
 )
 
 # Tools that are deprecated, renamed, or environment-specific and must be removed
@@ -60,7 +60,12 @@ $DeprecatedTools = @(
     # Legacy AC⚡DC greeting tool. Replaced by inline greeting rotation in
     # automation/scripts/Inject-AvatarGreeting.ps1 because extension-contributed
     # LM tools do not reliably attach to custom `.agent.md` chat agents.
-    "frw_get_greeting"
+    "frw_get_greeting",
+    # Legacy AC⚡DC flow-update tool name. Renamed to `acdc_update_agent_flow`
+    # when the extension's tool prefix moved from `frw_` to `acdc_`. Old
+    # references are stripped so the CoreTools entry (with the new name)
+    # remains the single source of truth.
+    "frw_update_agent_flow"
 )
 
 # Frontmatter keys that belong exclusively to the extension (read from assets/agent-metadata.json)

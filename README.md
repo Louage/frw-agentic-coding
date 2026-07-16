@@ -10,7 +10,7 @@ development, but it can grow to cover other stacks.
      contributed via the `chatSkills` manifest point and served live from the
      extension.
    - _Executable tool_ — an optional [Language Model Tool](https://code.visualstudio.com/api/extension-guides/ai/tools)
-     (`#frwCodingStandard`) that the agent can invoke automatically in agent mode.
+     (`#acdcCodingStandard`) that the agent can invoke automatically in agent mode.
 2. **Rules** — bundled AL custom instructions (`*.instructions.md`) contributed via
    the `chatInstructions` manifest point.
 
@@ -92,7 +92,36 @@ Press **F5** to launch a second VS Code window with the extension loaded.
 
 ## Commands
 
-- **The Framework: Check for extension updates** — manual update check.
+All commands are grouped under the **AC/DC** category in the command palette (`Ctrl+Shift+P`).
+
+| Command | What it does |
+|---------|--------------|
+| **AC/DC: Check for extension updates** | Manual update check against the private GitHub release. |
+| **AC/DC: Use Agent** | Prompts to pick an agent, then activates it (opens the chat participant, switches Agent Flow, auto-enables its declared tools). Also fired by clicking an agent in the sidebar. |
+| **AC/DC: Reload Agent List** | Re-reads `.agent.md` files and refreshes the **Agents** tree in the sidebar. |
+| **AC/DC: Reset Agent Flow** | Clears the current flow state shown in the **Agent Flow** sidebar. |
+| **AC/DC: Set Agent Placeholder…** | Two-step QuickPick to configure `acdc.agents.placeholders.*` (the `${architectAgent}`, `${developerAgent}`, `${conductorAgent}`, `${auditorAgent}`, `${reviewAgent}` values that agent files reference). |
+| **AC/DC: Pick SDD Plans Root Folder…** | Sets `acdc.plansRoot`; supports out-of-workspace folders. Also linked from the setting itself. |
+| **AC/DC: Show Settings Reference** | Opens a Markdown preview of the settings reference. Also linked from every setting's `[ⓘ Details]` link. |
+| **AC/DC: Manage AL Base Code / ISV Code** | Opens the AL Base Code panel to configure mounted BC / ISV repositories. |
+| **AC/DC: Sync AL Base Code / ISV Code** | Clones or pulls the mounted BC / ISV repositories. |
+
+## Agents (Personas)
+
+Agents ship under stable persona names so they never collide with agents from other extensions (e.g. **ALDC**) in the chat picker:
+
+| Persona | Role |
+|---------|------|
+| **Angus, AL Architect** | Solution design, data modeling, integration strategy |
+| **Phil, AL Developer** | Tactical implementation, coding, debugging |
+| **Malcolm, AL Conductor** | Orchestrates plan → implement → review cycles |
+| **Brian, AL Pre-Sales** | Estimation, SWOT, proposals |
+| **Bon, AL Auditor** | Independent read-only code audit against BCQuality |
+| **Chief, AL Agent Builder** | Builds BC agents (Agent SDK / Designer) |
+| **Wrench, AL Triage** | Reactive support for existing AL code |
+| **Ink, AL Documenter** | Documentation authoring |
+
+Subagents (invoked by other agents, not user-facing in the picker) are prefixed `acdc-*.subagent.md`.
 
 ## Agent Flow Hooks Overlay (Optional)
 

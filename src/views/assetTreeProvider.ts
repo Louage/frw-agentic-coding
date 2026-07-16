@@ -10,7 +10,7 @@ interface IAssetItem {
   /**
    * Stable identifier used to reference the asset in chat: the skill name for
    * skills (used as `/skill-name`) or the topic for rules (passed to the
-   * `#frwCodingStandard` tool).
+   * `#acdcCodingStandard` tool).
    */
   id: string;
   /** Short trailing text (e.g. a rule's `applyTo` glob). */
@@ -57,10 +57,10 @@ export class AssetTreeProvider implements vscode.TreeDataProvider<IAssetItem> {
     item.command = {
       command:
         this.kind === "skill"
-          ? "frwAgenticCoding.useSkill"
+          ? "acdc.useSkill"
           : this.kind === "rule"
-            ? "frwAgenticCoding.useRule"
-            : "frwAgenticCoding.useAgent",
+            ? "acdc.useRule"
+            : "acdc.useAgent",
       title: "Use in Chat",
       arguments:
         this.kind === "agent"

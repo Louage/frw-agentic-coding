@@ -29,7 +29,7 @@ external:
     assetsRoot: "assets/generated/microsoft-bcquality-assets"
     skillRoot: "assets/generated/microsoft-bcquality-assets/skills"
     instructionRoot: "assets/generated/microsoft-bcquality-assets/instructions"
-    consumedBy: ["agents/al-review-subagent.agent.md", "agents/dredd.agent.md", "agents/al-triage.agent.md"]
+    consumedBy: ["agents/acdc-al-review-subagent.agent.md", "agents/bon.agent.md", "agents/wrench.agent.md"]
     # Policy when bundled BCQuality assets are absent or disabled.
     fallback:
       mode: "skills-mode"        # review natively via instructions + skills
@@ -66,17 +66,17 @@ copilotEntrypointMode: "trimmed"
 
 required:
   agents:
-    - "agents/al-architect.agent.md"
-    - "agents/al-conductor.agent.md"
-    - "agents/al-developer.agent.md"
-    - "agents/al-presales.agent.md"
-    - "agents/dredd.agent.md"
-    - "agents/al-triage.agent.md"
+    - "agents/angus.agent.md"
+    - "agents/malcolm.agent.md"
+    - "agents/phil.agent.md"
+    - "agents/brian.agent.md"
+    - "agents/bon.agent.md"
+    - "agents/wrench.agent.md"
 
   subagents:
-    - "agents/al-planning-subagent.agent.md"
-    - "agents/al-review-subagent.agent.md"
-    - "agents/al-implement-subagent.agent.md"
+    - "agents/acdc-al-planning-subagent.agent.md"
+    - "agents/acdc-al-review-subagent.agent.md"
+    - "agents/acdc-al-implement-subagent.agent.md"
 
   workflows:
     - "prompts/al-spec.create.prompt.md"
@@ -123,7 +123,7 @@ required:
 
 optional:
   agents:
-    - "agents/al-agent-builder.agent.md"
+    - "agents/chief.agent.md"
   skills:
     - "skills/skill-agent-instructions/SKILL.md"
     - "skills/skill-agent-task-patterns/SKILL.md"

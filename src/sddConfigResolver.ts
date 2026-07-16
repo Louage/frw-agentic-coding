@@ -164,7 +164,7 @@ export class SddConfigResolver {
 
   /**
    * Returns a Markdown reference table describing every variable the
-   * resolver understands. Used by the `frw_get_sdd_config` tool.
+   * resolver understands. Used by the `acdc_get_sdd_config` tool.
    */
   variableReferenceMarkdown(): string {
     return [

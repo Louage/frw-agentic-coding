@@ -3,7 +3,7 @@ import { FlowStateService } from "../workflows/flowStateService";
 
 /**
  * Input parameters for the update-agent-flow tool. Must match the `inputSchema`
- * declared in package.json for `frw_update_agent_flow`.
+ * declared in package.json for `acdc_update_agent_flow`.
  */
 interface IUpdateAgentFlowInput {
   step?: string;

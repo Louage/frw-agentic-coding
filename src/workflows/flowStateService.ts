@@ -86,7 +86,7 @@ export interface IFlowState {
  * the last known position visible.
  *
  * The store is authoritative: the sidebar view, the language model tool
- * (`frw_update_agent_flow`), AND the workspace file watcher on
+ * (`acdc_update_agent_flow`), AND the workspace file watcher on
  * `.vscode/acdc-agent-flow.txt` all read/write through this service, and the
  * emitter fires whenever anything changes so the webview can re-render.
  *

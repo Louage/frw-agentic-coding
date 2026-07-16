@@ -64,7 +64,7 @@ function Get-AgentName {
     param([string]$Frontmatter)
 
     if ($Frontmatter -match '(?m)^name:\s*(.+)$') {
-        return $Matches[1].Trim()
+        return $Matches[1].Trim().Trim("'").Trim('"')
     }
     return $null
 }
