@@ -99,8 +99,8 @@ These placeholders can appear in agent prose, prompts, and skills as
 **Recommended**: use the **▶ Set via quick pick** link in the setting description —
 it shows a live dropdown of all agents currently loaded in the workspace.
 
-**Example**: set `reviewAgent` to `@Dredd` so every `${reviewAgent}` in agent files
-resolves to `@Dredd` when content is served through the extension.
+**Example**: set `reviewAgent` to `@Bon, AL Auditor` so every `${reviewAgent}` in agent files
+resolves to `@Bon, AL Auditor` when content is served through the extension.
 
 The extension ships sensible defaults; override only the roles you want to customize.
 A warning is shown in the **AC⚡DC** output channel if a resolved value does not match

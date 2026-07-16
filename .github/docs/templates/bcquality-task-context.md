@@ -3,7 +3,7 @@
 The **task-context** is the input a BCQuality consumer hands to the bundled
 BCQuality review skill(s). Per the BCQuality consumption contract, the
 **orchestrator builds it** and the agent consumes it — for the TDD loop the
-orchestrator is `@al-conductor`; for an on-demand audit the orchestrator is
+orchestrator is `@Malcolm, AL Conductor`; for an on-demand audit the orchestrator is
 Dredd itself. This file is the single source of truth for *how* to build it, so
 the rule lives in one place, not copied into every agent.
 

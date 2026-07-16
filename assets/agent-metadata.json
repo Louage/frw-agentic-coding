@@ -1,6 +1,6 @@
 {
   "$schema": "../../automation/schema/agent-metadata.schema.json",
-  "al-conductor": {
+  "malcolm": {
     "bcReviewSpecialist": "AL Code Review Subagent"
   }
 }

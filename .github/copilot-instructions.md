@@ -22,21 +22,21 @@ Choose the right agent for your task:
 
 | Intent | Agent | What it does |
 |--------|-------|-------------|
-| Designing, analyzing architecture, strategic decisions? | `@AL Architecture & Design Specialist` | Solution design, data modeling, integration strategy |
-| Implementing, coding, debugging, fixing? | `@AL Implementation Specialist` | Tactical implementation with full AL MCP tools |
-| Building a feature with TDD orchestration (plan → implement → review → commit)? | `@AL Development Conductor` | Orchestrates planning, implementation, and review subagents |
-| Estimating a project, sizing, proposals? | `@AL Pre-Sales & Project Estimation Specialist` | PERT estimation, SWOT analysis, cost breakdown |
-| Auditing code independently against BCQuality (changes vs main, or all)? | `@Dredd` | Independent read-only auditor; advisory verdict with citations |
+| Designing, analyzing architecture, strategic decisions? | `@Angus, AL Architect` | Solution design, data modeling, integration strategy |
+| Implementing, coding, debugging, fixing? | `@Phil, AL Developer` | Tactical implementation with full AL MCP tools |
+| Building a feature with TDD orchestration (plan → implement → review → commit)? | `@Malcolm, AL Conductor` | Orchestrates planning, implementation, and review subagents |
+| Estimating a project, sizing, proposals? | `@Brian, AL Pre-Sales` | PERT estimation, SWOT analysis, cost breakdown |
+| Auditing code independently against BCQuality (changes vs main, or all)? | `@Bon, AL Auditor` | Independent read-only auditor; advisory verdict with citations |
 
 ### Quick routing guide
 
 ```
-New feature (MEDIUM/HIGH)? → @AL Architecture & Design Specialist → al-spec.create → @AL Development Conductor
-New feature (LOW)?         → al-spec.create → @AL Implementation Specialist
-Bug fix / debugging?       → @AL Implementation Specialist
-Architecture review?       → @AL Architecture & Design Specialist
-Full TDD cycle?            → @AL Development Conductor
-Project estimation?        → @AL Pre-Sales & Project Estimation Specialist
+New feature (MEDIUM/HIGH)? → @Angus, AL Architect → al-spec.create → @Malcolm, AL Conductor
+New feature (LOW)?         → al-spec.create → @Phil, AL Developer
+Bug fix / debugging?       → @Phil, AL Developer
+Architecture review?       → @Angus, AL Architect
+Full TDD cycle?            → @Malcolm, AL Conductor
+Project estimation?        → @Brian, AL Pre-Sales
 ```
 
 ## Workflows
@@ -152,28 +152,28 @@ Requirement sets live in `.github/plans/`, one subdirectory per requirement:
 
 **MEDIUM / HIGH:**
 
-1. `@AL Architecture & Design Specialist` — Designs solution, creates `.github/plans/{req_name}/{req_name}.architecture.md`
+1. `@Angus, AL Architect` — Designs solution, creates `.github/plans/{req_name}/{req_name}.architecture.md`
 2. `@workspace use al-spec.create` — Reads architecture, generates `.github/plans/{req_name}/{req_name}.spec.md` (detailed blueprint: object IDs, procedure signatures, AL code)
-3. `@AL Development Conductor` — Reads spec + architecture from `.github/plans/{req_name}/`, orchestrates TDD: planning → implementation → review
+3. `@Malcolm, AL Conductor` — Reads spec + architecture from `.github/plans/{req_name}/`, orchestrates TDD: planning → implementation → review
 4. `@workspace use al-pr-prepare` — Prepares PR referencing the plan
 
 **LOW:**
 
 1. `@workspace use al-spec.create` — Generates `.github/plans/{req_name}/{req_name}.spec.md` directly from codebase
-2. `@AL Implementation Specialist` — Implements directly using spec as blueprint
+2. `@Phil, AL Developer` — Implements directly using spec as blueprint
 
 ## Complexity-Based Tool Selection
 
 When a user provides requirements, assess complexity to route correctly:
 
 **LOW** — Limited scope, single phase, no integrations
-→ `al-spec.create` → `@AL Implementation Specialist` direct implementation
+→ `al-spec.create` → `@Phil, AL Developer` direct implementation
 
 **MEDIUM** — 2-3 functional areas, internal integrations, conditional logic
-→ `@AL Architecture & Design Specialist` → `al-spec.create` → `@AL Development Conductor` TDD orchestration
+→ `@Angus, AL Architect` → `al-spec.create` → `@Malcolm, AL Conductor` TDD orchestration
 
 **HIGH** — Enterprise scope, 4+ phases, external integrations, complex workflows
-→ `@AL Architecture & Design Specialist` design first → `al-spec.create` → `@AL Development Conductor` implement
+→ `@Angus, AL Architect` design first → `al-spec.create` → `@Malcolm, AL Conductor` implement
 
 Present the assessment and wait for user confirmation before proceeding.
 

@@ -633,7 +633,7 @@ async function trySelectChatAgent(
   const discovered = await findChatAgentCommands();
 
   // Best signal from host diagnostics: one command per agent name, e.g.
-  // workbench.action.chat.openAL Architecture & Design Specialist
+  // workbench.action.chat.openAngus, AL Architect
   const directOpenCandidates = buildDirectOpenAgentCommands(
     displayName,
     stableId,

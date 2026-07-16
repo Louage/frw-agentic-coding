@@ -11,10 +11,10 @@ const CONFIG_KEY = "acdc.agents.placeholders";
  */
 export const DEFAULT_PLACEHOLDERS: Readonly<Record<string, string>> = {
   reviewAgent: "AL Code Review Subagent",
-  architectAgent: "AL Architecture & Design Specialist",
-  developerAgent: "AL Implementation Specialist",
-  conductorAgent: "AL Development Conductor",
-  auditorAgent: "Dredd — AL Independent Auditor",
+  architectAgent: "Angus, AL Architect",
+  developerAgent: "Phil, AL Developer",
+  conductorAgent: "Malcolm, AL Conductor",
+  auditorAgent: "Bon, AL Auditor",
 };
 
 /**

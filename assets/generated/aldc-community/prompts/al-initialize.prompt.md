@@ -374,18 +374,18 @@ Once your environment is initialized:
 
 **For Development:**
 ```
-@AL Implementation Specialist                    # Implement features (loads page/event skills on demand)
+@Phil, AL Developer                    # Implement features (loads page/event skills on demand)
 @workspace use al-build          # Build and deploy
 ```
 
 **For Architecture:**
 ```
-@AL Architecture & Design Specialist                    # Design solutions
+@Angus, AL Architect                    # Design solutions
 ```
 
 **For TDD Orchestration:**
 ```
-@AL Development Conductor                    # Plan → Implement → Review → Commit
+@Malcolm, AL Conductor                    # Plan → Implement → Review → Commit
 ```
 
 ## Security Considerations

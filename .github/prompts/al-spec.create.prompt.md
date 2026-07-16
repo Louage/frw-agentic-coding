@@ -51,7 +51,7 @@ Search for:
 
 ### 1.4 Ground the spec in the framework (token-light)
 
-This spec is the blueprint `@al-conductor` and `@al-developer` implement from — it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
+This spec is the blueprint `@Malcolm, AL Conductor` and `@Phil, AL Developer` implement from — it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
 
 - **Instructions (always) — reference, don't recite.** The hard micro-rules in `.github/instructions/al-*` (naming ≤26 PascalCase, `DataClassification` on every field, extension-only, the performance/error-handling safety-net) govern every object you propose. They are tiny — honor them, and cite the governing one where a section depends on it.
 - **Skills (on demand — one per domain the spec actually designs).** Load the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
@@ -365,7 +365,7 @@ page {ID} "{Prefix} {Entity} API"
 > 1. Human reviews and approves this spec
 > 2. Start TDD orchestration:
 >    ```
->    @AL Development Conductor
+>    @Malcolm, AL Conductor
 >    ```
 >    Conductor will read this spec + architecture.md and orchestrate planning → implementation → review.
 
@@ -375,7 +375,7 @@ page {ID} "{Prefix} {Entity} API"
 > 1. Human reviews and approves this spec
 > 2. Direct implementation:
 >    ```
->    @AL Implementation Specialist
+>    @Phil, AL Developer
 >    ```
 >    Developer reads this spec and implements directly (no TDD orchestration needed).
 
@@ -385,8 +385,8 @@ page {ID} "{Prefix} {Entity} API"
 
 | Complexity | Handoff to | Purpose |
 |-----------|-----------|---------|
-| MEDIUM / HIGH | `@AL Development Conductor` | TDD-orchestrated implementation (planning → implementation → review) |
-| LOW | `@AL Implementation Specialist` | Direct implementation using this spec as blueprint |
+| MEDIUM / HIGH | `@Malcolm, AL Conductor` | TDD-orchestrated implementation (planning → implementation → review) |
+| LOW | `@Phil, AL Developer` | Direct implementation using this spec as blueprint |
 
 ## Success Criteria
 

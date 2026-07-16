@@ -84,7 +84,7 @@ $BeginMarker
 > Example after handoff to you where you are on your third step:
 >
 > ```
-> --- agent: AL Architecture & Design Specialist ---
+> --- agent: Angus, AL Architect ---
 > analysing-requirements
 > loading-skill-api
 > skill: skill-api

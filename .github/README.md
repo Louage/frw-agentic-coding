@@ -43,7 +43,7 @@ Agents back findings with a pinned, externally-consumed BC knowledge base. Absen
 
 ### Also in 4.1.0
 
-- **`@AL Triage`** (reactive diagnosis) and **`@Dredd`** (independent auditor) — read-only on-demand specialists.
+- **`@AL Triage`** (reactive diagnosis) and **`@Bon, AL Auditor`** (independent auditor) — read-only on-demand specialists.
 - **`skill-contribution-assistant`** — guided contribution workflow.
 - **Restored full architecture & spec templates** with authoring guidance.
 
@@ -65,10 +65,10 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 
 **4 Public Agents** — Specialized roles for every development phase
 
-- `@AL Architecture & Design Specialist` — Solution Architect: designs solutions, information flows, technical decisions
-- `@AL Implementation Specialist` — Developer: implements, debugs, quick adjustments
-- `@AL Development Conductor` — Conductor: orchestrates TDD implementation with subagents
-- `@AL Pre-Sales & Project Estimation Specialist` — Pre-sales: estimation and scoping
+- `@Angus, AL Architect` — Solution Architect: designs solutions, information flows, technical decisions
+- `@Phil, AL Developer` — Developer: implements, debugs, quick adjustments
+- `@Malcolm, AL Conductor` — Conductor: orchestrates TDD implementation with subagents
+- `@Brian, AL Pre-Sales` — Pre-sales: estimation and scoping
 
 **3 Internal Subagents** — Autonomous specialists within the conductor
 
@@ -79,7 +79,7 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 **2 On-demand Specialists** — User-invocable, outside the TDD loop (read-only on code)
 
 - `@AL Triage` — Reactive diagnosis: reproduce → root-cause → minimal-fix recommendation
-- `@Dredd` — Independent auditor: BCQuality-cited static audit with an advisory verdict
+- `@Bon, AL Auditor` — Independent auditor: BCQuality-cited static audit with an advisory verdict
 
 **BCQuality (optional)** — External, citable BC knowledge layer for reviews & audits
 
@@ -112,10 +112,10 @@ ALDC (AL Development Collection) transforms how you develop Business Central ext
 
 ```text
 LOW complexity:
-  al-spec.create → @AL Implementation Specialist
+  al-spec.create → @Phil, AL Developer
 
 MEDIUM/HIGH complexity:
-  @AL Architecture & Design Specialist → al-spec.create → @AL Development Conductor
+  @Angus, AL Architect → al-spec.create → @Malcolm, AL Conductor
 ```
 
 The architect designs the solution and can decompose complex requirements into multiple specs, each implemented independently by the conductor.
@@ -124,17 +124,17 @@ The architect designs the solution and can decompose complex requirements into m
 flowchart TD
     REQ[Requirement] --> CLASSIFY{Complexity?}
     CLASSIFY -->|LOW| SPEC_LOW[al-spec.create]
-    SPEC_LOW --> DEV["@AL Implementation Specialist"]
+    SPEC_LOW --> DEV["@Phil, AL Developer"]
 
-    CLASSIFY -->|MEDIUM/HIGH| ARCH["@AL Architecture & Design Specialist"]
+    CLASSIFY -->|MEDIUM/HIGH| ARCH["@Angus, AL Architect"]
     ARCH -->|Designs solution| ARCH_DOC[architecture.md]
     ARCH --> DECOMPOSE{Decompose?}
     DECOMPOSE -->|Yes| SPEC_A[al-spec.create → spec-A]
     DECOMPOSE -->|Yes| SPEC_B[al-spec.create → spec-B]
     DECOMPOSE -->|No| SPEC_SINGLE[al-spec.create → spec.md]
-    SPEC_A --> COND_A["@AL Development Conductor"]
-    SPEC_B --> COND_B["@AL Development Conductor"]
-    SPEC_SINGLE --> COND["@AL Development Conductor"]
+    SPEC_A --> COND_A["@Malcolm, AL Conductor"]
+    SPEC_B --> COND_B["@Malcolm, AL Conductor"]
+    SPEC_SINGLE --> COND["@Malcolm, AL Conductor"]
 ```
 
 ---
@@ -171,10 +171,10 @@ flowchart LR
 ```mermaid
 graph TB
     subgraph PUBLIC["Public Agents (user-invocable)"]
-        ARCH["@AL Architecture & Design Specialist"]
-        DEV["@AL Implementation Specialist"]
-        COND["@AL Development Conductor"]
-        PRE["@AL Pre-Sales & Project Estimation Specialist"]
+        ARCH["@Angus, AL Architect"]
+        DEV["@Phil, AL Developer"]
+        COND["@Malcolm, AL Conductor"]
+        PRE["@Brian, AL Pre-Sales"]
     end
 
     subgraph INTERNAL["Internal Subagents (conductor-only)"]
@@ -224,10 +224,10 @@ graph TB
 └── plans/
     ├── memory.md                          ← Global (cross-session context)
     └── {req_name}/
-        ├── {req_name}.architecture.md    ← From @AL Architecture & Design Specialist
+        ├── {req_name}.architecture.md    ← From @Angus, AL Architect
         ├── {req_name}.spec.md            ← From al-spec.create
         ├── {req_name}.test-plan.md       ← From al-spec.create or conductor
-        ├── {req_name}-plan.md            ← From @AL Development Conductor (Planning)
+        ├── {req_name}-plan.md            ← From @Malcolm, AL Conductor (Planning)
         ├── {req_name}-phase-1-complete.md
         └── {req_name}-phase-N-complete.md
 ```
@@ -284,7 +284,7 @@ Clone this repo and open it with Claude Code. The `.claude/` directory and `CLAU
 
 1. Install the plugin: `/plugin install aldc`
 2. Initialize: `/aldc:al-initialize`
-3. Start with any agent: `@al-architect`, `@al-developer`, `@al-conductor`, or `@al-presales`
+3. Start with any agent: `@Angus, AL Architect`, `@Phil, AL Developer`, `@Malcolm, AL Conductor`, or `@Brian, AL Pre-Sales`
 4. Or run a workflow: `/aldc:al-spec-create`
 
 See [QUICKSTART.md](docs/framework/QUICKSTART.md) for the full onboarding guide.
@@ -295,14 +295,14 @@ See [QUICKSTART.md](docs/framework/QUICKSTART.md) for the full onboarding guide.
 
 | Complexity | Route | When |
 | ---------- | ----- | ---- |
-| **LOW** | `al-spec.create` → `@AL Implementation Specialist` | Simple field, validation, single UI change |
-| **MEDIUM** | `@AL Architecture & Design Specialist` → `al-spec.create` → `@AL Development Conductor` | Business logic, event-driven feature |
-| **HIGH** | `@AL Architecture & Design Specialist` → `al-spec.create` → `@AL Development Conductor` | Multi-module, external integration, architectural change |
+| **LOW** | `al-spec.create` → `@Phil, AL Developer` | Simple field, validation, single UI change |
+| **MEDIUM** | `@Angus, AL Architect` → `al-spec.create` → `@Malcolm, AL Conductor` | Business logic, event-driven feature |
+| **HIGH** | `@Angus, AL Architect` → `al-spec.create` → `@Malcolm, AL Conductor` | Multi-module, external integration, architectural change |
 
 **Not sure where to start?**
 
 ```text
-@AL Architecture & Design Specialist
+@Angus, AL Architect
 
 I need to [describe your requirement]
 ```
@@ -387,7 +387,7 @@ BCQuality is an optional BC knowledge layer for cited reviews and audits. The so
 
 2. Use the clone for local citation validation/source inspection. It is outside the extension project and does **not** compile.
 
-3. Run a review or audit (`@AL Development Conductor`, `@Dredd`, or `@AL Triage`): they consult the bundled BCQuality skills/instructions when enabled, or degrade gracefully to native checks if disabled.
+3. Run a review or audit (`@Malcolm, AL Conductor`, `@Bon, AL Auditor`, or `@AL Triage`): they consult the bundled BCQuality skills/instructions when enabled, or degrade gracefully to native checks if disabled.
 
 See [`docs/bcquality.md`](docs/bcquality.md) for the full guide.
 
@@ -414,7 +414,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 ## BC Agent Builder (optional)
 
 Build Business Central Agents with the AI Development Toolkit and Agent SDK.
-Includes: @AL Agent Builder agent, 3 skills, 4 workflows, validation tools.
+Includes: @Chief, AL Agent Builder agent, 3 skills, 4 workflows, validation tools.
 See [BC Agent Builder documentation](docs/bc-agent-builder.md).
 
 ---
@@ -453,11 +453,11 @@ prompts/*.prompt.md         →  .claude/skills/ (workflows)  →  skills/ (work
 
 | Agent | Direct | Plugin |
 | ----- | ------ | ------ |
-| Architecture & Design | `@al-architect` | `@aldc:al-architect` |
-| Implementation | `@al-developer` | `@aldc:al-developer` |
-| TDD Orchestration | `@al-conductor` | `@aldc:al-conductor` |
-| Estimation & Scoping | `@al-presales` | `@aldc:al-presales` |
-| Agent Builder | `@al-agent-builder` | `@aldc:al-agent-builder` |
+| Architecture & Design | `@Angus, AL Architect` | `@aldc:al-architect` |
+| Implementation | `@Phil, AL Developer` | `@aldc:al-developer` |
+| TDD Orchestration | `@Malcolm, AL Conductor` | `@aldc:al-conductor` |
+| Estimation & Scoping | `@Brian, AL Pre-Sales` | `@aldc:al-presales` |
+| Agent Builder | `@Chief, AL Agent Builder` | `@aldc:al-agent-builder` |
 
 ### Workflows (Claude Code)
 
