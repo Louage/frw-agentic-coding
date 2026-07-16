@@ -9,7 +9,7 @@ Source: microsoft/knowledge/performance/load-common-fields-before-branching-on-c
 
 # Load common fields before branching on case
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 

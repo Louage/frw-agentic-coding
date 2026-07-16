@@ -27,9 +27,9 @@ For SDK architecture and how instructions are loaded see `skill-agent-toolkit`. 
 - Instructions are the PRIMARY lever for controlling agent behavior
 - The runtime has specific tools: field setting, lookups, action invocation, page navigation, email composition
 - Instructions must use specific keywords to activate these tools effectively
-- Only English is fully supported — safeguards are optimized for English
+- Only English is fully supported, safeguards are optimized for English
 - Shorter, well-structured instructions often outperform verbose ones
-- The agent retains action history but NOT page state — use **MEMORIZE**
+- The agent retains action history but NOT page state, use **MEMORIZE**
 
 ## Framework: Responsibilities → Guidelines → Instructions
 
@@ -40,11 +40,11 @@ Every instruction file follows this three-part structure.
 A single sentence defining the agent's accountability. Anchors all behavior.
 
 ```
-**RESPONSIBILITY**: {What the agent is accountable for — one sentence}
+**RESPONSIBILITY**: {What the agent is accountable for, one sentence}
 ```
 
 Rules:
-- One sentence only — no paragraphs
+- One sentence only, no paragraphs
 - State the business outcome, not technical implementation
 - Include the key domain nouns ("leads", "sales orders", "credit checks")
 
@@ -65,7 +65,7 @@ Rules:
 - Gate ALL critical actions (posting, sending, releasing, deleting) with user intervention
 - Include data access boundaries (read-only vs. read-write)
 - Include reply/output keywords the agent should use for structured responses
-- Keep to 3-7 guidelines — more causes confusion
+- Keep to 3-7 guidelines, more causes confusion
 
 ### 3. INSTRUCTIONS (step-by-step per task)
 
@@ -113,13 +113,13 @@ Rules:
 - Page, field, and action names MUST match exactly what the agent sees in its profile
 - **MEMORIZE** must include an example format: `**Memorize**: "Customer: ACME Corp | Credit: 50,000"`
 - **Reply** keywords should include structured output patterns for programmatic parsing
-- The agent does NOT have access to "Tell Me" — all navigation must be via explicit page names
+- The agent does NOT have access to "Tell Me", all navigation must be via explicit page names
 
 ## Step-by-step creation workflow
 
 1. **Gather inputs**: agent purpose (1 sentence), pages in scope, fields to read/write, actions to invoke, decision criteria, output format, safety gates
 2. **Draft RESPONSIBILITY**: one sentence with domain + outcome
-3. **Draft GUIDELINES**: 3-7 rules — at least one ALWAYS, one DO NOT, one safety gate
+3. **Draft GUIDELINES**: 3-7 rules, at least one ALWAYS, one DO NOT, one safety gate
 4. **Draft INSTRUCTIONS per task**: navigate → read+MEMORIZE → branch → execute → Reply
 5. **Validate** with the checklist below
 6. **Test and iterate**: deploy → observe timeline → refine. Simpler instructions often perform better.
@@ -132,9 +132,9 @@ Rules:
 - [ ] **MEMORIZE** placed BEFORE the memorized value is needed in later steps
 - [ ] **MEMORIZE** includes example format (e.g., "Key: value | Key: value")
 - [ ] All critical actions (posting, sending, releasing, deleting) gated by user intervention or review
-- [ ] Written in English — agent safeguards are optimized for English
-- [ ] Environment-agnostic — no hardcoded company names, URLs, user IDs
-- [ ] Concise — no redundant prose; each line serves a purpose
+- [ ] Written in English, agent safeguards are optimized for English
+- [ ] Environment-agnostic, no hardcoded company names, URLs, user IDs
+- [ ] Concise, no redundant prose; each line serves a purpose
 - [ ] Error handling section covers: not found, unavailable pages, failed actions
 - [ ] Reply formats use consistent keywords for structured parsing
 - [ ] No references to "Tell Me" (agents cannot use it)
@@ -164,9 +164,9 @@ For SDK agents, `IAgentTaskExecution.GetAgentTaskPageContext` injects dynamic co
 ```
 Consider the following fields:
 {% if page.id == 42 %}
-Field "The Answer" — the meaning of the universe
+Field "The Answer", the meaning of the universe
 {% else %}
-Field "Business Data" — standard business field
+Field "Business Data", standard business field
 {% endif %}
 ```
 

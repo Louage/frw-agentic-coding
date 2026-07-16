@@ -11,7 +11,7 @@ Source: microsoft/knowledge/privacy/resolve-tobeclassified-before-release.md
 
 ## Description
 
-`DataClassification = ToBeClassified` is the sentinel value the AL compiler accepts while a developer has not yet decided what a new field actually stores. It exists for the development phase only and must be resolved to a real classification (`CustomerContent`, `EndUserIdentifiableInformation`, `EndUserPseudonymousIdentifiers`, `AccountData`, `OrganizationIdentifiableInformation` or `SystemMetadata`) before the code ships. A released field left at `ToBeClassified` tells the platform "we have not classified this data" — which means GDPR data-subject requests, telemetry and audit reports cannot reason about it.
+`DataClassification = ToBeClassified` is the sentinel value the AL compiler accepts while a developer has not yet decided what a new field actually stores. It exists for the development phase only and must be resolved to a real classification (`CustomerContent`, `EndUserIdentifiableInformation`, `EndUserPseudonymousIdentifiers`, `AccountData`, `OrganizationIdentifiableInformation` or `SystemMetadata`) before the code ships. A released field left at `ToBeClassified` tells the platform "we have not classified this data", which means GDPR data-subject requests, telemetry and audit reports cannot reason about it.
 
 ## Best Practice
 

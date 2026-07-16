@@ -1,4 +1,4 @@
-# Extension Manifest — Lead Tracking
+# Extension Manifest, Lead Tracking
 
 | Field | Value |
 |-------|-------|
@@ -18,7 +18,7 @@
 
 ---
 
-## CIRCE — MCP Connection Context
+## CIRCE, MCP Connection Context
 
 ### Connection Coordinates
 
@@ -164,7 +164,7 @@ Filtering is supported on `leadNumber`, `activityDate`, `type`, and `nextFollowU
 |-------|-------|
 | Purpose | Stores prospective customer records (leads) before conversion to the BC Customer table |
 | Primary key | No. (Code[20]) |
-| Records volume estimate | Medium (1K–100K) — depends on sales team size and lead generation velocity |
+| Records volume estimate | Medium (1K–100K), depends on sales team size and lead generation velocity |
 | Repo source path | src/table/Tab50100.CLTLead.al |
 
 #### Fields
@@ -195,7 +195,7 @@ Filtering is supported on `leadNumber`, `activityDate`, `type`, and `nextFollowU
 |-------|-------|
 | Purpose | Logs all interactions and activities against a lead for audit trail and follow-up tracking |
 | Primary key | Entry No. (Integer, AutoIncrement) |
-| Records volume estimate | High (>100K) — multiple activities per lead over the lifecycle |
+| Records volume estimate | High (>100K), multiple activities per lead over the lifecycle |
 | Repo source path | src/table/Tab50101.CLTLeadActivity.al |
 
 #### Fields
@@ -225,7 +225,7 @@ Filtering is supported on `leadNumber`, `activityDate`, `type`, and `nextFollowU
 
 ### Suggested Dimension Tables
 
-**CLT Lead Activity (Table 50101):** Activity log linked to leads. Can serve as a secondary fact table (activity count as measure) or a role-playing dimension for last-activity-date analysis. DELFOS Architect should validate the preferred modeling approach — `(review)`.
+**CLT Lead Activity (Table 50101):** Activity log linked to leads. Can serve as a secondary fact table (activity count as measure) or a role-playing dimension for last-activity-date analysis. DELFOS Architect should validate the preferred modeling approach, `(review)`.
 
 **Contact (standard BC):** Standard BC contact master. Linked via CLT Lead.Contact No. Provides contact name, company, address, and communication details for enrichment.
 
@@ -256,13 +256,13 @@ DIVIDE(
 )
 ```
 
-Average deal cycle time requires DATEDIFF between Created Date and the date the lead was converted. The current data structure does not store a "Converted Date" field — consider adding one to CLT Lead (Table 50100) in a future iteration. Without it, the DELFOS team would need to approximate using the last activity date where Status changed to Converted, which requires event-level tracking not currently exposed.
+Average deal cycle time requires DATEDIFF between Created Date and the date the lead was converted. The current data structure does not store a "Converted Date" field, consider adding one to CLT Lead (Table 50100) in a future iteration. Without it, the DELFOS team would need to approximate using the last activity date where Status changed to Converted, which requires event-level tracking not currently exposed.
 
-Lead aging analysis (days since creation with no status change) is possible with Created Date and a TODAY() reference in DAX but benefits from a dedicated "Last Status Change Date" field — also not currently stored.
+Lead aging analysis (days since creation with no status change) is possible with Created Date and a TODAY() reference in DAX but benefits from a dedicated "Last Status Change Date" field, also not currently stored.
 
 ### bc-data-source-mapping Compatibility
 
-**YES** — All API pages follow OData v4 conventions with standard entityName patterns. DELFOS can feed the Published API Pages and Data Structure sections directly into the `bc-data-source-mapping` skill without additional lookups. The API publisher (`contoso`), group (`leadtracking`), and version (`v1.0`) are consistent across all endpoints.
+**YES**, All API pages follow OData v4 conventions with standard entityName patterns. DELFOS can feed the Published API Pages and Data Structure sections directly into the `bc-data-source-mapping` skill without additional lookups. The API publisher (`contoso`), group (`leadtracking`), and version (`v1.0`) are consistent across all endpoints.
 
 ---
 
@@ -287,7 +287,7 @@ Lead aging analysis (days since creation with no status change) is possible with
     invoking the Data Modeling Expert. The Published API Pages section provides
     the OData routes and field definitions needed to configure Power BI data
     sources. The Data Structure section maps every field to Dimension or Measure
-    candidates. Star Schema Hints offer a starting point — the DELFOS Architect
+    candidates. Star Schema Hints offer a starting point, the DELFOS Architect
     will validate relationships, cardinalities, and DAX measure requirements
     against the actual semantic model.
 
@@ -305,4 +305,4 @@ Lead aging analysis (days since creation with no status change) is possible with
 | Skill loaded | extension-manifest (CIRCE + DELFOS target) |
 | Source data | app.json, al-spec.md, src/*.al (2 tables, 2 API pages, 1 API query, 2 codeunits) |
 | Sections generated | Header, CIRCE MCP Connection Context, Published API Pages, Published API Queries, Data Structure, Star Schema Hints, Footer |
-| HITL gates passed | Target selection (c — Both), Connection details provided |
+| HITL gates passed | Target selection (c, Both), Connection details provided |

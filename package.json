@@ -1356,7 +1356,8 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
+    "vscode:prepublish": "npm run regenerate:agents && npm run package",
+    "prepare": "husky",
     "compile": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "package": "node esbuild.js --production",
@@ -1364,7 +1365,12 @@
     "vsix": "vsce package --no-dependencies",
     "sync:sources": "pwsh -File automation/scripts/Sync-ExternalSources.ps1 -Clean",
     "normalize:agents": "pwsh -File automation/scripts/Normalize-AgentTools.ps1",
+    "normalize:em-dash": "pwsh -File automation/scripts/Normalize-EmDash.ps1",
     "inject:flow-reporting": "pwsh -File automation/scripts/Inject-FlowReporting.ps1",
+    "inject:avatar-greeting": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1",
+    "inject:avatar-greeting:source": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1 -AssetsRoot .github/agents",
+    "inject:avatar-greeting:overlay": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1 -AssetsRoot automation/overlays/aldc-community/agents",
+    "regenerate:agents": "npm run inject:avatar-greeting && npm run inject:avatar-greeting:source && npm run inject:avatar-greeting:overlay && npm run normalize:em-dash",
     "validate:source-contract": "pwsh -File automation/scripts/Validate-SourceContractsFromCatalog.ps1",
     "validate:source-contract:strict": "pwsh -File automation/scripts/Validate-SourceContractsFromCatalog.ps1 -RequireAtLeastOneContract",
     "sync:mcp-sources": "pwsh -File automation/scripts/Sync-McpKnowledgeSources.ps1 -Clean",
@@ -1372,7 +1378,7 @@
     "validate:contribution-paths": "node automation/scripts/Validate-ContributionPaths.mjs",
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
-    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run inject:flow-reporting && npm run generate:contributions && npm run apply:contributions",
+    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:em-dash && npm run inject:flow-reporting && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
     "pipeline:mcp": "npm run sync:mcp-sources"
   },
   "devDependencies": {
@@ -1385,6 +1391,7 @@
     "ajv-formats": "^3.0.1",
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
+    "husky": "^9.1.7",
     "typescript": "^5.6.0"
   }
 }

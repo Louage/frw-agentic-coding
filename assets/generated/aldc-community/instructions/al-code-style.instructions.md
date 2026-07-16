@@ -3,7 +3,7 @@ applyTo: "**/*.al"
 description: "AL Code structure, formatting, and folder organization guidelines for AL development"
 ---
 
-# AL Code Style — Micro Rules
+# AL Code Style, Micro Rules
 
 Hard style rules. Depth and examples in `skill-pages` and other domain skills.
 

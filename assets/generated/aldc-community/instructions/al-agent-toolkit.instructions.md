@@ -1,9 +1,9 @@
 ---
 applyTo: "**/*Factory.Codeunit.al, **/*Metadata.Codeunit.al, **/*TaskExecution.Codeunit.al, **/*Setup.Codeunit.al"
-description: "AL Agent Toolkit / BC Agents Pack — non-negotiable rules for code involving the AI Development Toolkit or Agent SDK"
+description: "AL Agent Toolkit / BC Agents Pack, non-negotiable rules for code involving the AI Development Toolkit or Agent SDK"
 ---
 
-# AL Agent Toolkit — Always-On Rules
+# AL Agent Toolkit, Always-On Rules
 
 Rules that apply whenever AL code related to the AI Development Toolkit or Agent SDK is edited. Rules only. Detailed knowledge (architecture, interface signatures, patterns) lives in skills.
 
@@ -19,14 +19,14 @@ For detailed content, load the corresponding skill:
 
 ## Non-negotiable rules
 
-1. **Public API is the standard entry point** — all task creation goes through a codeunit with `Access = Public`; all other patterns (page action, event subscriber, multi-turn) call through here.
-2. **TryFunction mandatory for event-driven task creation** — a posting/release/approval must never be blocked by an agent failure.
-3. **Filter before creating** — the business condition is evaluated BEFORE the task builder's `Create()`, never inside it.
-4. **Telemetry on every failure** — `Session.LogMessage` with category and `GetLastErrorText()`. No exceptions.
-5. **ExternalId with convention `{PREFIX}-{No.}`** — `SO-1001`, `LEAD-001`, `INV-103456`, `EMAIL-{threadId}`. Never a GUID, never a sequential number.
-6. **Task message contains ALL the context** — the agent only knows what is passed via the message + attachments.
+1. **Public API is the standard entry point**, all task creation goes through a codeunit with `Access = Public`; all other patterns (page action, event subscriber, multi-turn) call through here.
+2. **TryFunction mandatory for event-driven task creation**, a posting/release/approval must never be blocked by an agent failure.
+3. **Filter before creating**, the business condition is evaluated BEFORE the task builder's `Create()`, never inside it.
+4. **Telemetry on every failure**, `Session.LogMessage` with category and `GetLastErrorText()`. No exceptions.
+5. **ExternalId with convention `{PREFIX}-{No.}`**, `SO-1001`, `LEAD-001`, `INV-103456`, `EMAIL-{threadId}`. Never a GUID, never a sequential number.
+6. **Task message contains ALL the context**, the agent only knows what is passed via the message + attachments.
 7. **Agent Task Message Builder** is used for attachments and sanitization control; builder fields are never manipulated via reflection.
-8. **Instructions in English** — the runtime safeguards are optimized for English.
+8. **Instructions in English**, the runtime safeguards are optimized for English.
 
 ## Naming conventions
 
@@ -37,7 +37,7 @@ For detailed content, load the corresponding skill:
 | Factory codeunit             | `{Agent}Factory` implements `IAgentFactory`                 |
 | Metadata codeunit            | `{Agent}Metadata` implements `IAgentMetadata`               |
 | Task Execution codeunit      | `{Agent}TaskExecution` implements `IAgentTaskExecution`     |
-| Setup codeunit               | `"{Agent} Setup"` — centralized logic                       |
+| Setup codeunit               | `"{Agent} Setup"`, centralized logic                       |
 | Install codeunit             | `"{Agent} Install"` (Subtype = Install)                     |
 | Upgrade codeunit             | `"{Agent} Upgrade"` (Subtype = Upgrade)                     |
 | Public API codeunit          | `"{Agent} Public API"` (Access = Public) + Impl internal    |
@@ -47,7 +47,7 @@ For detailed content, load the corresponding skill:
 | Profile / RoleCenter         | `"{Agent} Profile"` / `"{Agent} Role Center"`               |
 | PermissionSet                | `"{Agent}"` (Assignable, includes D365 BASIC)               |
 
-## ConfigurationDialog page — invariants
+## ConfigurationDialog page, invariants
 
 `PageType = ConfigurationDialog` requires:
 

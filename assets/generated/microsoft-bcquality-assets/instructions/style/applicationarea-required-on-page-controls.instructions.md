@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/applicationarea-required-on-page-controls.md
 
 ## Description
 
-A field control on a page or pageextension that has no `ApplicationArea` property is silently hidden in the Web client for every profile whose enabled application areas do not cover it. There is no error and no warning at runtime — the field simply does not appear, which reads as data loss to the user. AppSourceCop AS0062 flags any page control or action that is missing the `ApplicationArea` property, and AppSource technical validation rejects the app until it is set.
+A field control on a page or pageextension that has no `ApplicationArea` property is silently hidden in the Web client for every profile whose enabled application areas do not cover it. There is no error and no warning at runtime, the field simply does not appear, which reads as data loss to the user. AppSourceCop AS0062 flags any page control or action that is missing the `ApplicationArea` property, and AppSource technical validation rejects the app until it is set.
 
 Set the property to an area the app actually enables. `All` makes the control visible under every profile and is the common default; if the app declares narrower areas in `app.json`, use one of those. The property applies to field controls and to actions. This is a sibling concern to `caption-required-on-page-fields.md` and `tooltip-required-on-page-fields.md`; note that the ToolTip requirement is the separate CodeCop rule AA0218, not AS0062.
 

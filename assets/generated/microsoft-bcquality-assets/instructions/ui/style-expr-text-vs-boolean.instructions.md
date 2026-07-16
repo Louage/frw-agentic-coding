@@ -13,10 +13,10 @@ Source: microsoft/knowledge/ui/style-expr-text-vs-boolean.md
 
 `StyleExpr` on a page field serves two distinct purposes depending on its type:
 
-- **Boolean** — When `StyleExpr` is a Boolean expression, it controls whether the `Style` property is applied. In this case the `Style` property carries the style name; analyze `Style` and ignore `StyleExpr` itself.
-- **Text** — When `StyleExpr` is a Text variable (e.g. `StyleExpr = StatusStyle` where `StatusStyle: Text` and is assigned literals such as `'Favorable'`), the variable contains the style name at runtime. There may be no `Style` property at all — the `StyleExpr` variable **is** the style.
+- **Boolean**, When `StyleExpr` is a Boolean expression, it controls whether the `Style` property is applied. In this case the `Style` property carries the style name; analyze `Style` and ignore `StyleExpr` itself.
+- **Text**, When `StyleExpr` is a Text variable (e.g. `StyleExpr = StatusStyle` where `StatusStyle: Text` and is assigned literals such as `'Favorable'`), the variable contains the style name at runtime. There may be no `Style` property at all, the `StyleExpr` variable **is** the style.
 
-When `StyleExpr` is Text, you must trace the variable's assignments — typically in `OnAfterGetRecord` or `OnAfterGetCurrRecord` — to determine which styles can be applied, then apply the same accessibility rules as for a literal `Style` value.
+When `StyleExpr` is Text, you must trace the variable's assignments, typically in `OnAfterGetRecord` or `OnAfterGetCurrRecord`, to determine which styles can be applied, then apply the same accessibility rules as for a literal `Style` value.
 
 ## Best Practice
 

@@ -21,6 +21,6 @@ See sample: `apply-filters-before-iterating.good.al`.
 
 ## Anti Pattern
 
-`if Customer.FindSet() then repeat if Customer."Country/Region Code" = 'US' then ProcessCustomer(Customer); until Customer.Next() = 0;` — the loop pays for every row in the table and discards the non-matching ones in AL. The intent is the same as a `SetRange("Country/Region Code", 'US')` ahead of the find, but the cost is not.
+`if Customer.FindSet() then repeat if Customer."Country/Region Code" = 'US' then ProcessCustomer(Customer); until Customer.Next() = 0;`, the loop pays for every row in the table and discards the non-matching ones in AL. The intent is the same as a `SetRange("Country/Region Code", 'US')` ahead of the find, but the cost is not.
 
 See sample: `apply-filters-before-iterating.bad.al`.

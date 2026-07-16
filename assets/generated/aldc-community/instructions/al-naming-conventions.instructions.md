@@ -3,7 +3,7 @@ applyTo: "**/*.al"
 description: "Comprehensive naming conventions for AL files, objects, variables, and functions"
 ---
 
-# AL Naming Conventions — Micro Rules
+# AL Naming Conventions, Micro Rules
 
 Hard naming rules. File naming is **framework infrastructure**: the narrow globs in other instructions depend on it.
 

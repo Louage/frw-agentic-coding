@@ -11,11 +11,11 @@ Source: microsoft/knowledge/style/api-page-camelcase-properties.md
 
 ## Description
 
-API pages — pages declared with `PageType = API` — surface as OData/JSON endpoints. The strings that appear in the URL (`APIPublisher`, `APIGroup`, `EntityName`, `EntitySetName`) and the JSON payload field names follow different naming rules from the rest of AL. They must be camelCase and use only alphanumeric characters: no hyphens, no underscores, no spaces, no punctuation. `'Contoso-App'`, `'contoso_app'`, and `'contoso.app'` are all rejected. The same rule applies to page field names exposed via `Name = '…'` on API page controls — those names appear verbatim in the JSON keys.
+API pages, pages declared with `PageType = API`, surface as OData/JSON endpoints. The strings that appear in the URL (`APIPublisher`, `APIGroup`, `EntityName`, `EntitySetName`) and the JSON payload field names follow different naming rules from the rest of AL. They must be camelCase and use only alphanumeric characters: no hyphens, no underscores, no spaces, no punctuation. `'Contoso-App'`, `'contoso_app'`, and `'contoso.app'` are all rejected. The same rule applies to page field names exposed via `Name = '…'` on API page controls, those names appear verbatim in the JSON keys.
 
 ## Best Practice
 
-Pick camelCase identifiers up front: `APIPublisher = 'contoso'`, `APIGroup = 'app1'`, `EntityName = 'customer'`, field `Name = 'displayName'`. Keep them short — they end up in URL paths and JSON keys that every consumer types.
+Pick camelCase identifiers up front: `APIPublisher = 'contoso'`, `APIGroup = 'app1'`, `EntityName = 'customer'`, field `Name = 'displayName'`. Keep them short, they end up in URL paths and JSON keys that every consumer types.
 
 See sample: `api-page-camelcase-properties.good.al`.
 

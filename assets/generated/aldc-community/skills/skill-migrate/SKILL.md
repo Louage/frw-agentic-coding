@@ -43,9 +43,9 @@ Update the three version-sensitive properties in `app.json`:
 ```
 
 **Rules:**
-- `platform` — target BC platform version (major.minor.0.0)
-- `runtime` — AL runtime version matching the target (see [runtime matrix](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-choosing-runtime))
-- `application` — must match or be compatible with target platform
+- `platform`, target BC platform version (major.minor.0.0)
+- `runtime`, AL runtime version matching the target (see [runtime matrix](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-choosing-runtime))
+- `application`, must match or be compatible with target platform
 - Update all `dependencies` versions to match the target release
 - Add new `features` flags required by the target runtime (e.g., `NoImplicitWith` from runtime 11.0+)
 
@@ -54,14 +54,14 @@ Update the three version-sensitive properties in `app.json`:
 Replace legacy patterns with modern equivalents:
 
 ```al
-// ❌ Deprecated — C/AL style
+// ❌ Deprecated, C/AL style
 Record.FIND('-');
 Record.FINDSET(TRUE, TRUE);
 IF Record.FINDFIRST THEN;
 Record.INIT;
 Record.INSERT;
 
-// ✅ Modern — AL patterns
+// ✅ Modern, AL patterns
 Record.FindSet();
 Record.FindSet(true, true);
 if Record.FindFirst() then;
@@ -70,24 +70,24 @@ Record.Insert(true);
 ```
 
 ```al
-// ❌ Deprecated — WITH statement (removed in NoImplicitWith)
+// ❌ Deprecated, WITH statement (removed in NoImplicitWith)
 with SalesHeader do begin
     "Document Type" := "Document Type"::Order;
     "Sell-to Customer No." := CustomerNo;
     Insert(true);
 end;
 
-// ✅ Modern — explicit record reference
+// ✅ Modern, explicit record reference
 SalesHeader."Document Type" := SalesHeader."Document Type"::Order;
 SalesHeader."Sell-to Customer No." := CustomerNo;
 SalesHeader.Insert(true);
 ```
 
 ```al
-// ❌ Deprecated — TextConst (runtime < 6.0)
+// ❌ Deprecated, TextConst (runtime < 6.0)
 CustomerNotFoundErr@1000 : TextConst 'ENU=Customer %1 not found.';
 
-// ✅ Modern — Label
+// ✅ Modern, Label
 var
     CustomerNotFoundErr: Label 'Customer %1 not found.';
 ```
@@ -97,7 +97,7 @@ var
 When base-app events add or change parameters between versions:
 
 ```al
-// BC 23.x subscriber — 3 parameters
+// BC 23.x subscriber, 3 parameters
 [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post",
                  OnBeforePostSalesDoc, '', false, false)]
 local procedure OnBeforePost(
@@ -108,7 +108,7 @@ begin
     // ...
 end;
 
-// BC 24.x — same event now has 4 parameters (new PreviewMode added)
+// BC 24.x, same event now has 4 parameters (new PreviewMode added)
 [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post",
                  OnBeforePostSalesDoc, '', false, false)]
 local procedure OnBeforePost(
@@ -122,7 +122,7 @@ end;
 ```
 
 **Migration steps:**
-1. Build with `al_build` — signature mismatches produce `AL0482` errors
+1. Build with `al_build`, signature mismatches produce `AL0482` errors
 2. Use `al_get_object_definition` to inspect the new publisher signature
 3. Update parameter list to match exactly (name, type, order)
 4. Re-verify with `al_build`
@@ -133,11 +133,11 @@ Handle objects marked `ObsoleteState = Removed` in the target version:
 
 ```al
 // Step 1: Find usage of removed objects
-// al_search_objects — search for the obsolete table/page/codeunit
+// al_search_objects, search for the obsolete table/page/codeunit
 
 // Step 2: Replace with the designated successor
 // Before (removed in BC 24):
-// Codeunit 80 "Sales-Post (Yes/No)" — ObsoleteState = Removed
+// Codeunit 80 "Sales-Post (Yes/No)", ObsoleteState = Removed
 // After:
 Codeunit.Run(Codeunit::"Sales-Post", SalesHeader);
 
@@ -147,8 +147,8 @@ Codeunit.Run(Codeunit::"Sales-Post", SalesHeader);
 
 **Process:**
 1. Compile → collect all `AL0503` (removed) and `AL0432` (pending) warnings
-2. For `Removed` — must fix before compilation succeeds
-3. For `Pending` — fix proactively to avoid future breaks
+2. For `Removed`, must fix before compilation succeeds
+3. For `Pending`, fix proactively to avoid future breaks
 4. Check release notes for each removed object's replacement
 
 ### Pattern 5: Upgrade Codeunit (Data Migration)
@@ -171,7 +171,7 @@ codeunit 50100 "Contoso Data Upgrade"
 
     trigger OnValidateUpgradePerCompany()
     begin
-        // Pre-upgrade validation — runs before OnUpgradePerCompany
+        // Pre-upgrade validation, runs before OnUpgradePerCompany
         VerifyDataIntegrity();
     end;
 
@@ -207,10 +207,10 @@ codeunit 50100 "Contoso Data Upgrade"
 
 **Upgrade codeunit rules:**
 
-- `Subtype = Upgrade` — BC runs these automatically during app upgrade
-- Use `UpgradeTag` to ensure idempotency — never run migration twice
-- `OnValidateUpgradePerCompany` runs first — validate data before transforming
-- `OnUpgradePerCompany` runs per company — do the actual migration
+- `Subtype = Upgrade`, BC runs these automatically during app upgrade
+- Use `UpgradeTag` to ensure idempotency, never run migration twice
+- `OnValidateUpgradePerCompany` runs first, validate data before transforming
+- `OnUpgradePerCompany` runs per company, do the actual migration
 - Always test with a copy of production data before deploying
 - For large datasets, use `SelectLatestVersion()` and batch processing
 
@@ -219,7 +219,7 @@ codeunit 50100 "Contoso Data Upgrade"
 Document and prepare rollback before executing migration:
 
 ```markdown
-## Rollback Plan — {Project} Migration v{X} → v{Y}
+## Rollback Plan, {Project} Migration v{X} → v{Y}
 
 ### Pre-Migration Checklist
 - [ ] Git branch created from stable tag: `git checkout -b migration/vX-to-vY vX.0.0`
@@ -228,7 +228,7 @@ Document and prepare rollback before executing migration:
 - [ ] Rollback tested in sandbox environment
 
 ### Rollback Procedure
-1. **Code rollback**: `git checkout vX.0.0` — restore previous version
+1. **Code rollback**: `git checkout vX.0.0`, restore previous version
 2. **Extension rollback**: Uninstall new version, install archived .app
 3. **Data rollback** (if upgrade codeunit ran):
    - Restore database from pre-migration backup
@@ -247,7 +247,7 @@ Document and prepare rollback before executing migration:
 - Always create a rollback plan BEFORE starting migration
 - Tag the pre-migration commit: `git tag vX.0.0-pre-migration`
 - Archive the current .app file alongside the plan
-- Test rollback in sandbox — never assume it works
+- Test rollback in sandbox, never assume it works
 - If upgrade codeunit is destructive (deletes data), document the point of no return
 
 ## Workflow
@@ -256,17 +256,17 @@ Document and prepare rollback before executing migration:
 
 1. **Backup**: Ensure source control is up to date (`git status` clean)
 2. **Download current symbols**: `al_downloadsymbols`
-3. **Document dependencies**: `al_packages` — list loaded packages with current versions
+3. **Document dependencies**: `al_packages`, list loaded packages with current versions
 4. **Review release notes**: Check BC target version breaking changes
 5. **Create migration plan** in `specs/Plans/{project}-migration.md`
 
-**PAUSE — wait for user approval before modifying files.**
+**PAUSE, wait for user approval before modifying files.**
 
 ### Step 2: Update Configuration
 
-1. Update `app.json` (Pattern 1) — platform, runtime, application, dependencies, features
+1. Update `app.json` (Pattern 1), platform, runtime, application, dependencies, features
 2. Download new symbols for target version
-3. Build: `al_build` — collect all errors
+3. Build: `al_build`, collect all errors
 
 ### Step 3: Fix Compilation Errors
 
@@ -280,8 +280,8 @@ For each fix, verify with incremental build.
 
 ### Step 4: Regenerate and Validate
 
-1. Update the manifest (`app.json`) — no agent tool; edit directly (or via the VS Code command)
-2. Full build: `al_build` — zero errors, zero new warnings; `al_build` also produces the `.app` package
+1. Update the manifest (`app.json`), no agent tool; edit directly (or via the VS Code command)
+2. Full build: `al_build`, zero errors, zero new warnings; `al_build` also produces the `.app` package
 4. Run existing tests to verify no regressions
 
 ### Step 5: Post-Migration
@@ -313,8 +313,8 @@ For each fix, verify with incremental build.
 ## Constraints
 
 - This skill covers **version migration planning, breaking-change remediation, and configuration updates**
-- Do NOT modify base BC objects — extension-only changes
+- Do NOT modify base BC objects, extension-only changes
 - Do NOT skip the pre-migration backup and assessment step
-- Do NOT combine migration with feature development — migrate first, then develop
+- Do NOT combine migration with feature development, migrate first, then develop
 - Always create a migration plan and obtain approval before modifying files
 - Event debugging → `skill-debug.md` | Performance after migration → `skill-performance.md` | Test verification → `skill-testing.md`

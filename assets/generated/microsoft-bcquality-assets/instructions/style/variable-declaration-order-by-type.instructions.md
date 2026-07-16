@@ -21,6 +21,6 @@ See sample: `variable-declaration-order-by-type.good.al`.
 
 ## Anti Pattern
 
-A `var` block where records and primitives are interleaved — `CustomerNo: Code[20];` between two `Record` variables, or `Amount: Decimal;` declared above the `Customer: Record Customer;` it is computed from. AA0021 flags it and the block is harder to scan; readers expect composite types at the top.
+A `var` block where records and primitives are interleaved, `CustomerNo: Code[20];` between two `Record` variables, or `Amount: Decimal;` declared above the `Customer: Record Customer;` it is computed from. AA0021 flags it and the block is harder to scan; readers expect composite types at the top.
 
 See sample: `variable-declaration-order-by-type.bad.al`.

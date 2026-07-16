@@ -11,9 +11,9 @@ Source: microsoft/knowledge/upgrade/triggers-call-helpers-not-implementations.md
 
 ## Description
 
-The `OnUpgradePerCompany` and `OnUpgradePerDatabase` triggers on an upgrade codeunit are dispatch points, not implementation slots. They should contain only calls to named local procedures — one call per feature being upgraded. Putting `ModifyAll`, record loops, or any business logic directly inside the trigger body makes the upgrade impossible to read, impossible to selectively skip via upgrade tags per feature, and impossible to extend without touching the trigger itself.
+The `OnUpgradePerCompany` and `OnUpgradePerDatabase` triggers on an upgrade codeunit are dispatch points, not implementation slots. They should contain only calls to named local procedures, one call per feature being upgraded. Putting `ModifyAll`, record loops, or any business logic directly inside the trigger body makes the upgrade impossible to read, impossible to selectively skip via upgrade tags per feature, and impossible to extend without touching the trigger itself.
 
-Empty `OnUpgradePerCompany` / `OnUpgradePerDatabase` triggers are acceptable — they may be placeholders for future use or artifacts from cleanup.
+Empty `OnUpgradePerCompany` / `OnUpgradePerDatabase` triggers are acceptable, they may be placeholders for future use or artifacts from cleanup.
 
 ## Best Practice
 

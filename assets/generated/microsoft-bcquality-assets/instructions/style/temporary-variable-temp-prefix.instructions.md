@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/temporary-variable-temp-prefix.md
 
 ## Description
 
-A `Record` variable declared with the `temporary` modifier behaves nothing like a normal record variable: it never touches the database, holds rows only for the lifetime of the variable, and is not visible to filters or queries on the underlying table. The BC convention is to make that difference visible at every call site by prefixing the variable name with `Temp` — `TempJobWIPBuffer`, `TempSalesLine`, `TempIntegerBuffer`. The convention is load-bearing for code review: when a reader sees `SalesLine.Insert()`, they expect a database write; when they see `TempSalesLine.Insert()`, they know it is an in-memory buffer.
+A `Record` variable declared with the `temporary` modifier behaves nothing like a normal record variable: it never touches the database, holds rows only for the lifetime of the variable, and is not visible to filters or queries on the underlying table. The BC convention is to make that difference visible at every call site by prefixing the variable name with `Temp`, `TempJobWIPBuffer`, `TempSalesLine`, `TempIntegerBuffer`. The convention is load-bearing for code review: when a reader sees `SalesLine.Insert()`, they expect a database write; when they see `TempSalesLine.Insert()`, they know it is an in-memory buffer.
 
 ## Best Practice
 

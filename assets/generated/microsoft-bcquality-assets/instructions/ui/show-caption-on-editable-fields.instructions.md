@@ -13,7 +13,7 @@ Source: microsoft/knowledge/ui/show-caption-on-editable-fields.md
 
 `ShowCaption` must remain true (the default) on editable fields unless the field matches one of the officially supported "magic patterns". Fields are editable by default. Setting `ShowCaption = false` on an editable field is almost always an accessibility bug: without a visible caption, screen reader users lose the label that identifies the field, and sighted users lose a visual cue.
 
-A field whose `Editable` property is a Boolean expression (e.g. `Editable = IsEditable`) is dynamically editable and must be treated as a form field — `ShowCaption = false` on such a field is also a violation.
+A field whose `Editable` property is a Boolean expression (e.g. `Editable = IsEditable`) is dynamically editable and must be treated as a form field, `ShowCaption = false` on such a field is also a violation.
 
 ## Best Practice
 
@@ -23,6 +23,6 @@ See sample: `show-caption-on-editable-fields.good.al`.
 
 ## Anti Pattern
 
-The `InstructionalText` property on a field renders as HTML placeholder text and is **not** a substitute for a caption — it disappears once the user types and is not reliably announced by screen readers.
+The `InstructionalText` property on a field renders as HTML placeholder text and is **not** a substitute for a caption, it disappears once the user types and is not reliably announced by screen readers.
 
 See sample: `show-caption-on-editable-fields.bad.al`.

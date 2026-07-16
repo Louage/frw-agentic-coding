@@ -11,7 +11,7 @@ Source: microsoft/knowledge/security/secrettext-for-credentials.md
 
 ## Description
 
-`SecretText` is the AL data type for values that should never appear in a debugger session, in a log, or in a variable watch. The compiler enforces two guarantees: a string literal cannot be assigned directly to a `SecretText` variable, and a `SecretText` cannot be assigned back to a `Text` or `Code` without an explicit `Unwrap` call. Together these prevent the two common accidents — embedding a secret in source code, and quietly converting a secret to plain text where the debugger can read it. Use `SecretText` for parameters, return values, and local variables that carry API keys, tokens, passwords, connection strings, or any other value an attacker with debugger access should not see.
+`SecretText` is the AL data type for values that should never appear in a debugger session, in a log, or in a variable watch. The compiler enforces two guarantees: a string literal cannot be assigned directly to a `SecretText` variable, and a `SecretText` cannot be assigned back to a `Text` or `Code` without an explicit `Unwrap` call. Together these prevent the two common accidents, embedding a secret in source code, and quietly converting a secret to plain text where the debugger can read it. Use `SecretText` for parameters, return values, and local variables that carry API keys, tokens, passwords, connection strings, or any other value an attacker with debugger access should not see.
 
 ## Best Practice
 

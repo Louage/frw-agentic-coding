@@ -1,9 +1,9 @@
 ---
 name: skill-sdd-finalise-feature
-description: "Lean SDD — finalise a completed feature: update roadmap, close tasks, prepare PR. Triggers on: speckit.finalise, finalise feature, finalise spec, close spec, wrap up feature, lean SDD finalise, prepare PR lean SDD."
+description: "Lean SDD, finalise a completed feature: update roadmap, close tasks, prepare PR. Triggers on: speckit.finalise, finalise feature, finalise spec, close spec, wrap up feature, lean SDD finalise, prepare PR lean SDD."
 ---
 
-# Skill: Lean SDD — Finalise Feature
+# Skill: Lean SDD, Finalise Feature
 
 ## Purpose
 
@@ -23,12 +23,12 @@ Load when:
 
 ## Prerequisites
 
-1. `specs/<slug>/tasks.md` — all rows ✅
-2. `specs/roadmap.md` — entry for this feature
-3. `CHANGELOG.md` — updated (from generate-docs step)
+1. `specs/<slug>/tasks.md`, all rows ✅
+2. `specs/roadmap.md`, entry for this feature
+3. `CHANGELOG.md`, updated (from generate-docs step)
 4. No open questions in `spec.md`
 
-## Step 1 — Verify Completeness
+## Step 1, Verify Completeness
 
 Read `tasks.md` and count:
 - Unchecked implementation tasks → must be 0
@@ -38,7 +38,7 @@ Read `tasks.md` and count:
 
 If any are unchecked, **stop** and list them for the user to resolve before finalising.
 
-## Step 2 — Update `specs/roadmap.md`
+## Step 2, Update `specs/roadmap.md`
 
 Change the feature row from `🔄 In progress` to `✅ Done`:
 
@@ -46,7 +46,7 @@ Change the feature row from `🔄 In progress` to `✅ Done`:
 | 1 | {Feature Name} | `SDD/YYYY-MM-DD-{slug}/` | ✅ Done | {criterion} |
 ```
 
-## Step 3 — Update `constitution.md` Decisions Log
+## Step 3, Update `constitution.md` Decisions Log
 
 If any architectural decisions were made during this feature, append them:
 
@@ -54,15 +54,15 @@ If any architectural decisions were made during this feature, append them:
 | {date} | {decision title} | {rationale} |
 ```
 
-## Step 4 — Set `spec.md` Status to Done
+## Step 4, Set `spec.md` Status to Done
 
 Update the status line at the top of `spec.md`:
 
 ```markdown
-> **Status**: ✅ Done — {date}
+> **Status**: ✅ Done, {date}
 ```
 
-## Step 5 — Prepare PR Description
+## Step 5, Prepare PR Description
 
 Generate a PR description following this template:
 
@@ -106,7 +106,7 @@ Generate a PR description following this template:
 - Roadmap: `specs/roadmap.md` row {N}
 ```
 
-## Step 6 — Optional: Full PR Workflow
+## Step 6, Optional: Full PR Workflow
 
 If the user wants to go through the full PR preparation (branch validation, test report, deployment checklist), invoke:
 
@@ -114,9 +114,9 @@ If the user wants to go through the full PR preparation (branch validation, test
 @workspace use al-pr-prepare
 ```
 
-This is optional — for small, low-complexity features the lean PR description above is sufficient.
+This is optional, for small, low-complexity features the lean PR description above is sufficient.
 
-## Step 7 — Archive Note
+## Step 7, Archive Note
 
 After the PR is merged, no cleanup is needed. The spec folder in `specs/` is the permanent record of what was built and why. Do **not** delete or move it.
 

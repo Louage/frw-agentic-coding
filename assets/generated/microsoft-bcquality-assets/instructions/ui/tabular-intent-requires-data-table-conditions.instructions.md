@@ -11,7 +11,7 @@ Source: microsoft/knowledge/ui/tabular-intent-requires-data-table-conditions.md
 
 ## Description
 
-The most common accessibility bug in grid layouts is partially following the data-table conventions. A developer arranges fields with **tabular intent** — one field acts as a label or row header for another — but the grid does not satisfy all the data-table heuristic conditions. The client falls back to layout-table rendering, and the tabular relationships between fields are lost: a screen reader announces each field independently with no programmatic association.
+The most common accessibility bug in grid layouts is partially following the data-table conventions. A developer arranges fields with **tabular intent**, one field acts as a label or row header for another, but the grid does not satisfy all the data-table heuristic conditions. The client falls back to layout-table rendering, and the tabular relationships between fields are lost: a screen reader announces each field independently with no programmatic association.
 
 Flag a grid as an accessibility issue when any of these are true:
 
@@ -22,6 +22,6 @@ Both manifestations have the same root cause: tabular semantics were intended bu
 
 ## Anti Pattern
 
-A single field that keeps its visible caption is enough to demote an entire would-be data-table grid into a layout table — and silently strip the labels off its sibling captionless fields. Either restructure to meet all three conditions, or restore captions on every editable field.
+A single field that keeps its visible caption is enough to demote an entire would-be data-table grid into a layout table, and silently strip the labels off its sibling captionless fields. Either restructure to meet all three conditions, or restore captions on every editable field.
 
 See sample: `tabular-intent-requires-data-table-conditions.bad.al`.

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/events/preserve-onafter-execution-when-ishandled-ski
 
 ## Description
 
-A routine that exposes both an `OnBefore…` event (with `var IsHandled`) and a paired `OnAfter…` event has a subtle trap. The common `if IsHandled then exit;` guard returns from the whole routine, so when a subscriber handles the OnBefore the OnAfter event never fires. Subscribers that depend on OnAfter — logging, downstream integration, dependent updates — then silently stop running whenever some other extension overrides the body. The fix is to skip only the default body, not the routine, so the OnAfter still publishes. The two seams are independent: overriding the work should not cancel the notification that the work happened.
+A routine that exposes both an `OnBefore…` event (with `var IsHandled`) and a paired `OnAfter…` event has a subtle trap. The common `if IsHandled then exit;` guard returns from the whole routine, so when a subscriber handles the OnBefore the OnAfter event never fires. Subscribers that depend on OnAfter, logging, downstream integration, dependent updates, then silently stop running whenever some other extension overrides the body. The fix is to skip only the default body, not the routine, so the OnAfter still publishes. The two seams are independent: overriding the work should not cancel the notification that the work happened.
 
 ## Best Practice
 

@@ -23,9 +23,9 @@ This skill should be loaded when:
 
 ### Objects Required
 
-1. **Enum Extension** — extend `"Copilot Capability"` to register your feature
-2. **Install Codeunit** — register the capability on app install
-3. **Isolated Storage Wrapper** — manage Azure OpenAI secrets securely
+1. **Enum Extension**, extend `"Copilot Capability"` to register your feature
+2. **Install Codeunit**, register the capability on app install
+3. **Isolated Storage Wrapper**, manage Azure OpenAI secrets securely
 
 ### Pattern: Enum Extension
 
@@ -374,11 +374,11 @@ Validates the Copilot experience with the AI Test Toolkit: dependency setup, the
 ### Step 1: Design Copilot Experience
 
 Define before coding:
-1. **User problem** — what task does this Copilot help with?
-2. **PromptMode** — Prompt (user types) vs Generate (auto-run)?
-3. **Input** — free text, options, context from calling page?
-4. **Output** — simple text or structured proposals (temp table + subpage)?
-5. **AI model** — Temperature (deterministic vs creative), MaxTokens
+1. **User problem**, what task does this Copilot help with?
+2. **PromptMode**, Prompt (user types) vs Generate (auto-run)?
+3. **Input**, free text, options, context from calling page?
+4. **Output**, simple text or structured proposals (temp table + subpage)?
+5. **AI model**, Temperature (deterministic vs creative), MaxTokens
 
 ### Step 2: Implement (Phase 1 → Phase 3)
 
@@ -397,11 +397,11 @@ Define before coding:
 ### Step 4: Responsible AI Review
 
 Before shipping:
-- User transparency — users know they're interacting with AI
-- Content filtering — no raw AI output without validation
-- Data privacy — no sensitive data in prompts without sanitization
-- Feedback — users can accept/reject AI suggestions (OK/Cancel)
-- Error handling — graceful handling of all Azure OpenAI error codes
+- User transparency, users know they're interacting with AI
+- Content filtering, no raw AI output without validation
+- Data privacy, no sensitive data in prompts without sanitization
+- Feedback, users can accept/reject AI suggestions (OK/Cancel)
+- Error handling, graceful handling of all Azure OpenAI error codes
 
 ## References
 
@@ -410,17 +410,17 @@ Before shipping:
 - [PromptDialog Page Type](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-type-promptdialog)
 - [Azure OpenAI Module in AL](https://learn.microsoft.com/en-us/dynamics365/business-central/application/system-application/codeunit/system.ai.azure-openai)
 - [AI Test Toolkit](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-ai-test-toolkit)
-- [BCTech Samples — Copilot](https://github.com/microsoft/BCTech/tree/master/samples/AzureOpenAI)
-- [Responsible AI — Microsoft](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/ai-responsible-ai-overview)
+- [BCTech Samples, Copilot](https://github.com/microsoft/BCTech/tree/master/samples/AzureOpenAI)
+- [Responsible AI, Microsoft](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/ai-responsible-ai-overview)
 
 ## Constraints
 
-- Do NOT expose raw AI responses without validation — always parse and verify structure
+- Do NOT expose raw AI responses without validation, always parse and verify structure
 - Do NOT include sensitive customer data in prompts without sanitization
 - Do NOT deploy Copilot features without Responsible AI compliance review
-- Do NOT skip AI Test Toolkit testing — every Copilot feature MUST have test coverage
-- Do NOT use deprecated `SetAuthorization` in production — use `SetManagedResourceAuthorization`
-- Do NOT hardcode Azure OpenAI credentials — always use `IsolatedStorage`
+- Do NOT skip AI Test Toolkit testing, every Copilot feature MUST have test coverage
+- Do NOT use deprecated `SetAuthorization` in production, use `SetManagedResourceAuthorization`
+- Do NOT hardcode Azure OpenAI credentials, always use `IsolatedStorage`
 - Permission set generation → `skill-permissions.md`
 - Debugging AI integration issues → `skill-debug.md`
 - Test strategy design → `skill-testing.md`

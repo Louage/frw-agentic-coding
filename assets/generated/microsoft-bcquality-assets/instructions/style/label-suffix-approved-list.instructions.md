@@ -15,7 +15,7 @@ CodeCop AA0074 flags `Label` and `TextConst` identifiers that do not end with an
 
 ## Best Practice
 
-Pick the suffix that matches the call where the label is consumed: `UpdateCompleteMsg` for `Message(...)`, `CustomerNotFoundErr` for `Error(...)`, `DeleteRecordQst` for `Confirm(...)`, `CustomerNameLbl` for tooltips and captions, `GetMethodTok` for locked tokens, `TelemetryDataTxt` for telemetry payloads. Suffix choices between `Tok`, `Lbl`, `Txt`, and `Msg` are judgment calls when the suffix is valid for the usage — what matters is that the suffix is on the approved list and matches the actual call.
+Pick the suffix that matches the call where the label is consumed: `UpdateCompleteMsg` for `Message(...)`, `CustomerNotFoundErr` for `Error(...)`, `DeleteRecordQst` for `Confirm(...)`, `CustomerNameLbl` for tooltips and captions, `GetMethodTok` for locked tokens, `TelemetryDataTxt` for telemetry payloads. Suffix choices between `Tok`, `Lbl`, `Txt`, and `Msg` are judgment calls when the suffix is valid for the usage, what matters is that the suffix is on the approved list and matches the actual call.
 
 See sample: `label-suffix-approved-list.good.al`.
 

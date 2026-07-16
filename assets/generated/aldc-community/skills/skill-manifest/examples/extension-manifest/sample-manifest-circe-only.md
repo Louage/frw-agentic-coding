@@ -1,4 +1,4 @@
-# Extension Manifest — Lead Tracking
+# Extension Manifest, Lead Tracking
 
 | Field | Value |
 |-------|-------|
@@ -18,7 +18,7 @@
 
 ---
 
-## CIRCE — MCP Connection Context
+## CIRCE, MCP Connection Context
 
 ### Connection Coordinates
 
@@ -94,4 +94,4 @@ For deeper inspection of business logic (codeunit logic, event subscribers, vali
 | Skill loaded | extension-manifest (CIRCE target) |
 | Source data | app.json, al-spec.md, src/*.al (3 API objects, 2 tables, 2 codeunits) |
 | Sections generated | Header, CIRCE MCP Connection Context, Footer |
-| HITL gates passed | Target selection (a — CIRCE), Connection details provided |
+| HITL gates passed | Target selection (a, CIRCE), Connection details provided |

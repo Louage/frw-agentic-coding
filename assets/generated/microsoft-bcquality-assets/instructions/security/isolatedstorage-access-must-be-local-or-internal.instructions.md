@@ -15,7 +15,7 @@ Source: microsoft/knowledge/security/isolatedstorage-access-must-be-local-or-int
 
 ## Best Practice
 
-Mark every procedure that touches `IsolatedStorage` as `local` (visible only inside its containing object) or `internal` (visible only inside the owning extension). Provide consumers with a narrow, intent-specific API — for example, "send notification to configured webhook" rather than "give me the webhook secret." See sample: `isolatedstorage-access-must-be-local-or-internal.good.al`.
+Mark every procedure that touches `IsolatedStorage` as `local` (visible only inside its containing object) or `internal` (visible only inside the owning extension). Provide consumers with a narrow, intent-specific API, for example, "send notification to configured webhook" rather than "give me the webhook secret." See sample: `isolatedstorage-access-must-be-local-or-internal.good.al`.
 
 ## Anti Pattern
 

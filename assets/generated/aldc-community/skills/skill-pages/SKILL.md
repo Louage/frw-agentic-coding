@@ -168,7 +168,7 @@ page 50101 "Contoso Project List"
                     StyleExpr = StatusStyleExpr;
                 }
                 field("Starting Date"; Rec."Starting Date") { ApplicationArea = All; }
-                // Limit FlowFields on list pages — max 3-4 for performance
+                // Limit FlowFields on list pages, max 3-4 for performance
                 field("Total Budget"; Rec."Total Budget") { ApplicationArea = All; }
             }
         }
@@ -185,7 +185,7 @@ page 50101 "Contoso Project List"
 ```
 
 **List page rules:**
-- Set `Editable = false` — use Card for editing
+- Set `Editable = false`, use Card for editing
 - Set `CardPageId` for drill-down navigation
 - Limit FlowFields to 3-4 maximum (each triggers a query per row)
 - Use `UsageCategory = Lists` for search/Tell Me discoverability
@@ -325,17 +325,17 @@ pageextension 50100 "Customer Card Ext" extends "Customer Card"
 ```
 
 **Extension placement keywords:**
-- `addafter(AnchorField)` / `addbefore(AnchorField)` — position relative to existing field
-- `addlast(GroupName)` / `addfirst(GroupName)` — at end/start of group
-- `modify(FieldName)` — change properties of existing field
-- `moveafter(Target; FieldToMove)` / `movebefore(Target; FieldToMove)` — reorder
+- `addafter(AnchorField)` / `addbefore(AnchorField)`, position relative to existing field
+- `addlast(GroupName)` / `addfirst(GroupName)`, at end/start of group
+- `modify(FieldName)`, change properties of existing field
+- `moveafter(Target; FieldToMove)` / `movebefore(Target; FieldToMove)`, reorder
 
 ### Pattern 5: Field Importance and Promoted Actions
 
 Control visibility and prominence:
 
 ```al
-// Field importance — controls FastTab collapsed behavior
+// Field importance, controls FastTab collapsed behavior
 field(CriticalField; Rec.CriticalField)
 {
     ApplicationArea = All;
@@ -354,7 +354,7 @@ field(RareField; Rec.RareField)
 ```
 
 ```al
-// Promoted actions — modern actionref syntax (BC 22+)
+// Promoted actions, modern actionref syntax (BC 22+)
 actions
 {
     area(Processing)
@@ -390,7 +390,7 @@ actions
 ### Step 2: Design Layout
 
 1. Group related fields into FastTabs (`group()`)
-2. Set `Importance` — Promoted for key fields, Additional for rare ones
+2. Set `Importance`, Promoted for key fields, Additional for rare ones
 3. Add FactBoxes (`area(FactBoxes)`) for contextual info
 4. Add Notes and Links system parts
 5. For Document pages, create the ListPart subpage with `AutoSplitKey`
@@ -404,9 +404,9 @@ actions
 
 ### Step 4: Implement Dynamic UI
 
-1. `Visible` / `Editable` expressions — control field/group visibility based on state
-2. `StyleExpr` — conditional formatting (Favorable, Unfavorable, Attention, Subordinate, Strong)
-3. `Enabled` — disable actions based on record state
+1. `Visible` / `Editable` expressions, control field/group visibility based on state
+2. `StyleExpr`, conditional formatting (Favorable, Unfavorable, Attention, Subordinate, Strong)
+3. `Enabled`, disable actions based on record state
 4. Update expressions in `OnAfterGetRecord` trigger
 
 ### Step 5: Build and Test
@@ -418,7 +418,7 @@ actions
 
 ## References
 
-- [Page Types — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-types-and-layouts)
+- [Page Types, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-types-and-layouts)
 - [Page Extension Object](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-ext-object)
 - [Actions Overview](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-actions-overview)
 - [Promoted Actions (actionref)](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-promoted-actions)
@@ -428,7 +428,7 @@ actions
 ## Constraints
 
 - This skill covers **page design, layout, extensions, and dynamic UI patterns**
-- Do NOT modify standard BC pages directly — use `pageextension` objects only
+- Do NOT modify standard BC pages directly, use `pageextension` objects only
 - Do NOT place more than 3-4 FlowFields on List pages (performance impact)
 - Do NOT skip `ApplicationArea` on any field or action
 - API page design → `skill-api.md` | Performance (FlowFields, SetLoadFields) → `skill-performance.md` | Page testing → `skill-testing.md`

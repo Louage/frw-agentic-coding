@@ -32,4 +32,4 @@ See sample: `obsoletion-requires-reason-and-tag.bad.al`.
 
 ## See also
 
-- `obsolete-pending-to-removed-staging.md` — when to advance `Pending` to `Removed` and write upgrade code.
+- `obsolete-pending-to-removed-staging.md`, when to advance `Pending` to `Removed` and write upgrade code.

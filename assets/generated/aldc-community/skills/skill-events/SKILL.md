@@ -29,7 +29,7 @@ Before writing any subscriber, discover which events are raised during the busin
 2. Start recording
 3. Execute the business process in BC (e.g., post a sales order)
 4. Stop recording
-5. Analyze the event list — filter by object or keyword
+5. Analyze the event list, filter by object or keyword
 6. Identify the OnBefore/OnAfter event closest to your extension point
 ```
 
@@ -39,16 +39,16 @@ Use `al_find_references` to see who else subscribes to the same event.
 ### Pattern 2: Event Subscriber
 
 ```al
-// Subscriber codeunit — name with "Handler" suffix
+// Subscriber codeunit, name with "Handler" suffix
 codeunit 50100 "Sales Document Events Handler"
 {
     // Attribute breakdown:
-    //   ObjectType  — Table, Codeunit, Page, Report, etc.
-    //   ObjectId    — Database::"Sales Header" or Codeunit::"Customer Management"
-    //   EventName   — exact name of the publisher procedure (e.g., OnBeforeInsert)
-    //   ElementName — '' for table/codeunit events; field name for page field triggers
-    //   SkipOnMissingLicense  — false (recommended: always run)
-    //   SkipOnMissingPermission — false (recommended: always run)
+    //   ObjectType, Table, Codeunit, Page, Report, etc.
+    //   ObjectId, Database::"Sales Header" or Codeunit::"Customer Management"
+    //   EventName, exact name of the publisher procedure (e.g., OnBeforeInsert)
+    //   ElementName, '' for table/codeunit events; field name for page field triggers
+    //   SkipOnMissingLicense, false (recommended: always run)
+    //   SkipOnMissingPermission, false (recommended: always run)
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header",
                      OnBeforeInsert, '', false, false)]
@@ -78,7 +78,7 @@ codeunit 50101 "Customer Management"
     var
         IsHandled: Boolean;
     begin
-        // 1. Raise OnBefore — subscribers can validate, modify, or skip
+        // 1. Raise OnBefore, subscribers can validate, modify, or skip
         OnBeforeCreateCustomer(Customer, IsHandled);
         if IsHandled then
             exit(true);
@@ -87,7 +87,7 @@ codeunit 50101 "Customer Management"
         if not Customer.Insert(true) then
             exit(false);
 
-        // 3. Raise OnAfter — subscribers can react (logging, integration, etc.)
+        // 3. Raise OnAfter, subscribers can react (logging, integration, etc.)
         OnAfterCreateCustomer(Customer);
         exit(true);
     end;
@@ -97,26 +97,26 @@ codeunit 50101 "Customer Management"
         var Customer: Record Customer;
         var IsHandled: Boolean)
     begin
-        // Empty body — subscribers provide the implementation
+        // Empty body, subscribers provide the implementation
         // IsHandled = true → skip default logic
     end;
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterCreateCustomer(var Customer: Record Customer)
     begin
-        // Empty body — subscribers react after creation
+        // Empty body, subscribers react after creation
     end;
 }
 ```
 
 **IntegrationEvent attribute:**
 - `IntegrationEvent(IncludeSender, GlobalVarAccess)`
-- `IncludeSender = false` — recommended for clean API (no coupling to publisher internals)
-- `GlobalVarAccess = false` — recommended (prevent subscribers from accessing publisher global vars)
+- `IncludeSender = false`, recommended for clean API (no coupling to publisher internals)
+- `GlobalVarAccess = false`, recommended (prevent subscribers from accessing publisher global vars)
 
 ### Pattern 4: Business Event
 
-Business events are user-disablable — use for optional, non-critical functionality:
+Business events are user-disablable, use for optional, non-critical functionality:
 
 ```al
 [BusinessEvent(IncludeSender)]
@@ -124,7 +124,7 @@ local procedure OnCustomerCreditLimitExceeded(
     Customer: Record Customer;
     RequestedAmount: Decimal)
 begin
-    // Subscribers may send notification, log, or block — user can disable
+    // Subscribers may send notification, log, or block, user can disable
 end;
 ```
 
@@ -136,20 +136,20 @@ end;
 ### Pattern 5: Well-Designed Event Parameters
 
 ```al
-// ✅ Good — rich context, var where modification expected, IsHandled for OnBefore
+// ✅ Good, rich context, var where modification expected, IsHandled for OnBefore
 [IntegrationEvent(false, false)]
 local procedure OnBeforePostDocument(
-    var DocumentHeader: Record "Sales Header";   // var — subscriber may modify
-    var DocumentLines: Record "Sales Line";      // var — subscriber may modify
-    PostingDate: Date;                           // value — read-only context
-    var IsHandled: Boolean)                      // var — subscriber may skip default
+    var DocumentHeader: Record "Sales Header";   // var, subscriber may modify
+    var DocumentLines: Record "Sales Line";      // var, subscriber may modify
+    PostingDate: Date;                           // value, read-only context
+    var IsHandled: Boolean)                      // var, subscriber may skip default
 begin
 end;
 
-// ✅ Good — results context for OnAfter
+// ✅ Good, results context for OnAfter
 [IntegrationEvent(false, false)]
 local procedure OnAfterPostDocument(
-    DocumentHeader: Record "Sales Header";       // value — read-only (already posted)
+    DocumentHeader: Record "Sales Header";       // value, read-only (already posted)
     PostedDocumentNo: Code[20];                  // result reference
     PostingResult: Boolean)                      // success/failure
 begin
@@ -157,8 +157,8 @@ end;
 ```
 
 **Parameter design rules:**
-- `var Record` — when subscribers should be able to modify the record
-- Non-var `Record` — when record is read-only context
+- `var Record`, when subscribers should be able to modify the record
+- Non-var `Record`, when record is read-only context
 - Always include `var IsHandled: Boolean` in `OnBefore` events
 - Include result/outcome parameters in `OnAfter` events
 - Use meaningful parameter names that describe business intent
@@ -169,7 +169,7 @@ end;
 
 1. Open the Event Recorder in VS Code (a VS Code command, not an agent tool)
 2. Execute the target business process in BC
-3. Review recorded events — filter by relevant object
+3. Review recorded events, filter by relevant object
 4. Use `al_get_object_definition` to inspect publisher signatures
 5. Use `al_find_references` to check existing subscribers (avoid conflicts)
 
@@ -211,10 +211,10 @@ codeunit 50102 "Customer Validation Handler"
 
 ### Step 4: Verify
 
-1. Build: `al_build` — check for compilation errors (signature mismatches)
+1. Build: `al_build`, check for compilation errors (signature mismatches)
 2. Set breakpoint inside subscriber
 3. Debug: `al_debug`
-4. Execute the business process — confirm subscriber fires
+4. Execute the business process, confirm subscriber fires
 5. If subscriber does NOT fire, check:
    - Signature mismatch (most common cause)
    - Wrong `ObjectType` / `ObjectId`
@@ -235,7 +235,7 @@ codeunit 50102 "Customer Validation Handler"
 
 ## References
 
-- [Event Recorder — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-discoverability)
+- [Event Recorder, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-discoverability)
 - [Events in AL](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-events-in-al)
 - [IntegrationEvent Attribute](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/attributes/devenv-integrationevent-attribute)
 - [BusinessEvent Attribute](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/attributes/devenv-businessevent-attribute)
@@ -243,7 +243,7 @@ codeunit 50102 "Customer Validation Handler"
 
 ## Constraints
 
-- This skill covers **event discovery, design, and implementation patterns** — it does NOT duplicate the passive rules in `al-events.instructions.md` (auto-applied to all `.al` files)
+- This skill covers **event discovery, design, and implementation patterns**, it does NOT duplicate the passive rules in `al-events.instructions.md` (auto-applied to all `.al` files)
 - Do NOT create publishers without an `OnBefore` + `OnAfter` pair at minimum
 - Do NOT use `Commit` inside event subscribers unless absolutely required
 - Do NOT set `IsHandled = true` without clear documentation of why default logic is skipped

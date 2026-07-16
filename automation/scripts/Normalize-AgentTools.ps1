@@ -56,7 +56,11 @@ $CoreTools = @(
 $DeprecatedTools = @(
     # VS Code built-in Mermaid Chat — not a marketplace extension, not universally available
     "vscode.mermaid-chat-features/renderMermaidDiagram",
-    "vscode.mermaid-chat-features/*"
+    "vscode.mermaid-chat-features/*",
+    # Legacy AC⚡DC greeting tool. Replaced by inline greeting rotation in
+    # automation/scripts/Inject-AvatarGreeting.ps1 because extension-contributed
+    # LM tools do not reliably attach to custom `.agent.md` chat agents.
+    "frw_get_greeting"
 )
 
 # Frontmatter keys that belong exclusively to the extension (read from assets/agent-metadata.json)

@@ -9,7 +9,7 @@ Source: microsoft/knowledge/performance/order-case-branches-by-frequency.md
 
 # Order case branches by frequency
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 

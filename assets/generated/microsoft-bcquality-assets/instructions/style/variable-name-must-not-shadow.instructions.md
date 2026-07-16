@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/variable-name-must-not-shadow.md
 
 ## Description
 
-Three CodeCop rules — AA0198, AA0202, AA0204 — together forbid a local variable from sharing a name with a global variable on the same object, with a field on the same table or page source, with a procedure on the same object, or with an action on the same page. The compiler resolves the conflict by binding the closer scope, so a local `Customer: Text` will silently override a global `Customer: Record Customer` for the duration of a procedure — every call site reading `Customer.Name` from inside that procedure refers to the text, and the breakage is invisible to a reader who has both declarations on screen.
+Three CodeCop rules, AA0198, AA0202, AA0204, together forbid a local variable from sharing a name with a global variable on the same object, with a field on the same table or page source, with a procedure on the same object, or with an action on the same page. The compiler resolves the conflict by binding the closer scope, so a local `Customer: Text` will silently override a global `Customer: Record Customer` for the duration of a procedure, every call site reading `Customer.Name` from inside that procedure refers to the text, and the breakage is invisible to a reader who has both declarations on screen.
 
 ## Best Practice
 

@@ -11,9 +11,9 @@ Source: microsoft/knowledge/style/caption-required-on-page-fields.md
 
 ## Description
 
-CodeCop AA0225 and AA0226 require every field control to expose a `Caption` property, separately from the field's source name. The caption is what the user sees as the column header or label; the source name is what the code uses to reference the field. Without an explicit `Caption`, AL falls back to the source field's caption — which may be wrong for the page's context — or to the field name itself in code casing, which surfaces internal naming to users and to translators.
+CodeCop AA0225 and AA0226 require every field control to expose a `Caption` property, separately from the field's source name. The caption is what the user sees as the column header or label; the source name is what the code uses to reference the field. Without an explicit `Caption`, AL falls back to the source field's caption, which may be wrong for the page's context, or to the field name itself in code casing, which surfaces internal naming to users and to translators.
 
-Acceptable exceptions: a field whose caption is inherited via `CaptionClass = '3,5,' + CurrencyCode` (or another CaptionClass formula) does not need a literal `Caption`; the formula provides it. API pages and test pages may omit captions because their consumers are not human users. Boolean fields whose name already reads as a sentence — `Enabled`, `Posted`, `Released` — do not need a redundant Caption that repeats the name.
+Acceptable exceptions: a field whose caption is inherited via `CaptionClass = '3,5,' + CurrencyCode` (or another CaptionClass formula) does not need a literal `Caption`; the formula provides it. API pages and test pages may omit captions because their consumers are not human users. Boolean fields whose name already reads as a sentence, `Enabled`, `Posted`, `Released`, do not need a redundant Caption that repeats the name.
 
 ## Best Practice
 

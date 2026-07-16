@@ -35,10 +35,10 @@ description: "Index of ALDC role-based agent specialists for AL development in B
 ## Requirement Contracts
 
 All agents read/write to `.github/plans/`:
-- `{req_name}.spec.md` — Technical specification
-- `{req_name}.architecture.md` — Architectural design
-- `{req_name}.test-plan.md` — Test strategy
-- `memory.md` — Global memory (append-only)
+- `{req_name}.spec.md`, Technical specification
+- `{req_name}.architecture.md`, Architectural design
+- `{req_name}.test-plan.md`, Test strategy
+- `memory.md`, Global memory (append-only)
 
 ---
 

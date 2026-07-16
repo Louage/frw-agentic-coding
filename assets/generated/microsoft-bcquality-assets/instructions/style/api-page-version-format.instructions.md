@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/api-page-version-format.md
 
 ## Description
 
-The `APIVersion` property on an API page is part of the public URL path: `/api/<publisher>/<group>/<version>/<entitySetName>`. The platform accepts only two value shapes for it: a `vMAJOR.MINOR` string such as `'v1.0'`, `'v2.0'`, or `'v2.1'`, or the literal string `'beta'` for pre-release endpoints. Anything else — `'v2'`, `'2.0'`, `'1'`, `'v2.0.0'` — is rejected. The major-minor pair lets consumers detect compatibility through URL inspection alone; the explicit `'beta'` channel signals "this contract may break without notice."
+The `APIVersion` property on an API page is part of the public URL path: `/api/<publisher>/<group>/<version>/<entitySetName>`. The platform accepts only two value shapes for it: a `vMAJOR.MINOR` string such as `'v1.0'`, `'v2.0'`, or `'v2.1'`, or the literal string `'beta'` for pre-release endpoints. Anything else, `'v2'`, `'2.0'`, `'1'`, `'v2.0.0'`, is rejected. The major-minor pair lets consumers detect compatibility through URL inspection alone; the explicit `'beta'` channel signals "this contract may break without notice."
 
 ## Best Practice
 

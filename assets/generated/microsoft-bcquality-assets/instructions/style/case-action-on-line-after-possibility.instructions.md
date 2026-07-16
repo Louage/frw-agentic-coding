@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/case-action-on-line-after-possibility.md
 
 ## Description
 
-In an AL `case` statement, the action for each label is written on the line that follows the label, not on the same line. `'A': Letter2 := '10';` on a single line is the discouraged form; the convention is `'A':` on one line and `Letter2 := '10';` on the next, indented one level deeper. The exception is when the action is a `begin … end` block — there the `begin` follows the colon on the same line, consistent with the rule for `then begin` / `else begin` / `do begin`.
+In an AL `case` statement, the action for each label is written on the line that follows the label, not on the same line. `'A': Letter2 := '10';` on a single line is the discouraged form; the convention is `'A':` on one line and `Letter2 := '10';` on the next, indented one level deeper. The exception is when the action is a `begin … end` block, there the `begin` follows the colon on the same line, consistent with the rule for `then begin` / `else begin` / `do begin`.
 
 ## Best Practice
 

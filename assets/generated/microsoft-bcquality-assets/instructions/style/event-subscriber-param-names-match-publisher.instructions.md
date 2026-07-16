@@ -11,11 +11,11 @@ Source: microsoft/knowledge/style/event-subscriber-param-names-match-publisher.m
 
 ## Description
 
-In AL, an `[EventSubscriber]` procedure is bound to its publisher by event name and parameter list. The parameter names on the subscriber are not a style choice — they must match the names the publisher declared. The compiler validates the match at build time and emits an error if the subscriber renames a parameter. This means a reviewer cannot apply a generic "use better names" pass to subscriber parameters: `Sender`, `Rec`, `xRec`, `RunTrigger`, the table-and-field-specific parameter names a publisher emits — all are dictated by the publisher and must be reproduced verbatim.
+In AL, an `[EventSubscriber]` procedure is bound to its publisher by event name and parameter list. The parameter names on the subscriber are not a style choice, they must match the names the publisher declared. The compiler validates the match at build time and emits an error if the subscriber renames a parameter. This means a reviewer cannot apply a generic "use better names" pass to subscriber parameters: `Sender`, `Rec`, `xRec`, `RunTrigger`, the table-and-field-specific parameter names a publisher emits, all are dictated by the publisher and must be reproduced verbatim.
 
 ## Best Practice
 
-Copy the publisher signature exactly when declaring the subscriber. When in doubt, navigate to the publisher (`OnAfterValidateEvent`, `OnBeforePostSalesDoc`, etc.) and copy its parameter list. Style rules that apply to other locals — descriptive names, no spaces — do not apply to subscriber parameters.
+Copy the publisher signature exactly when declaring the subscriber. When in doubt, navigate to the publisher (`OnAfterValidateEvent`, `OnBeforePostSalesDoc`, etc.) and copy its parameter list. Style rules that apply to other locals, descriptive names, no spaces, do not apply to subscriber parameters.
 
 ## Anti Pattern
 

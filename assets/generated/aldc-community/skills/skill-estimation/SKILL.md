@@ -25,7 +25,7 @@ This skill should be loaded when:
 Before any estimation, gather these parameters:
 
 ```markdown
-## Project Intake — Required Information
+## Project Intake, Required Information
 
 ### 1. Project Identity
 - Project name (will be used for folder structure)
@@ -48,7 +48,7 @@ Before any estimation, gather these parameters:
 - BC experience level: New, Experienced, Expert?
 ```
 
-**PAUSE — do NOT proceed without cost parameters. Estimation without rates is meaningless.**
+**PAUSE, do NOT proceed without cost parameters. Estimation without rates is meaningless.**
 
 ### Pattern 2: Complexity Scoring
 
@@ -177,9 +177,9 @@ Structured risk and opportunity assessment:
 | **Overall** | **/10** |
 
 ### Recommendation
-- [ ] **GO** — Project viable, proceed
-- [ ] **CAUTION** — Viable with conditions
-- [ ] **NO-GO** — Not recommended currently
+- [ ] **GO**, Project viable, proceed
+- [ ] **CAUTION**, Viable with conditions
+- [ ] **NO-GO**, Not recommended currently
 ```
 
 ### Pattern 5: Cost Summary and Payment Milestones
@@ -216,7 +216,7 @@ Consolidate estimation into a financial summary:
 ### Step 1: Intake
 
 1. Ask mandatory intake questions (Pattern 1)
-2. Confirm cost parameters — **do NOT skip this**
+2. Confirm cost parameters, **do NOT skip this**
 3. If reference repositories provided, analyze them for scope comparison
 
 ### Step 2: Analyze
@@ -233,7 +233,7 @@ Consolidate estimation into a financial summary:
 3. Apply standard ratios:
    - Testing = 30-40% of development
    - Documentation = 10-15% of total
-   - Integration = typically underestimated by 50% — adjust accordingly
+   - Integration = typically underestimated by 50%, adjust accordingly
    - Data migration = 15-20% of total (if applicable)
    - BC version testing = 5-10% for compatibility
 
@@ -250,16 +250,16 @@ Consolidate estimation into a financial summary:
 3. Compile all sections into presales documentation
 4. Store in `Technical_PreSales/{project-slug}/` folder structure
 
-**PAUSE — present proposal for stakeholder review before commitment.**
+**PAUSE, present proposal for stakeholder review before commitment.**
 
 ## Estimation Guidelines
 
 | Rule | Guideline |
 |---|---|
 | Testing effort | Always 30-40% of development hours |
-| Documentation | Never skip — 10-15% of total hours |
-| Integration complexity | Usually underestimated — add 50% buffer |
-| Data migration | Add if mentioned — 15-20% of total |
+| Documentation | Never skip, 10-15% of total hours |
+| Integration complexity | Usually underestimated, add 50% buffer |
+| Data migration | Add if mentioned, 15-20% of total |
 | BC version testing | Add 5-10% for compatibility verification |
 | Training | 8-16 hours per user group |
 | Contingency | 15-20% standard, 25-30% for high uncertainty |
@@ -274,8 +274,8 @@ Consolidate estimation into a financial summary:
 ## Constraints
 
 - This skill covers **project estimation, risk analysis, and presales documentation**
-- Do NOT estimate without cost parameters (hourly rate, currency) — ask first
-- Do NOT build, compile, or deploy code — estimation only
-- Do NOT modify production source code — analysis and documentation only
-- Do NOT skip the SWOT analysis for any project — risk awareness is mandatory
+- Do NOT estimate without cost parameters (hourly rate, currency), ask first
+- Do NOT build, compile, or deploy code, estimation only
+- Do NOT modify production source code, analysis and documentation only
+- Do NOT skip the SWOT analysis for any project, risk awareness is mandatory
 - Architecture design → al-architect agent | Technical specifications → al-spec.create workflow | Implementation → al-conductor agent

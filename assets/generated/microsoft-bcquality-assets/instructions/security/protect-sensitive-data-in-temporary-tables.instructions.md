@@ -15,7 +15,7 @@ A temporary record copies data out of the source table into session memory. The 
 
 ## Best Practice
 
-Validate the caller's read permission on the source table before populating the temporary buffer. Keep the buffer's lifetime as short as the work requires, and prefer local temporary variables over globals for anything carrying sensitive data — a local buffer's contents are discarded automatically when the procedure returns. When a buffer must be global or is passed back to callers, delete its contents on every exit path — including error paths — so sensitive values do not linger.
+Validate the caller's read permission on the source table before populating the temporary buffer. Keep the buffer's lifetime as short as the work requires, and prefer local temporary variables over globals for anything carrying sensitive data, a local buffer's contents are discarded automatically when the procedure returns. When a buffer must be global or is passed back to callers, delete its contents on every exit path, including error paths, so sensitive values do not linger.
 
 See sample: `protect-sensitive-data-in-temporary-tables.good.al`.
 

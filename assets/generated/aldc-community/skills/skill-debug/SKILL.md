@@ -65,7 +65,7 @@ Scenario: "My event subscriber doesn't execute"
 ### Pattern 4: Performance Bottleneck
 
 ```al
-// ❌ N+1 pattern — common cause of slow pages
+// ❌ N+1 pattern, common cause of slow pages
 repeat
     Item.Get(SalesLine."No.");      // DB call inside loop
     SalesLine.Amount := Item.Price * SalesLine.Quantity;
@@ -94,7 +94,7 @@ Before initializing:
 2. Security review for sensitive information
 3. Obtain explicit user approval
 
-Commands (one tool — `al_snapshotdebugging` — covers initialize / finish / view):
+Commands (one tool, `al_snapshotdebugging`, covers initialize / finish / view):
   al_snapshotdebugging (initialize)   ← start capture session
   [reproduce scenario 10-20 times]
   al_snapshotdebugging (finish)       ← end capture
@@ -156,16 +156,16 @@ al_build                                ← verify compilation
 ```
 Check `app.json` dependencies version alignment.
 
-**Build errors — common codes**:
-- `AL0896` — Recursive FlowField: map dependency graph, break circular chain
-- `AL0185` — Object ID conflict: check ID range in `app.json`, no duplicates
-- `AL0118` — Field length mismatch: align extension field length with base table
+**Build errors, common codes**:
+- `AL0896`, Recursive FlowField: map dependency graph, break circular chain
+- `AL0185`, Object ID conflict: check ID range in `app.json`, no duplicates
+- `AL0118`, Field length mismatch: align extension field length with base table
 
 **Publishing failures**: check environment connectivity, extension version increment, dependency resolution via `al_packages`.
 
 ### Step 3: Diagnose Root Cause
 
-Identify the **exact point of failure** and — critically — **WHY** it occurs:
+Identify the **exact point of failure** and, critically, **WHY** it occurs:
 
 Common AL root causes by scenario:
 
@@ -194,7 +194,7 @@ Create `specs/Plans/<issue-kebab-case>-diagnosis.md` before proposing any fix:
 
 ## Symptoms
 - Expected: [what should happen]
-- Actual: [what happens — include exact error text]
+- Actual: [what happens, include exact error text]
 
 ## Reproduction Steps
 1. [Step]
@@ -202,7 +202,7 @@ Create `specs/Plans/<issue-kebab-case>-diagnosis.md` before proposing any fix:
 **Reproducibility**: Always / Sometimes / Rare
 
 ## Root Cause
-[Technical explanation with evidence — code snippet, line reference]
+[Technical explanation with evidence, code snippet, line reference]
 
 ## Recommended Fix
 [Specific solution. Short-term hotfix + long-term if needed]
@@ -222,7 +222,7 @@ File naming: `sales-posting-error-diagnosis.md`, `slow-customer-list-diagnosis.m
 
 1. Design fix addressing **root cause** (never symptoms only)
 2. Consider edge cases and side effects
-3. **PAUSE — present diagnosis and proposed fix to user for approval**
+3. **PAUSE, present diagnosis and proposed fix to user for approval**
 4. After approval: handoff implementation to `al-developer` (simple) or via `al-conductor` TDD cycle (complex refactor)
 5. After fix: run tests, re-profile if performance issue, verify regression scenarios
 
@@ -230,14 +230,14 @@ Clean up: remove debugging artifacts, breakpoints, and temporary logging from co
 
 ## References
 
-- [AL Debugger — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-debugging)
+- [AL Debugger, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-debugging)
 - [Snapshot Debugging](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-snapshot-debugging)
-- [AL Code Analysis — AL0896](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0896)
+- [AL Code Analysis, AL0896](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0896)
 - [Performance Profiler](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/performance-profiler-overview)
 
 ## Constraints
 
-- This skill covers **diagnosis and root cause analysis only** — code changes are implemented by `al-developer` or via `al-conductor`
+- This skill covers **diagnosis and root cause analysis only**, code changes are implemented by `al-developer` or via `al-conductor`
 - **NEVER** guess solutions without evidence from debugging tools
 - **NEVER** skip Step 4 (diagnosis document) for non-trivial issues (>5 min investigation)
 - **NEVER** proceed to fix without user approval (Step 5 HITL gate)

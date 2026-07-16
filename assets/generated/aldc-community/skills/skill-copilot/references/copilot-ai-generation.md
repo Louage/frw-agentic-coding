@@ -1,4 +1,4 @@
-# Copilot — AI Generation Codeunit (Phase 3)
+# Copilot, AI Generation Codeunit (Phase 3)
 
 > Reference extracted from `skill-copilot/SKILL.md`. Load only when implementing the AI generation codeunit.
 
@@ -73,7 +73,7 @@ codeunit 50110 "Contoso Forecast Generation"
             Enum::"AOAI Model Type"::"Chat Completions",
             AOAIDeployments.GetGPT4oLatest());
 
-        // Development (own subscription) — uncomment and configure:
+        // Development (own subscription), uncomment and configure:
         // var Storage: Codeunit "Contoso Isolated Storage";
         // AzureOpenAI.SetAuthorization(
         //     Enum::"AOAI Model Type"::"Chat Completions",
@@ -107,7 +107,7 @@ codeunit 50110 "Contoso Forecast Generation"
             402:
                 Error('Your Entra tenant ran out of AI quota. Ensure billing is set up correctly.');
             429:
-                Error('Too many requests — please wait a moment and try again.');
+                Error('Too many requests, please wait a moment and try again.');
             503:
                 Error('AI service is temporarily unavailable. Please try again shortly.');
             else
@@ -128,7 +128,7 @@ codeunit 50110 "Contoso Forecast Generation"
         SysPrompt.AppendLine('# Rules');
         SysPrompt.AppendLine('- Base predictions only on the data provided.');
         SysPrompt.AppendLine('- Provide clear explanations for each prediction.');
-        SysPrompt.AppendLine('- Do not hallucinate item numbers — only use IDs from the data.');
+        SysPrompt.AppendLine('- Do not hallucinate item numbers, only use IDs from the data.');
         SysPrompt.AppendLine('');
         SysPrompt.AppendLine('# Output Format (JSON)');
         SysPrompt.AppendLine('{"items":[{"itemNo":"...","description":"...","forecastQty":0,"explanation":"...","confidence":0.0}]}');
@@ -202,15 +202,15 @@ codeunit 50110 "Contoso Forecast Generation"
 ### Prompt Engineering Guidelines
 
 **System prompt structure:**
-1. **Role** — who the AI is ("sales forecasting expert")
-2. **Task** — what it must do ("analyze data, predict demand")
-3. **Rules** — constraints ("only use provided data", "no hallucinated IDs")
-4. **Output format** — exact JSON schema with field descriptions
+1. **Role**, who the AI is ("sales forecasting expert")
+2. **Task**, what it must do ("analyze data, predict demand")
+3. **Rules**, constraints ("only use provided data", "no hallucinated IDs")
+4. **Output format**, exact JSON schema with field descriptions
 
 **User prompt structure:**
-1. **Context data** — BC records formatted as text (items, customers, history)
-2. **Parameters** — user-selected options (period, filters)
-3. **Request** — the user's free-text input
+1. **Context data**, BC records formatted as text (items, customers, history)
+2. **Parameters**, user-selected options (period, filters)
+3. **Request**, the user's free-text input
 
 **Key parameters:**
 | Parameter | Value | Effect |
@@ -218,4 +218,4 @@ codeunit 50110 "Contoso Forecast Generation"
 | `Temperature` | `0` | Deterministic, consistent results |
 | `Temperature` | `0.7` | Creative, varied results |
 | `MaxTokens` | `2500` | Limits response length |
-| `SetJsonMode(true)` | — | Forces valid JSON output |
+| `SetJsonMode(true)` |, | Forces valid JSON output |

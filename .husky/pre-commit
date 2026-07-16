@@ -1,0 +1,18 @@
+# Regenerate agent greetings if the source-of-truth or any .agent.md is staged.
+# Skips fast when the commit doesn't touch agent content.
+
+CHANGED=$(git diff --cached --name-only --diff-filter=ACMR)
+echo "$CHANGED" | grep -E '^(assets/greetings\.json|(\.github/agents|assets/generated/aldc-community/agents|automation/overlays/aldc-community/agents)/.*\.agent\.md)$' >/dev/null || exit 0
+
+echo "[husky] Agent content staged; running regenerate:agents..."
+npm run regenerate:agents --silent || {
+  echo "[husky] regenerate:agents failed. Fix the error and commit again." >&2
+  exit 1
+}
+
+# Re-stage anything the regenerator touched so the commit reflects the truth.
+git add \
+  assets/greetings.json \
+  .github/agents \
+  assets/generated/aldc-community/agents \
+  automation/overlays/aldc-community/agents 2>/dev/null || true

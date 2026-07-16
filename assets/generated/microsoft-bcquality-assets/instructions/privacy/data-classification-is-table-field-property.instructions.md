@@ -11,7 +11,7 @@ Source: microsoft/knowledge/privacy/data-classification-is-table-field-property.
 
 ## Description
 
-`DataClassification` is defined on table fields. Pages — including `Card`, `List`, `API`, and `ListPart` — do not own a classification; they simply expose fields whose classification is inherited from the underlying table. A page-level `DataClassification` property does not exist, so neither a missing nor a "wrong" classification can be reported against a page. When the underlying table field is misclassified, the fix is on the table definition, not on every page that surfaces the field.
+`DataClassification` is defined on table fields. Pages, including `Card`, `List`, `API`, and `ListPart`, do not own a classification; they simply expose fields whose classification is inherited from the underlying table. A page-level `DataClassification` property does not exist, so neither a missing nor a "wrong" classification can be reported against a page. When the underlying table field is misclassified, the fix is on the table definition, not on every page that surfaces the field.
 
 ## Best Practice
 

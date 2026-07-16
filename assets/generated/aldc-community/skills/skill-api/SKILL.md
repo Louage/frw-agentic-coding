@@ -32,14 +32,14 @@ page 50100 "Contoso Sales Orders API"
 
     EntityCaption = 'Sales Order';
     EntitySetCaption = 'Sales Orders';
-    EntityName = 'salesOrder';               // singular — used in URL for single entity
-    EntitySetName = 'salesOrders';           // plural — used in URL for collection
+    EntityName = 'salesOrder';               // singular, used in URL for single entity
+    EntitySetName = 'salesOrders';           // plural, used in URL for collection
 
     PageType = API;
     SourceTable = "Sales Header";
     SourceTableView = where("Document Type" = const(Order));
-    DelayedInsert = true;                    // required — defers insert until all fields set
-    ODataKeyFields = SystemId;               // required — use SystemId for stable GUIDs
+    DelayedInsert = true;                    // required, defers insert until all fields set
+    ODataKeyFields = SystemId;               // required, use SystemId for stable GUIDs
 
     layout
     {
@@ -101,9 +101,9 @@ DELETE /api/contoso/sales/v2.0/companies({companyId})/salesOrders({id})
 ```
 
 **Property rules:**
-- `ODataKeyFields = SystemId` — always use `SystemId` for stable, immutable keys
-- `DelayedInsert = true` — mandatory on API pages (lets BC set defaults before committing)
-- `SourceTableView` — pre-filter the source if the table serves multiple document types
+- `ODataKeyFields = SystemId`, always use `SystemId` for stable, immutable keys
+- `DelayedInsert = true`, mandatory on API pages (lets BC set defaults before committing)
+- `SourceTableView`, pre-filter the source if the table serves multiple document types
 - Field names use **camelCase** (OData convention): `customerNumber`, not `Customer_Number`
 - `Editable = false` on computed/system fields to prevent consumer confusion
 
@@ -238,7 +238,7 @@ Content-Type: application/json
 
 ### Pattern 4: Unbound Actions (Standalone Operations)
 
-Unbound actions are not tied to a specific entity — use a virtual/dummy source table:
+Unbound actions are not tied to a specific entity, use a virtual/dummy source table:
 
 ```al
 page 50102 "Contoso Utility API"
@@ -298,7 +298,7 @@ page 50102 "Contoso Utility API"
 
 ## XML Documentation for Public Procedures
 
-Any `public` procedure that other modules call carries XML doc comments. This covers API pages (above), and equally the **library codeunits** invoked by API logic or by other codeunits — anything outside the unit's own boundary.
+Any `public` procedure that other modules call carries XML doc comments. This covers API pages (above), and equally the **library codeunits** invoked by API logic or by other codeunits, anything outside the unit's own boundary.
 
 ```al
 /// <summary>
@@ -312,9 +312,9 @@ begin
 end;
 ```
 
-- `<summary>` (required) — what the procedure does and why a caller would invoke it.
-- `<param name="...">` (required for each non-trivial parameter) — what value to pass and constraints.
-- `<returns>` (required when there is a return value) — what the value means.
+- `<summary>` (required), what the procedure does and why a caller would invoke it.
+- `<param name="...">` (required for each non-trivial parameter), what value to pass and constraints.
+- `<returns>` (required when there is a return value), what the value means.
 - `local` and `internal` procedures: doc is optional.
 
 This surface is what IntelliSense presents to consumers and what AL's missing-documentation diagnostics flag.
@@ -324,15 +324,15 @@ This surface is what IntelliSense presents to consumers and what AL's missing-do
 ### Step 1: Design API Contract
 
 Before implementing, define:
-1. **Resource model** — entities, relationships, navigation properties
-2. **Operations** — which HTTP methods per resource (GET/POST/PATCH/DELETE)
-3. **Actions** — custom operations (bound: per entity, unbound: global)
-4. **Filtering** — which fields consumers can `$filter` on (add corresponding keys)
-5. **Versioning** — initial version and deprecation plan
-6. **Authentication** — OAuth 2.0 scope, permission sets needed
+1. **Resource model**, entities, relationships, navigation properties
+2. **Operations**, which HTTP methods per resource (GET/POST/PATCH/DELETE)
+3. **Actions**, custom operations (bound: per entity, unbound: global)
+4. **Filtering**, which fields consumers can `$filter` on (add corresponding keys)
+5. **Versioning**, initial version and deprecation plan
+6. **Authentication**, OAuth 2.0 scope, permission sets needed
 
 Document in `specs/Plans/{req_name}.architecture.md` or a dedicated API design section.
-**PAUSE — wait for user approval before implementing.**
+**PAUSE, wait for user approval before implementing.**
 
 ### Step 2: Implement API Pages
 
@@ -359,9 +359,9 @@ tableextension 50100 "Contoso Sales Header Ext" extends "Sales Header"
 
 Key OData query patterns:
 
-- **Projection**: `?$select=number,customerNumber` — reduces payload
-- **Filtering**: `?$filter=customerNumber eq 'C00001' and orderDate ge 2025-01-01` — server-side
-- **Expansion**: `?$expand=salesOrderLines` — inline children
+- **Projection**: `?$select=number,customerNumber`, reduces payload
+- **Filtering**: `?$filter=customerNumber eq 'C00001' and orderDate ge 2025-01-01`, server-side
+- **Expansion**: `?$expand=salesOrderLines`, inline children
 - **Delta links**: initial GET returns `@odata.deltaLink`; subsequent call with `$deltatoken` returns only changes
 - **Pagination**: `?$top=50&$skip=100`
 
@@ -380,7 +380,7 @@ Create role-based permission sets (full access + read-only) for the API pages. F
 
 ## References
 
-- [API Page Type — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-api-pagetype)
+- [API Page Type, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-api-pagetype)
 - [API v2.0 Standard Endpoints](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/)
 - [OData Query Parameters](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-connect-apps-filtering)
 - [Custom APIs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-develop-custom-api)
@@ -390,9 +390,9 @@ Create role-based permission sets (full access + read-only) for the API pages. F
 ## Constraints
 
 - This skill covers **API page design, implementation patterns, and OData conventions**
-- Do NOT modify base BC objects — create API pages as extensions only
+- Do NOT modify base BC objects, create API pages as extensions only
 - Do NOT expose internal implementation details (codeunit internals, temp tables) in API responses
-- Do NOT skip `APIVersion` — every API page MUST have an explicit version
-- Do NOT create breaking changes on stable versions — use `beta` for previewing changes, then promote
-- Do NOT skip error handling — `OnInsertRecord`, `OnModifyRecord`, `OnDeleteRecord` must validate
+- Do NOT skip `APIVersion`, every API page MUST have an explicit version
+- Do NOT create breaking changes on stable versions, use `beta` for previewing changes, then promote
+- Do NOT skip error handling, `OnInsertRecord`, `OnModifyRecord`, `OnDeleteRecord` must validate
 - Permission set hierarchy → `skill-permissions.md` | Performance deep-dive → `skill-performance.md` | API testing → `skill-testing.md`

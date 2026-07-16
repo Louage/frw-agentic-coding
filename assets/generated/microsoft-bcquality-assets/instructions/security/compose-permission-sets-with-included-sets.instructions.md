@@ -11,7 +11,7 @@ Source: microsoft/knowledge/security/compose-permission-sets-with-included-sets.
 
 ## Description
 
-The `IncludedPermissionSets` property lets one AL permission set reference another, composing rights out of smaller building blocks. Combined with `Assignable = false` on the building blocks, an extension can ship focused per-module units (a table-data cluster, an API-access cluster) and assemble role-shaped sets that include them. Adding an object updates one building block, and every role-shaped set that includes it inherits the change automatically — instead of drifting apart across duplicated definitions.
+The `IncludedPermissionSets` property lets one AL permission set reference another, composing rights out of smaller building blocks. Combined with `Assignable = false` on the building blocks, an extension can ship focused per-module units (a table-data cluster, an API-access cluster) and assemble role-shaped sets that include them. Adding an object updates one building block, and every role-shaped set that includes it inherits the change automatically, instead of drifting apart across duplicated definitions.
 
 ## Best Practice
 

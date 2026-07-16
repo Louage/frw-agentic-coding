@@ -21,6 +21,6 @@ See sample: `upgrade-codeunit-subtype.good.al`.
 
 ## Anti Pattern
 
-Putting upgrade-style logic in a regular codeunit that the platform never invokes during upgrade — for example a normal codeunit with a manually invented "RunUpgrade" procedure that nothing wires to the upgrade pipeline. The migration code will simply not run.
+Putting upgrade-style logic in a regular codeunit that the platform never invokes during upgrade, for example a normal codeunit with a manually invented "RunUpgrade" procedure that nothing wires to the upgrade pipeline. The migration code will simply not run.
 
 See sample: `upgrade-codeunit-subtype.bad.al`.

@@ -11,9 +11,9 @@ Source: microsoft/knowledge/data-modeling/master-table-no-from-number-series-in-
 
 ## Description
 
-In Business Central, a master table (Customer, Vendor, Item, and any custom equivalent) uses a single primary-key field named `No.` of type `Code[20]`. It is populated from a number series — configured on the feature's application-area setup table — inside the table's `OnInsert` trigger, but only when `No.` is still blank (so a user may still type a manual number when the series allows it). The record also keeps a non-editable `No. Series` `Code[20]` field recording which series produced the number.
+In Business Central, a master table (Customer, Vendor, Item, and any custom equivalent) uses a single primary-key field named `No.` of type `Code[20]`. It is populated from a number series, configured on the feature's application-area setup table, inside the table's `OnInsert` trigger, but only when `No.` is still blank (so a user may still type a manual number when the series allows it). The record also keeps a non-editable `No. Series` `Code[20]` field recording which series produced the number.
 
-This is not an `Integer` `AutoIncrement` key, a GUID, or the `SystemId`. Those are surrogate/system identifiers that users never see and cannot quote; BC's whole document flow — lookups, filtering, printed references, telephone support — depends on a short, human-readable, business-controlled `No.`. Use the modern assignment API described in `use-no-series-codeunit-not-noseriesmanagement.md`.
+This is not an `Integer` `AutoIncrement` key, a GUID, or the `SystemId`. Those are surrogate/system identifiers that users never see and cannot quote; BC's whole document flow, lookups, filtering, printed references, telephone support, depends on a short, human-readable, business-controlled `No.`. Use the modern assignment API described in `use-no-series-codeunit-not-noseriesmanagement.md`.
 
 ## Best Practice
 

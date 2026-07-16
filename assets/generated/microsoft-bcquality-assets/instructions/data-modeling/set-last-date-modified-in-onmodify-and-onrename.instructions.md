@@ -13,7 +13,7 @@ Source: microsoft/knowledge/data-modeling/set-last-date-modified-in-onmodify-and
 
 Master tables carry a non-editable `Last Date Modified` field of type `Date`. It records when the record last changed and is refreshed by table triggers, not by the user. The refresh must happen in **both** `OnModify` and `OnRename`.
 
-The reason is a BC-specific trap: renaming a record changes its primary key and fires `OnRename` — it does **not** fire `OnModify`. A table that updates `Last Date Modified` only in `OnModify` therefore leaves a stale date behind every rename. Downstream logic that keys on this field (incremental sync, integration deltas, "changed since" reports) then silently skips the renamed record. Assign `Today` (the system date), not `WorkDate`, because the field reflects the real modification moment.
+The reason is a BC-specific trap: renaming a record changes its primary key and fires `OnRename`, it does **not** fire `OnModify`. A table that updates `Last Date Modified` only in `OnModify` therefore leaves a stale date behind every rename. Downstream logic that keys on this field (incremental sync, integration deltas, "changed since" reports) then silently skips the renamed record. Assign `Today` (the system date), not `WorkDate`, because the field reflects the real modification moment.
 
 ## Best Practice
 

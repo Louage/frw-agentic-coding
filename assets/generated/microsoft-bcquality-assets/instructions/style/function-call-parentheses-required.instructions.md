@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/function-call-parentheses-required.md
 
 ## Description
 
-AL allows a parameterless procedure to be called without parentheses — `Customer.Init` instead of `Customer.Init()` — and the result is syntactically identical at runtime. CodeCop AA0008 still flags the parenthesis-less form. The reason is twofold: written without parentheses, a procedure call is visually indistinguishable from a property read, which makes BC code harder to scan; and the same identifier may exist as both a property and a procedure on different objects, so the parentheses are the only local signal that this is a call. The rule applies to every parameterless invocation, including `Init`, `Insert`, `Modify`, `Delete`, `DeleteAll`, `FindFirst`, `FindSet`, `Next`, `Get`, `CalcFields`, and user-defined procedures.
+AL allows a parameterless procedure to be called without parentheses, `Customer.Init` instead of `Customer.Init()`, and the result is syntactically identical at runtime. CodeCop AA0008 still flags the parenthesis-less form. The reason is twofold: written without parentheses, a procedure call is visually indistinguishable from a property read, which makes BC code harder to scan; and the same identifier may exist as both a property and a procedure on different objects, so the parentheses are the only local signal that this is a call. The rule applies to every parameterless invocation, including `Init`, `Insert`, `Modify`, `Delete`, `DeleteAll`, `FindFirst`, `FindSet`, `Next`, `Get`, `CalcFields`, and user-defined procedures.
 
 ## Best Practice
 

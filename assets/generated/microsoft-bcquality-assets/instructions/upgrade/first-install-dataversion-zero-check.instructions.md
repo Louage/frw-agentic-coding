@@ -27,5 +27,5 @@ See sample: `first-install-dataversion-zero-check.bad.al`.
 
 ## See also
 
-- `use-upgrade-tags-not-version-checks.md` — for upgrade steps after first install, use upgrade tags rather than `DataVersion`.
-- `install-code-does-not-run-on-version-upgrade.md` — ordinary version upgrades invoke upgrade code, not install code.
+- `use-upgrade-tags-not-version-checks.md`, for upgrade steps after first install, use upgrade tags rather than `DataVersion`.
+- `install-code-does-not-run-on-version-upgrade.md`, ordinary version upgrades invoke upgrade code, not install code.

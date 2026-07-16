@@ -31,10 +31,10 @@ permissionset 50100 "Contoso Sales"
     Caption = 'Contoso Sales Permissions';
 
     Permissions =
-        // Tables — object-level execute
+        // Tables, object-level execute
         table "Contoso Sales Setup" = X,
         table "Contoso Discount Rule" = X,
-        // Table data — RIMD granularity
+        // Table data, RIMD granularity
         tabledata "Contoso Sales Setup" = R,          // read-only for most users
         tabledata "Contoso Discount Rule" = RIMD,     // full CRUD
         // Executable objects
@@ -61,10 +61,10 @@ For non-tabledata objects (`table`, `codeunit`, `page`, `report`, `xmlport`, `qu
 
 ### Pattern 2: Role-Based Hierarchy (Least Privilege)
 
-Design a layered permission structure — each role includes only what it needs:
+Design a layered permission structure, each role includes only what it needs:
 
 ```al
-// Layer 1: Base — read-only access shared by all roles
+// Layer 1: Base, read-only access shared by all roles
 permissionset 50100 "Contoso Base"
 {
     Assignable = false;                   // not directly assignable to users
@@ -77,7 +77,7 @@ permissionset 50100 "Contoso Base"
         page "Contoso Discount Rules List" = X;
 }
 
-// Layer 2: User — standard operations (includes Base)
+// Layer 2: User, standard operations (includes Base)
 permissionset 50101 "Contoso User"
 {
     Assignable = true;
@@ -91,7 +91,7 @@ permissionset 50101 "Contoso User"
         report "Contoso Sales Summary" = X;
 }
 
-// Layer 3: Admin — full control (includes User)
+// Layer 3: Admin, full control (includes User)
 permissionset 50102 "Contoso Admin"
 {
     Assignable = true;
@@ -107,13 +107,13 @@ permissionset 50102 "Contoso Admin"
 ```
 
 **Design rules:**
-- `Assignable = false` for base/internal layers — only assign leaf-level sets to users
-- `IncludedPermissionSets` builds hierarchy — no need to repeat parent permissions
+- `Assignable = false` for base/internal layers, only assign leaf-level sets to users
+- `IncludedPermissionSets` builds hierarchy, no need to repeat parent permissions
 - Separate functional areas into distinct sets when the extension covers multiple domains
 
 ### Pattern 3: Permission Set Extension
 
-Extend existing BC permission sets to include your extension's objects — so users with standard roles automatically get access:
+Extend existing BC permission sets to include your extension's objects, so users with standard roles automatically get access:
 
 ```al
 permissionsetextension 50100 "Contoso D365 Sales Ext" extends "D365 SALES"
@@ -168,7 +168,7 @@ Generate the XML format via the VS Code permission-set command (not an agent too
 
 XML `ObjectType` codes: `0` = TableData, `1` = Table, `3` = Report, `5` = Codeunit, `6` = XMLport, `8` = Page, `9` = Query.
 
-**Prefer AL format** for new development — it lives in source control, participates in build, and supports `IncludedPermissionSets`.
+**Prefer AL format** for new development, it lives in source control, participates in build, and supports `IncludedPermissionSets`.
 
 ### Pattern 5: Indirect Permissions and TestPermissions
 
@@ -179,7 +179,7 @@ Some objects are accessed indirectly (via codeunit calls) and need indirect perm
 codeunit 50100 "Contoso Sales Management"
 {
     Permissions =
-        tabledata "Contoso Internal Log" = RIMD;   // indirect — user doesn't access directly
+        tabledata "Contoso Internal Log" = RIMD;   // indirect, user doesn't access directly
 }
 ```
 
@@ -216,15 +216,15 @@ codeunit 50200 "Contoso Sales Test"
 
 ### Step 2: HITL Security Gate (MANDATORY)
 
-**STOP — present the permission matrix to the user before generating:**
+**STOP, present the permission matrix to the user before generating:**
 
 ```markdown
 | Object | Type | Base (R) | User | Admin |
 |---|---|---|---|---|
 | Contoso Sales Setup | tabledata | R | R | RIMD |
 | Contoso Discount Rule | tabledata | R | RIM | RIMD |
-| Contoso Sales Mgmt | codeunit | — | X | X |
-| Contoso Sales Import | xmlport | — | — | X |
+| Contoso Sales Mgmt | codeunit |, | X | X |
+| Contoso Sales Import | xmlport |, |, | X |
 ```
 
 Justify each permission and confirm the principle of least privilege is respected.
@@ -236,7 +236,7 @@ Justify each permission and confirm the principle of least privilege is respecte
 2. Split into role-based layers (Pattern 2)
 3. Create `permissionsetextension` for standard BC roles if needed (Pattern 3)
 4. Add indirect permissions to codeunits (Pattern 5)
-5. Build: `al_build` — verify no errors
+5. Build: `al_build`, verify no errors
 
 ### Step 4: Test with Restrictive Permissions
 
@@ -257,7 +257,7 @@ Include in the extension's documentation or architecture file:
 
 ## References
 
-- [Permission Set Object — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-permissionset-object)
+- [Permission Set Object, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-permissionset-object)
 - [Permission Set Extension Object](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-permissionset-ext-object)
 - [Permissions on AL Objects](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-permissions-property)
 - [TestPermissions Property](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-testpermissions-property)
@@ -267,7 +267,7 @@ Include in the extension's documentation or architecture file:
 
 - **NEVER** generate permission sets without HITL security gate approval (Step 2)
 - **NEVER** grant `D` (Delete) on setup/configuration tables unless explicitly justified
-- **NEVER** grant permissions on system tables — use appropriate APIs instead
+- **NEVER** grant permissions on system tables, use appropriate APIs instead
 - **NEVER** set `Assignable = true` on intermediate/base layers (only leaf-level sets)
 - Permission errors at runtime → load `skill-debug.md` for investigation
 - Data sensitivity classification and GDPR → outside this skill scope

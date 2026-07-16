@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/skip-nonessential-work-via-execution-context
 
 ## Description
 
-Runtime procedures (table triggers, install routines, helpers called from many places) sometimes fire during the upgrade window because the upgrade itself touches the data they react to. When the work those procedures do is not strictly required for the upgrade to succeed — inserting report-selection entries, seeding optional configuration, sending welcome notifications — they should detect upgrade context with `GetExecutionContext() = ExecutionContext::Upgrade` and exit. This keeps upgrade transactions tight and avoids side effects that the upgrade pipeline did not ask for.
+Runtime procedures (table triggers, install routines, helpers called from many places) sometimes fire during the upgrade window because the upgrade itself touches the data they react to. When the work those procedures do is not strictly required for the upgrade to succeed, inserting report-selection entries, seeding optional configuration, sending welcome notifications, they should detect upgrade context with `GetExecutionContext() = ExecutionContext::Upgrade` and exit. This keeps upgrade transactions tight and avoids side effects that the upgrade pipeline did not ask for.
 
 This is the opposite of a load-bearing concern: code that MUST run during the upgrade does not consult execution context. The check is for *optional* side effects that happen to be wired into runtime code paths.
 

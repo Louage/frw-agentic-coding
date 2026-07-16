@@ -1,4 +1,4 @@
-# API — Advanced Patterns (Versioning, Webhooks, Error Handling)
+# API, Advanced Patterns (Versioning, Webhooks, Error Handling)
 
 > Reference extracted from `skill-api/SKILL.md`. Load only when you need versioning/deprecation, webhooks, or trigger-level error handling.
 
@@ -15,7 +15,7 @@
 Maintain backward compatibility while evolving the API:
 
 ```al
-// v1.0 — deprecated, keep running for existing consumers
+// v1.0, deprecated, keep running for existing consumers
 page 50100 "Contoso Sales Orders API v1"
 {
     APIVersion = 'v1.0';
@@ -30,7 +30,7 @@ page 50100 "Contoso Sales Orders API v1"
     // ... limited field set from original v1 design ...
 }
 
-// v2.0 — current stable version
+// v2.0, current stable version
 page 50110 "Contoso Sales Orders API"
 {
     APIVersion = 'v2.0';
@@ -43,7 +43,7 @@ page 50110 "Contoso Sales Orders API"
     // ... full field set, navigation properties, actions ...
 }
 
-// beta — preview of next breaking change
+// beta, preview of next breaking change
 page 50120 "Contoso Sales Orders API v3"
 {
     APIVersion = 'beta';
@@ -58,10 +58,10 @@ page 50120 "Contoso Sales Orders API v3"
 ```
 
 **Versioning rules:**
-- Same `EntityName`/`EntitySetName` across versions — only `APIVersion` and page ID differ
+- Same `EntityName`/`EntitySetName` across versions, only `APIVersion` and page ID differ
 - Mark deprecated versions with `ObsoleteState = Pending` + `ObsoleteReason`
 - Use `beta` version for preview of breaking changes before promoting to stable
-- Never break an existing stable version — add new fields, don't rename or remove
+- Never break an existing stable version, add new fields, don't rename or remove
 
 ### Pattern 6: Webhooks (Subscription Notifications)
 
@@ -96,9 +96,9 @@ BC sends POST to `notificationUrl` when `salesOrders` are created, modified, or 
 **Webhook design considerations:**
 - `notificationUrl` must be HTTPS and publicly accessible
 - BC sends a validation request on subscription creation (return 200 with the same body)
-- Subscriptions expire after 3 days — implement renewal logic in the consumer
+- Subscriptions expire after 3 days, implement renewal logic in the consumer
 - Use `clientState` to validate incoming notifications are from BC
-- Webhooks provide notification only — consumer must call the API to get the actual data
+- Webhooks provide notification only, consumer must call the API to get the actual data
 - Use `$filter` on subscription `resource` to limit scope: `salesOrders?$filter=status eq 'Released'`
 
 ### Pattern 7: Error Handling in API Triggers

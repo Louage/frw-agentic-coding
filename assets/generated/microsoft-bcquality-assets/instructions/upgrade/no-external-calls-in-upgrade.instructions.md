@@ -11,9 +11,9 @@ Source: microsoft/knowledge/upgrade/no-external-calls-in-upgrade.md
 
 ## Description
 
-Upgrade code runs in a constrained execution window: the tenant is mid-upgrade, no users are signed in, and a failure aborts the entire transaction. An external HTTP call, DotNet interop call, or any other I/O to a system outside Business Central can hang or fail for reasons completely unrelated to the upgrade — DNS, expired credentials, a service that is itself being upgraded — and the upgrade fails with it. Rolling back from such a failure is hard because the upgrade pipeline assumes its work is deterministic.
+Upgrade code runs in a constrained execution window: the tenant is mid-upgrade, no users are signed in, and a failure aborts the entire transaction. An external HTTP call, DotNet interop call, or any other I/O to a system outside Business Central can hang or fail for reasons completely unrelated to the upgrade, DNS, expired credentials, a service that is itself being upgraded, and the upgrade fails with it. Rolling back from such a failure is hard because the upgrade pipeline assumes its work is deterministic.
 
-The rule applies inside any codeunit with `Subtype = Upgrade` and to any procedure transitively invoked from `OnUpgrade...` triggers. The same calls in regular runtime code — pages, table triggers, normal codeunits, background jobs — are fine.
+The rule applies inside any codeunit with `Subtype = Upgrade` and to any procedure transitively invoked from `OnUpgrade...` triggers. The same calls in regular runtime code, pages, table triggers, normal codeunits, background jobs, are fine.
 
 ## Best Practice
 

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/ui/on-drill-down-on-non-editable-fields-renders-as-l
 
 ## Description
 
-The Business Central client renders non-editable fields that have an `OnDrillDown` trigger as HTML `<a>` (anchor) elements. Screen readers correctly announce these as links. `OnDrillDown` on a non-editable field is therefore **not** an accessibility issue — the platform handles the semantics.
+The Business Central client renders non-editable fields that have an `OnDrillDown` trigger as HTML `<a>` (anchor) elements. Screen readers correctly announce these as links. `OnDrillDown` on a non-editable field is therefore **not** an accessibility issue, the platform handles the semantics.
 
 Do not flag `OnDrillDown` usage as an accessibility issue. The combination of `Editable = false` and `OnDrillDown` is the standard BC pattern for navigable, screen-reader-friendly value cells in list and card pages.
 

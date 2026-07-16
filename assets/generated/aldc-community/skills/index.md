@@ -4,7 +4,7 @@
 
 Skills are composable knowledge modules in markdown format that agents load on demand based on task context. They encapsulate domain-specific patterns, workflows, and best practices.
 
-Skills follow the GitHub Copilot Agent Skills structure (`skills/{skill-name}/SKILL.md`). Copilot auto-loads skills based on their `description` frontmatter — agents no longer need `@file` references.
+Skills follow the GitHub Copilot Agent Skills structure (`skills/{skill-name}/SKILL.md`). Copilot auto-loads skills based on their `description` frontmatter, agents no longer need `@file` references.
 
 ## Required Skills (MUST exist)
 

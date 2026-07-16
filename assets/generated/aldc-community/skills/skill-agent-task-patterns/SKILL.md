@@ -18,9 +18,9 @@ Knowledge base for every Agent SDK task integration pattern, with runtime-availa
 
 | Method                                       | Scope            | Status         | Workaround                                              |
 | -------------------------------------------- | ---------------- | -------------- | ------------------------------------------------------- |
-| `AddTaskMessage(From, Text)`                 | Extension        | ✅ Available    | —                                                       |
-| `AddAttachment(Name, MediaType, InStream)`   | Extension        | ✅ Available    | —                                                       |
-| `SetExternalId(Text)`                        | Extension        | ✅ Available    | —                                                       |
+| `AddTaskMessage(From, Text)`                 | Extension        | ✅ Available    |, |
+| `AddAttachment(Name, MediaType, InStream)`   | Extension        | ✅ Available    |, |
+| `SetExternalId(Text)`                        | Extension        | ✅ Available    |, |
 | `SetRequiresReview(true)`                    | **OnPrem only**  | ❌ Ext. blocked | Use `IAgentTaskExecution` Warning annotation            |
 | `SetSkipMessageSanitization(true)`           | **OnPrem only**  | ❌ Ext. blocked | Pre-format message text upstream                        |
 | `AddToTask(AgentTask)`                       | Future           | ❌ Not in 17.0  | Create a new follow-up task referencing original ExternalId |
@@ -28,7 +28,7 @@ Knowledge base for every Agent SDK task integration pattern, with runtime-availa
 
 OnPrem-only methods are documented but throw at runtime when invoked from a cloud Extension. Treat the workarounds as the canonical Extension pattern.
 
-## SDK codeunits — quick reference
+## SDK codeunits, quick reference
 
 | Codeunit                       | Purpose                                      | Key methods                                                |
 | ------------------------------ | -------------------------------------------- | ---------------------------------------------------------- |
@@ -42,7 +42,7 @@ OnPrem-only methods are documented but throw at runtime when invoked from a clou
 
 ## 8 integration patterns
 
-### Pattern A — Public API (standard entry point)
+### Pattern A, Public API (standard entry point)
 
 **When**: every reusable task-creation surface. All other patterns call through here.
 
@@ -102,7 +102,7 @@ begin
 end;
 ```
 
-### Pattern B — Page action (user-initiated)
+### Pattern B, Page action (user-initiated)
 
 **When**: a button on a page sends work to an agent.
 
@@ -128,14 +128,14 @@ begin
 end;
 ```
 
-### Pattern C — Business event (automated)
+### Pattern C, Business event (automated)
 
 **When**: a business event (posting, releasing, approval) auto-triggers an agent task.
 
 **Non-negotiable rules**:
 
-1. **Always wrap in `[TryFunction]`** — never block the business event on agent failure.
-2. **Always filter by business condition BEFORE creating the task** — not inside the TryFunction.
+1. **Always wrap in `[TryFunction]`**, never block the business event on agent failure.
+2. **Always filter by business condition BEFORE creating the task**, not inside the TryFunction.
 3. **Always log failures via `Session.LogMessage`** with category and `GetLastErrorText()`.
 
 ```al
@@ -167,7 +167,7 @@ begin
 end;
 ```
 
-### Pattern D — Attachment task
+### Pattern D, Attachment task
 
 **When**: agent needs to process files (PDFs, images, CSVs, Excel).
 
@@ -198,7 +198,7 @@ end;
 
 When you need a canonical end-to-end example combining attachment + business condition + telemetry + lead handoff, load `examples/lead-handoff-with-attachment.md`.
 
-### Pattern E — Multi-turn conversation
+### Pattern E, Multi-turn conversation
 
 **When**: continue an existing task with follow-up messages.
 
@@ -226,7 +226,7 @@ end;
 **When `AddToTask` becomes available** in a future runtime, the canonical pattern will be:
 
 ```al
-// FUTURE — not yet in Extension scope
+// FUTURE, not yet in Extension scope
 AgentTaskRecord := AgentTaskCU.GetTaskByExternalId(AgentSecurityId, ExternalId);
 AgentTaskMsgBuilder.Initialize('User', FollowUpText);
 AgentTaskMsgBuilder.AddToTask(AgentTaskRecord);
@@ -234,7 +234,7 @@ if AgentTaskCU.CanSetStatusToReady(AgentTaskRecord) then
     AgentTaskCU.SetStatusToReady(AgentTaskRecord);
 ```
 
-### Pattern F — Lifecycle management
+### Pattern F, Lifecycle management
 
 **When**: monitor, restart, or stop tasks programmatically.
 
@@ -246,7 +246,7 @@ if AgentTaskCU.CanSetStatusToReady(AgentTaskRecord) then
 | Resume paused task    | `if AgentTask.CanSetStatusToReady(Rec) then AgentTask.SetStatusToReady(Rec)` |
 | Display name lookup   | `Agent.GetDisplayName(AgentUserSecurityId)`              |
 
-### Pattern G — Agent session detection
+### Pattern G, Agent session detection
 
 **When**: AL code must run only inside an agent session (not in normal user sessions).
 
@@ -264,7 +264,7 @@ end;
 if not AgentSession.IsAgentSession(Enum::"Agent Metadata Provider"::"Lead Qualifier") then exit;
 ```
 
-### Pattern H — Agent session event binding (performance)
+### Pattern H, Agent session event binding (performance)
 
 **When**: event subscribers should be active only during agent tasks, never in normal user sessions.
 
@@ -319,7 +319,7 @@ end;
 
 Warning annotations trigger the user-intervention flow via `GetAgentTaskUserInterventionSuggestions`. Error annotations stop the task.
 
-## Agent discovery — current state
+## Agent discovery, current state
 
 Until `Custom Agent.GetCustomAgents()` becomes available in Extension scope, use `Agent Setup.OpenAgentLookup()` for user selection and `Agent.GetDisplayName(Guid)` for display:
 
@@ -363,14 +363,14 @@ end;
 
 ## Non-negotiable rules
 
-1. **Public API is the entry point** — all other patterns call through it.
-2. **TryFunction for event-driven creation** — never block posting, releasing, approval.
-3. **Filter before creating** — business condition checked outside the TryFunction.
-4. **Log failures to telemetry** — `Session.LogMessage` with category and error text.
-5. **Mensaje contiene todo el contexto** — el agente solo sabe lo que le pasas por el mensaje + attachments.
-6. **ExternalId follows `{PREFIX}-{No.}`** — `SO-1001`, `LEAD-001`, `EMAIL-{threadId}`. Never GUIDs or auto-increments.
-7. **Use `Agent Task Message Builder`** for attachments — never manipulate the underlying records directly.
-8. **Verify availability** against the matrix above before designing — don't ship code that relies on OnPrem-only methods.
+1. **Public API is the entry point**, all other patterns call through it.
+2. **TryFunction for event-driven creation**, never block posting, releasing, approval.
+3. **Filter before creating**, business condition checked outside the TryFunction.
+4. **Log failures to telemetry**, `Session.LogMessage` with category and error text.
+5. **Mensaje contiene todo el contexto**, el agente solo sabe lo que le pasas por el mensaje + attachments.
+6. **ExternalId follows `{PREFIX}-{No.}`**, `SO-1001`, `LEAD-001`, `EMAIL-{threadId}`. Never GUIDs or auto-increments.
+7. **Use `Agent Task Message Builder`** for attachments, never manipulate the underlying records directly.
+8. **Verify availability** against the matrix above before designing, don't ship code that relies on OnPrem-only methods.
 
 ## Examples
 

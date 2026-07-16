@@ -11,7 +11,7 @@ Source: microsoft/knowledge/performance/use-setloadfields-for-partial-records.md
 
 ## Description
 
-`SetLoadFields(...)` declares the subset of normal fields the next read should materialize, "reducing data read and transfer thereby improving performance significantly." Per the upstream guidance, "the gains scale with the amount of rows read, so for loops that read many rows `SetLoadFields` is even more important." Primary-key fields, `SystemId`, and system audit fields are loaded automatically, "and fields that are filtered on are also automatically included" — those do not need to appear in the list. `SetLoadFields` only affects `FieldClass = Normal`; it does not narrow FlowFields or FlowFilters.
+`SetLoadFields(...)` declares the subset of normal fields the next read should materialize, "reducing data read and transfer thereby improving performance significantly." Per the upstream guidance, "the gains scale with the amount of rows read, so for loops that read many rows `SetLoadFields` is even more important." Primary-key fields, `SystemId`, and system audit fields are loaded automatically, "and fields that are filtered on are also automatically included", those do not need to appear in the list. `SetLoadFields` only affects `FieldClass = Normal`; it does not narrow FlowFields or FlowFilters.
 
 ## Best Practice
 
@@ -21,6 +21,6 @@ See sample: `use-setloadfields-for-partial-records.good.al`.
 
 ## Anti Pattern
 
-Loading a wide table and reading one field per row in a loop. The bytes transferred per row are dominated by the columns the procedure does not touch; the SQL query selects them anyway. The same applies to a single `Get` on a wide table — the platform reads the whole row when a single field would have sufficed.
+Loading a wide table and reading one field per row in a loop. The bytes transferred per row are dominated by the columns the procedure does not touch; the SQL query selects them anyway. The same applies to a single `Get` on a wide table, the platform reads the whole row when a single field would have sufficed.
 
 See sample: `use-setloadfields-for-partial-records.bad.al`.

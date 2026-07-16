@@ -17,12 +17,12 @@ Business Central renders `grid()` and `fixed()` layouts in two modes. The mode i
 - Every child of every group is a field (no nested groups or other controls).
 - All fields have `ShowCaption = false`.
 
-The heuristic checks field captions only — group `ShowCaption` is not part of the check. A group with a visible caption inside a data-table grid does **not** break the heuristic and is not a violation. However, groups in a data table should also have `ShowCaption = false` for correct visual presentation.
+The heuristic checks field captions only, group `ShowCaption` is not part of the check. A group with a visible caption inside a data-table grid does **not** break the heuristic and is not a violation. However, groups in a data table should also have `ShowCaption = false` for correct visual presentation.
 
 Any grid or fixed layout that does not meet all three conditions renders as a layout table (visual column arrangement, no table semantics).
 
 ## Best Practice
 
-If you intend a grid or fixed layout to render as a data table, satisfy all three conditions and verify the resulting markup matches your intent. If you do not need tabular semantics, prefer simple groups over grid or fixed layouts — they reflow better and produce correct semantic markup automatically.
+If you intend a grid or fixed layout to render as a data table, satisfy all three conditions and verify the resulting markup matches your intent. If you do not need tabular semantics, prefer simple groups over grid or fixed layouts, they reflow better and produce correct semantic markup automatically.
 
 See sample: `grid-data-table-heuristic.good.al`.

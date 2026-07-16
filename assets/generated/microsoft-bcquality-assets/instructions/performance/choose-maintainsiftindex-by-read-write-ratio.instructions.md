@@ -9,7 +9,7 @@ Source: microsoft/knowledge/performance/choose-maintainsiftindex-by-read-write-r
 
 # Choose MaintainSIFTIndex by read-write ratio
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 
@@ -23,4 +23,4 @@ See sample: `choose-maintainsiftindex-by-read-write-ratio.good.al`.
 
 ## Anti Pattern
 
-Leaving `MaintainSIFTIndex = Yes` on every key by reflex or convenience. On write-heavy tables the cumulative cost turns every INSERT or MODIFY into several additional aggregate updates, and the impact compounds in batch imports and posting routines — often without any code-review signal that the property is the cause.
+Leaving `MaintainSIFTIndex = Yes` on every key by reflex or convenience. On write-heavy tables the cumulative cost turns every INSERT or MODIFY into several additional aggregate updates, and the impact compounds in batch imports and posting routines, often without any code-review signal that the property is the cause.

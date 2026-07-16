@@ -11,7 +11,7 @@ Source: microsoft/knowledge/events/avoid-raising-events-inside-try-functions.md
 
 ## Description
 
-A `TryFunction` catches all errors — including errors thrown by event subscribers. When an `[IntegrationEvent]` is raised inside a `TryFunction` body, any error a subscriber raises is silently swallowed by the TryFunction's error boundary. The subscriber's logic fails, the caller sees no error, and the calling code continues as if nothing happened. Subscribers have no way to signal failure to the caller.
+A `TryFunction` catches all errors, including errors thrown by event subscribers. When an `[IntegrationEvent]` is raised inside a `TryFunction` body, any error a subscriber raises is silently swallowed by the TryFunction's error boundary. The subscriber's logic fails, the caller sees no error, and the calling code continues as if nothing happened. Subscribers have no way to signal failure to the caller.
 
 ## Best Practice
 
@@ -21,6 +21,6 @@ See sample: `avoid-raising-events-inside-try-functions.good.al`.
 
 ## Anti Pattern
 
-Raising an integration event inside a TryFunction body. Subscriber failures are caught and discarded by the TryFunction. The subscriber contract — that a subscriber can signal failure to the caller — is silently broken.
+Raising an integration event inside a TryFunction body. Subscriber failures are caught and discarded by the TryFunction. The subscriber contract, that a subscriber can signal failure to the caller, is silently broken.
 
 See sample: `avoid-raising-events-inside-try-functions.bad.al`.

@@ -11,11 +11,11 @@ Source: microsoft/knowledge/style/file-name-object-type-pattern.md
 
 ## Description
 
-Each AL source file holds a single object, and the file name is expected to be of the form `<ObjectName>.<ObjectType>.al` — `CustomerCard.Page.al`, `PostSalesInvoice.Codeunit.al`, `NoSeriesTests.Codeunit.al`, `SalesHeader.TableExt.al`. The pattern makes object types greppable from a file listing and lets tooling — symbol search, project explorers, code generators — locate objects without parsing the AL source. Snake-case, lowercase-only, or type-less file names (`customer_page.al`, `tests_noSeries.al`, `PostSalesInvoiceLogic.al`) all break that contract.
+Each AL source file holds a single object, and the file name is expected to be of the form `<ObjectName>.<ObjectType>.al`, `CustomerCard.Page.al`, `PostSalesInvoice.Codeunit.al`, `NoSeriesTests.Codeunit.al`, `SalesHeader.TableExt.al`. The pattern makes object types greppable from a file listing and lets tooling, symbol search, project explorers, code generators, locate objects without parsing the AL source. Snake-case, lowercase-only, or type-less file names (`customer_page.al`, `tests_noSeries.al`, `PostSalesInvoiceLogic.al`) all break that contract.
 
 ## Best Practice
 
-Use PascalCase for the object portion, no spaces, no underscores; the type segment is one of the AL object-type names — `Page`, `Codeunit`, `Table`, `TableExt`, `Report`, `Query`, `XmlPort`, `Enum`, `EnumExt`, `Interface`, `PermissionSet`, `PageExt`, `ReportExt`. The object portion should echo the object's name as it appears in AL.
+Use PascalCase for the object portion, no spaces, no underscores; the type segment is one of the AL object-type names, `Page`, `Codeunit`, `Table`, `TableExt`, `Report`, `Query`, `XmlPort`, `Enum`, `EnumExt`, `Interface`, `PermissionSet`, `PageExt`, `ReportExt`. The object portion should echo the object's name as it appears in AL.
 
 See sample (file-naming pattern is structural; no AL sample shipped here).
 

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/begin-on-same-line-as-then-else-do.md
 
 ## Description
 
-When a compound block follows `then`, `else`, or `do`, the `begin` keyword must sit on the same line as the preceding keyword, separated by exactly one space. `if Condition then begin` and `for i := 1 to N do begin` are correct. The form that puts `begin` on its own line — common in older AL and in languages like Pascal — is flagged by CodeCop AA0005. The rule does not change indentation of the block body; it only governs the placement of `begin` relative to `then`/`else`/`do`.
+When a compound block follows `then`, `else`, or `do`, the `begin` keyword must sit on the same line as the preceding keyword, separated by exactly one space. `if Condition then begin` and `for i := 1 to N do begin` are correct. The form that puts `begin` on its own line, common in older AL and in languages like Pascal, is flagged by CodeCop AA0005. The rule does not change indentation of the block body; it only governs the placement of `begin` relative to `then`/`else`/`do`.
 
 ## Best Practice
 

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/performance/pass-false-to-insert-when-trigger-not-ne
 
 ## Description
 
-`Insert(true)`, `Modify(true)`, and `Delete(true)` run the table's `OnInsert`/`OnModify`/`OnDelete` trigger; the `(false)` form skips it. Per the upstream guidance, the trigger form should be used "only when needed" — every row whose write fires a trigger pays that cost, even when the trigger has nothing useful to add for the current call site. For tight bulk write paths the difference compounds linearly with row count.
+`Insert(true)`, `Modify(true)`, and `Delete(true)` run the table's `OnInsert`/`OnModify`/`OnDelete` trigger; the `(false)` form skips it. Per the upstream guidance, the trigger form should be used "only when needed", every row whose write fires a trigger pays that cost, even when the trigger has nothing useful to add for the current call site. For tight bulk write paths the difference compounds linearly with row count.
 
 ## Best Practice
 

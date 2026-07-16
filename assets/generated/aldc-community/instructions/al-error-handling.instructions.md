@@ -3,7 +3,7 @@ applyTo: "**/*.Codeunit.al"
 description: "AL Error handling patterns, debugging techniques, and troubleshooting guidelines for AL development"
 ---
 
-# AL Error Handling — Micro Rules
+# AL Error Handling, Micro Rules
 
 Hard error handling rules for codeunits. Depth, patterns and examples in `skill-debug` and related skills.
 

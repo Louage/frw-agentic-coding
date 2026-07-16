@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/single-space-after-not-operator.md
 
 ## Description
 
-CodeCop AA0003 requires exactly one space between the `not` operator and the expression it negates. `if not Customer.FindFirst() then …` is correct; `if not  Customer.FindFirst() then …` (two spaces) and `if notCustomer.FindFirst() then …` (zero — which fails parsing anyway) are not. The rule is also the place where uppercase `NOT` is flagged in combination with CodeCop AA0241 (reserved keywords must be lowercase): `if NOT Condition then` is doubly wrong.
+CodeCop AA0003 requires exactly one space between the `not` operator and the expression it negates. `if not Customer.FindFirst() then …` is correct; `if not  Customer.FindFirst() then …` (two spaces) and `if notCustomer.FindFirst() then …` (zero, which fails parsing anyway) are not. The rule is also the place where uppercase `NOT` is flagged in combination with CodeCop AA0241 (reserved keywords must be lowercase): `if NOT Condition then` is doubly wrong.
 
 ## Best Practice
 
@@ -21,6 +21,6 @@ See sample: `single-space-after-not-operator.good.al`.
 
 ## Anti Pattern
 
-`if NOT condition then`, `if not  condition then`, `if !condition then` (which is not even AL — `!` is not a negation operator in AL). All three either trip AA0003 / AA0241 or fail to compile.
+`if NOT condition then`, `if not  condition then`, `if !condition then` (which is not even AL, `!` is not a negation operator in AL). All three either trip AA0003 / AA0241 or fail to compile.
 
 See sample: `single-space-after-not-operator.bad.al`.

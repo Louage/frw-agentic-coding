@@ -11,7 +11,7 @@ Source: microsoft/knowledge/events/prefix-temporary-record-event-parameters-with
 
 ## Description
 
-When a record passed to an event is a temporary record — an in-memory buffer not persisted to the database — its parameter name must start with `Temp`. The prefix is the only reliable signal a subscriber has that writes to the record will not reach the database and that the data is scoped to the current call. Without it, subscribers may treat buffer data as persisted: calling `Modify` or `Insert` expecting durability, or reading it as the authoritative table, which leads to silent data loss and confusing behaviour. The `temporary` keyword sits on the variable declaration and is not visible at the subscriber, so the name has to carry the meaning.
+When a record passed to an event is a temporary record, an in-memory buffer not persisted to the database, its parameter name must start with `Temp`. The prefix is the only reliable signal a subscriber has that writes to the record will not reach the database and that the data is scoped to the current call. Without it, subscribers may treat buffer data as persisted: calling `Modify` or `Insert` expecting durability, or reading it as the authoritative table, which leads to silent data loss and confusing behaviour. The `temporary` keyword sits on the variable declaration and is not visible at the subscriber, so the name has to carry the meaning.
 
 ## Best Practice
 

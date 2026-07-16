@@ -13,7 +13,7 @@ Source: microsoft/knowledge/appsource/object-affixes-prevent-collisions.md
 
 An AppSource extension must prevent name collisions through its registered affix or, on BC23 and later for objects it owns, a namespace with at least two levels. The affix still applies to every field, key, control, or action added to a base-application object; see `two-level-namespace-replaces-object-affix-not-extension-member-affix.md`. Without either mechanism, two apps that both define a `Loyalty Tier` table cannot coexist, and two apps that add an unaffixed `Loyalty Points` field to `Customer` still collide regardless of their namespaces.
 
-AppSourceCop enforces this. The primary rule is AS0011 ("An affix is required"); the affixes are configured through `mandatoryAffixes` (and `mandatoryPrefix`) in `AppSourceCop.json`. Two placements matter and are easy to get half-right: an object you define carries the affix at **object-name** level, while a member you add to a **standard** object carries the affix on that **member's** name. Adding an affixed object is not enough — an unaffixed field bolted onto `Customer` still collides and still fails validation.
+AppSourceCop enforces this. The primary rule is AS0011 ("An affix is required"); the affixes are configured through `mandatoryAffixes` (and `mandatoryPrefix`) in `AppSourceCop.json`. Two placements matter and are easy to get half-right: an object you define carries the affix at **object-name** level, while a member you add to a **standard** object carries the affix on that **member's** name. Adding an affixed object is not enough, an unaffixed field bolted onto `Customer` still collides and still fails validation.
 
 ## Best Practice
 

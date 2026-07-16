@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/enum-values-additive-at-end.md
 
 ## Description
 
-An AL `enum` is a fixed list of ordinal-named values. Persisted rows reference enum members by ordinal, not by name. The only enum mutation that preserves the meaning of every existing row is **appending a new value at the end** — every previously valid ordinal still maps to the same member. Inserting a new value in the middle, renumbering existing values, or removing a value without obsoletion all shift ordinals: rows written with the old layout silently take on the new member at their saved ordinal.
+An AL `enum` is a fixed list of ordinal-named values. Persisted rows reference enum members by ordinal, not by name. The only enum mutation that preserves the meaning of every existing row is **appending a new value at the end**, every previously valid ordinal still maps to the same member. Inserting a new value in the middle, renumbering existing values, or removing a value without obsoletion all shift ordinals: rows written with the old layout silently take on the new member at their saved ordinal.
 
 ## Best Practice
 
@@ -27,5 +27,5 @@ See sample: `enum-values-additive-at-end.bad.al`.
 
 ## See also
 
-- `obsoletion-requires-reason-and-tag.md` — how to retire an enum member correctly.
-- `obsolete-pending-to-removed-staging.md` — the `Pending → Removed` lifecycle.
+- `obsoletion-requires-reason-and-tag.md`, how to retire an enum member correctly.
+- `obsolete-pending-to-removed-staging.md`, the `Pending → Removed` lifecycle.

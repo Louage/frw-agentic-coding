@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/initvalue-does-not-update-existing-rows.md
 
 ## Description
 
-`InitValue` on a field defines the value the platform assigns when a *new* record is inserted. It does not touch rows that already exist when the field is added. When a new field is added to an existing table — directly or via a table extension — every pre-existing row receives the datatype default (`false` for Boolean, `0` for numeric, empty for text), not the `InitValue`. If the intended semantics require existing rows to carry the `InitValue`, the change is incomplete without an upgrade routine that sets the field on those rows.
+`InitValue` on a field defines the value the platform assigns when a *new* record is inserted. It does not touch rows that already exist when the field is added. When a new field is added to an existing table, directly or via a table extension, every pre-existing row receives the datatype default (`false` for Boolean, `0` for numeric, empty for text), not the `InitValue`. If the intended semantics require existing rows to carry the `InitValue`, the change is incomplete without an upgrade routine that sets the field on those rows.
 
 Several legitimate cases do NOT need upgrade code:
 - New fields on brand-new tables (no existing rows).
@@ -21,7 +21,7 @@ Several legitimate cases do NOT need upgrade code:
 
 ## Best Practice
 
-When a new field on an existing table has an `InitValue` that matters, ship an upgrade procedure that walks the existing rows and sets the field to the same value — typically via `DataTransfer.AddConstantValue` for performance — guarded by an upgrade tag.
+When a new field on an existing table has an `InitValue` that matters, ship an upgrade procedure that walks the existing rows and sets the field to the same value, typically via `DataTransfer.AddConstantValue` for performance, guarded by an upgrade tag.
 
 See sample: `initvalue-does-not-update-existing-rows.good.al`.
 

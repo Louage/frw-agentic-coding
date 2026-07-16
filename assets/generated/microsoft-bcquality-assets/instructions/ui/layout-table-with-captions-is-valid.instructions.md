@@ -11,7 +11,7 @@ Source: microsoft/knowledge/ui/layout-table-with-captions-is-valid.md
 
 ## Description
 
-A grid or fixed layout that does not meet all three data-table conditions renders as a **layout table**. A layout table where editable fields keep their visible captions is not an accessibility violation. Each field is labeled by its own caption — this is a valid, accessible pattern.
+A grid or fixed layout that does not meet all three data-table conditions renders as a **layout table**. A layout table where editable fields keep their visible captions is not an accessibility violation. Each field is labeled by its own caption, this is a valid, accessible pattern.
 
 Do not flag a grid or fixed layout as an accessibility issue merely because it does not meet the data-table heuristic. The violation is hidden labels in a non-data-table grid, not the layout choice itself.
 

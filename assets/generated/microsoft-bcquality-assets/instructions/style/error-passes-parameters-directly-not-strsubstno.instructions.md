@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/error-passes-parameters-directly-not-strsubstn
 
 ## Description
 
-`Error()` accepts a format string and a variable number of arguments — `Error(SomeLabelErr, Arg1, Arg2)`. The platform performs the substitution itself, which is the path the translation pipeline understands. Wrapping the same call as `Error(StrSubstNo(SomeLabelErr, Arg1, Arg2))` hides the placeholders from the platform and removes the format-string identity from the call-site, so analyzers cannot match the call to its label and translators lose the link between the formatted message and its template. The corresponding anti-pattern for hardcoded strings — `Error('Customer ' + CustomerNo + ' not found')` — is even worse: it builds an untranslatable, unanalyzable string at runtime.
+`Error()` accepts a format string and a variable number of arguments, `Error(SomeLabelErr, Arg1, Arg2)`. The platform performs the substitution itself, which is the path the translation pipeline understands. Wrapping the same call as `Error(StrSubstNo(SomeLabelErr, Arg1, Arg2))` hides the placeholders from the platform and removes the format-string identity from the call-site, so analyzers cannot match the call to its label and translators lose the link between the formatted message and its template. The corresponding anti-pattern for hardcoded strings, `Error('Customer ' + CustomerNo + ' not found')`, is even worse: it builds an untranslatable, unanalyzable string at runtime.
 
 ## Best Practice
 

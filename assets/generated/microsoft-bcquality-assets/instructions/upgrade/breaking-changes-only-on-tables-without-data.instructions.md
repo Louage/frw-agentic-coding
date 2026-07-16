@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/breaking-changes-only-on-tables-without-data
 
 ## Description
 
-Primary-key changes and field-type changes (for example widening `Integer` to `BigInteger`) rewrite the on-disk layout of every row in the table. On a new feature table that ships in the same change as the modification, no rows exist and the change is free. On an existing table that already holds tenant data — base-app tables, ledger entries, anything that has been live across releases — the same change can fail outright (key uniqueness violations, value overflow on conversion) or require a full table rewrite during the upgrade window. Either way, the change needs an explicit migration design, not just a metadata edit.
+Primary-key changes and field-type changes (for example widening `Integer` to `BigInteger`) rewrite the on-disk layout of every row in the table. On a new feature table that ships in the same change as the modification, no rows exist and the change is free. On an existing table that already holds tenant data, base-app tables, ledger entries, anything that has been live across releases, the same change can fail outright (key uniqueness violations, value overflow on conversion) or require a full table rewrite during the upgrade window. Either way, the change needs an explicit migration design, not just a metadata edit.
 
 ## Best Practice
 

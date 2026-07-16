@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/do-not-block-upgrade-on-data-errors.md
 
 ## Description
 
-When upgrade code encounters unexpected data — a record it expected to find, a relationship it assumed to be intact — the response is to log telemetry and continue, not to raise an error. A runtime error inside an upgrade codeunit aborts the upgrade for the company or database, leaving the customer stuck on the old version. Customers should not be blocked from upgrading because of a data inconsistency that an upgrade routine could not have anticipated.
+When upgrade code encounters unexpected data, a record it expected to find, a relationship it assumed to be intact, the response is to log telemetry and continue, not to raise an error. A runtime error inside an upgrade codeunit aborts the upgrade for the company or database, leaving the customer stuck on the old version. Customers should not be blocked from upgrading because of a data inconsistency that an upgrade routine could not have anticipated.
 
 ## Best Practice
 

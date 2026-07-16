@@ -15,7 +15,7 @@ Source: microsoft/knowledge/style/labels-declared-at-object-scope.md
 
 Labels declared inside a procedure-local `var` block are still **compiled** as Label values, but their participation in localization is fragile: depending on the BC version, the build pipeline, and the translation toolchain in use, procedure-local Labels may be missed during XLIFF extraction, may be re-emitted with auto-generated keys that change between builds, or may not be addressable by reviewers triaging translations. The reliable, supported pattern is to declare every Label in the object's top-level `var` block.
 
-The same rule applies to all object types that own behavior: codeunits, pages, tables, reports, queries, and their extensions. For shared messages used by multiple objects, declare the Label in the most appropriate owning object and reference it — do not duplicate the literal across procedure-scoped declarations in several places.
+The same rule applies to all object types that own behavior: codeunits, pages, tables, reports, queries, and their extensions. For shared messages used by multiple objects, declare the Label in the most appropriate owning object and reference it, do not duplicate the literal across procedure-scoped declarations in several places.
 
 ## Best Practice
 
@@ -25,6 +25,6 @@ See sample: `labels-declared-at-object-scope.good.al`.
 
 ## Anti Pattern
 
-Declaring `Label` inside a procedure-local `var` block — `procedure Lookup() var GreetingMsg: Label 'Hello %1';` — couples the translatable string to one procedure, hides it from object-level review, and depends on a translation pipeline behavior that is not part of the AL language contract.
+Declaring `Label` inside a procedure-local `var` block, `procedure Lookup() var GreetingMsg: Label 'Hello %1';`, couples the translatable string to one procedure, hides it from object-level review, and depends on a translation pipeline behavior that is not part of the AL language contract.
 
 See sample: `labels-declared-at-object-scope.bad.al`.

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/security/isolatedstorage-setencrypted-for-sensitive-
 
 ## Description
 
-`IsolatedStorage` exposes two write entry points: `Set` stores the value as-is, and `SetEncrypted` stores it encrypted at rest. Both are scoped per extension, but only `SetEncrypted` adds the additional protection that the value is not readable from the underlying storage by anything that bypasses the AL `IsolatedStorage` API. The choice between them is by intent: configuration that is not sensitive (a user preference, a default flag) can use `Set`; anything that would harm the tenant if leaked — API keys, tokens, connection strings, OAuth client secrets — uses `SetEncrypted`.
+`IsolatedStorage` exposes two write entry points: `Set` stores the value as-is, and `SetEncrypted` stores it encrypted at rest. Both are scoped per extension, but only `SetEncrypted` adds the additional protection that the value is not readable from the underlying storage by anything that bypasses the AL `IsolatedStorage` API. The choice between them is by intent: configuration that is not sensitive (a user preference, a default flag) can use `Set`; anything that would harm the tenant if leaked, API keys, tokens, connection strings, OAuth client secrets, uses `SetEncrypted`.
 
 ## Best Practice
 
@@ -19,4 +19,4 @@ Use the `SecretText` overloads of `IsolatedStorage.SetEncrypted` and `IsolatedSt
 
 ## Anti Pattern
 
-`IsolatedStorage.Set('ApiKey', ApiKeyValue, DataScope::Module)` — the key is now sitting in storage unencrypted, and any future incident that exposes the underlying storage exposes the key. Reviewers should flag any `IsolatedStorage.Set` whose key name or surrounding context suggests a secret (`ApiKey`, `Token`, `Password`, `Secret`, `ClientSecret`). See sample: `isolatedstorage-setencrypted-for-sensitive-values.bad.al`.
+`IsolatedStorage.Set('ApiKey', ApiKeyValue, DataScope::Module)`, the key is now sitting in storage unencrypted, and any future incident that exposes the underlying storage exposes the key. Reviewers should flag any `IsolatedStorage.Set` whose key name or surrounding context suggests a secret (`ApiKey`, `Token`, `Password`, `Secret`, `ClientSecret`). See sample: `isolatedstorage-setencrypted-for-sensitive-values.bad.al`.

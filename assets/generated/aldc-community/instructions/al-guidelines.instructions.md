@@ -1,6 +1,6 @@
 ---
 applyTo: "**/*.al"
-description: "AL Core principles — transversal rules for Microsoft Dynamics 365 Business Central development"
+description: "AL Core principles, transversal rules for Microsoft Dynamics 365 Business Central development"
 ---
 
 # AL Core Principles

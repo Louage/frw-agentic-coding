@@ -13,9 +13,9 @@ Source: microsoft/knowledge/ui/semantic-styles-need-independent-textual-meaning.
 
 Three `Style` values carry semantic meaning through color and must be backed by text that conveys the same meaning:
 
-- `Favorable` (Bold + Green) — implies a positive outcome.
-- `Unfavorable` (Bold + Italic + Red) — implies a negative outcome.
-- `Ambiguous` (Yellow) — implies an uncertain or mixed outcome.
+- `Favorable` (Bold + Green), implies a positive outcome.
+- `Unfavorable` (Bold + Italic + Red), implies a negative outcome.
+- `Ambiguous` (Yellow), implies an uncertain or mixed outcome.
 
 For accessibility, assume the style is completely invisible to the user. The semantic meaning must be independently determinable from at least one of:
 

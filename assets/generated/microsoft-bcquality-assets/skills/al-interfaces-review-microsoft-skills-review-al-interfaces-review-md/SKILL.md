@@ -17,16 +17,16 @@ An orchestrator invokes this skill with either a `pr-diff` (the standard PR-revi
 
 ## Source
 
-Read the BCQuality knowledge index once — the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone — see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint — exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `interfaces` as this skill's candidate set across every enabled layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/interfaces/**`.
+Read the BCQuality knowledge index once, the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone, see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint, exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `interfaces` as this skill's candidate set across every enabled layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/interfaces/**`.
 
 ## Relevance
 
 Apply the frontmatter matching rules defined in READ (*Frontmatter matching semantics*) against the task context:
 
-- `bc-version` — the target BC version from the PR branch's `app.json` or the orchestrator-supplied version. Interface guidance is gated at Business Central 2020 release wave 1 (BC16), so a target below 16 discards it. If unavailable, the dimension is `unknown`.
-- `technologies` — `[al]`.
-- `countries` — the countries declared in the consuming app's `app.json`. Default to the orchestrator's configured context; if absent, `unknown`.
-- `application-area` — the union of application areas declared by the changed objects. Pass the actual set; do not substitute `[all]`. If the area cannot be determined from the changes, the dimension is `unknown`.
+- `bc-version`, the target BC version from the PR branch's `app.json` or the orchestrator-supplied version. Interface guidance is gated at Business Central 2020 release wave 1 (BC16), so a target below 16 discards it. If unavailable, the dimension is `unknown`.
+- `technologies`, `[al]`.
+- `countries`, the countries declared in the consuming app's `app.json`. Default to the orchestrator's configured context; if absent, `unknown`.
+- `application-area`, the union of application areas declared by the changed objects. Pass the actual set; do not substitute `[all]`. If the area cannot be determined from the changes, the dimension is `unknown`.
 
 Discard files that are not applicable. Retain conditionally applicable files (any dimension `unknown`) only when the orchestrator's configuration permits them; findings derived from those files MUST have `confidence` no higher than `medium`, AND the finding's `message` MUST name the dimension or dimensions that were unknown.
 
@@ -34,11 +34,11 @@ Discard files that are not applicable. Retain conditionally applicable files (an
 
 Narrow the relevant files to the subset that applies to the changes under review. For each relevant file, compute overlap against:
 
-- The changed AL object names and types — especially `interface` objects, codeunits and enums declared with the `implements` keyword, and consumers that declare or assign an `Interface` variable.
+- The changed AL object names and types, especially `interface` objects, codeunits and enums declared with the `implements` keyword, and consumers that declare or assign an `Interface` variable.
 - The changed procedures and triggers, weighted toward factory or dispatch routines that resolve a variant to behaviour, setter-injection procedures that take an `Interface` parameter, and `case`-over-enum blocks that select between strategies.
-- Tokens extracted from the diff that relate to interfaces and enum-backed implementation (`interface`, `extends`, `implements`, `Implementation`, `DefaultImplementation`, `UnknownValueImplementation`, `enum`, `Extensible`, `Interface`, `case`, and the `case <enum> of` anti-pattern signal — a `case` over an enum value whose branches choose between variant computations).
+- Tokens extracted from the diff that relate to interfaces and enum-backed implementation (`interface`, `extends`, `implements`, `Implementation`, `DefaultImplementation`, `UnknownValueImplementation`, `enum`, `Extensible`, `Interface`, `case`, and the `case <enum> of` anti-pattern signal, a `case` over an enum value whose branches choose between variant computations).
 
-A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
+A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file, its `## Best Practice` / `## Anti Pattern` bodies, only after it makes the worklist; candidate selection uses the index alone.
 
 Once the candidate worklist is known, resolve layer-precedence conflicts per READ. Drop lower-precedence files whose normative guidance (`## Best Practice` or `## Anti Pattern`) directly contradicts a higher-precedence candidate, and record each dropped file in `suppressed` with `reason: "layer-precedence"`. Files that would have been candidates but are hidden because their layer is disabled in consumer configuration are recorded with `reason: "configuration"`. Files that never became candidates are NOT recorded in `suppressed`.
 
@@ -48,9 +48,9 @@ When the post-conflict worklist is empty because no applicable interfaces knowle
 
 The following targeted checks map diff signals to specific `interfaces` articles. Treat each as a candidate-selection cue: when the signal appears in the changed code, add the named article to the worklist and evaluate it in Action.
 
-- `DefaultImplementation` used as the only fallback where a persisted ordinal may no longer match any declared enum value, or a persisted enum lacks `UnknownValueImplementation` on BC18 or later — `handle-unknown-enum-ordinals-with-unknownvalueimplementation`.
-- A method added directly to an interface that exists in the baseline, instead of adding a BC25+ interface that `extends` it or a versioned sibling for older targets — `extend-published-interfaces-dont-edit-them`.
-- A declared enum value with no `Implementation` and no enum-level `DefaultImplementation` — `set-defaultimplementation-on-enum`.
+- `DefaultImplementation` used as the only fallback where a persisted ordinal may no longer match any declared enum value, or a persisted enum lacks `UnknownValueImplementation` on BC18 or later, `handle-unknown-enum-ordinals-with-unknownvalueimplementation`.
+- A method added directly to an interface that exists in the baseline, instead of adding a BC25+ interface that `extends` it or a versioned sibling for older targets, `extend-published-interfaces-dont-edit-them`.
+- A declared enum value with no `Implementation` and no enum-level `DefaultImplementation`, `set-defaultimplementation-on-enum`.
 
 For `set-defaultimplementation-on-enum`, inspect the complete containing enum before emitting. An enum-level `DefaultImplementation = <Interface> = <Codeunit>;` conclusively covers every declared value that omits its own `Implementation`; do not flag such a value and do not replace the intentional fallback with a per-value mapping.
 
@@ -68,19 +68,19 @@ Set `confidence` to:
 - `medium` when detection relies on heuristics or when any frontmatter dimension was `unknown`.
 - `low` when the finding is an advisory derived only from applicability.
 
-After evaluating each worklist entry, also consider whether the diff exhibits an interfaces defect the agent recognises from its general AL knowledge that no knowledge file in the worklist covers. Such candidates are agent findings within this skill's domain — emit them with `references: []`, an `id` slug prefixed with `agent:`, `confidence` capped at `medium`, `severity` capped at `minor` (agent findings are advisory and non-gating), and a `message` that is self-contained (describing both the issue and a concrete recommendation, since there is no knowledge-file footer for the consumer to fall back on). Hold every candidate to the precision bar in `skills/do.md` (*Agent findings*): emit only a concrete, material interfaces defect a knowledgeable BC reviewer would agree is wrong — steelman it first and drop anything stylistic, speculative, dependent on code outside the diff, or merely a valid alternative; when in doubt, omit. The scope is strictly interfaces and enum-with-implementation; defects outside this domain belong to other leaves and MUST NOT be emitted here. Before emitting, check the worklist for a knowledge file that matches the candidate — if one exists, upgrade the candidate to a knowledge-backed finding instead. See `skills/do.md` for the full contract.
+After evaluating each worklist entry, also consider whether the diff exhibits an interfaces defect the agent recognises from its general AL knowledge that no knowledge file in the worklist covers. Such candidates are agent findings within this skill's domain, emit them with `references: []`, an `id` slug prefixed with `agent:`, `confidence` capped at `medium`, `severity` capped at `minor` (agent findings are advisory and non-gating), and a `message` that is self-contained (describing both the issue and a concrete recommendation, since there is no knowledge-file footer for the consumer to fall back on). Hold every candidate to the precision bar in `skills/do.md` (*Agent findings*): emit only a concrete, material interfaces defect a knowledgeable BC reviewer would agree is wrong, steelman it first and drop anything stylistic, speculative, dependent on code outside the diff, or merely a valid alternative; when in doubt, omit. The scope is strictly interfaces and enum-with-implementation; defects outside this domain belong to other leaves and MUST NOT be emitted here. Before emitting, check the worklist for a knowledge file that matches the candidate, if one exists, upgrade the candidate to a knowledge-backed finding instead. See `skills/do.md` for the full contract.
 
-For every emitted finding, decide whether the fix is mechanical. A fix is mechanical when it is small, local, and unambiguous from the diff context (for example: add a `DefaultImplementation` mapping to an extensible enum that implements an interface; add the `Implementation` property to a new enum value; change a concrete `Codeunit` collaborator variable to its `Interface` type). For mechanical findings, emit `findings[].suggested-code` with the literal replacement for the source lines indicated by `location`. The payload must be a verbatim replacement — no diff markers, no fences, no commentary — that the consumer can render as a one-click suggestion. When a `.good.al` companion exists and the diff context matches the `.bad.al` shape, adapt the `.good.al` replacement into `suggested-code`.
+For every emitted finding, decide whether the fix is mechanical. A fix is mechanical when it is small, local, and unambiguous from the diff context (for example: add a `DefaultImplementation` mapping to an extensible enum that implements an interface; add the `Implementation` property to a new enum value; change a concrete `Codeunit` collaborator variable to its `Interface` type). For mechanical findings, emit `findings[].suggested-code` with the literal replacement for the source lines indicated by `location`. The payload must be a verbatim replacement, no diff markers, no fences, no commentary, that the consumer can render as a one-click suggestion. When a `.good.al` companion exists and the diff context matches the `.bad.al` shape, adapt the `.good.al` replacement into `suggested-code`.
 
 Omit `suggested-code` only when the appropriate fix depends on context the skill cannot determine, when multiple defensible replacements exist, or when the fix spans non-contiguous code. If a finding is mechanical-looking but you omit `suggested-code`, set `findings[].suggested-code-omission-reason` to a short explanation. See `skills/do.md` for the full contract.
 
 Outcome selection:
 
-- `completed` — the skill evaluated every worklist item; default when the skill finishes normally, including when the resulting `findings` array is empty.
-- `no-knowledge` — no applicable interfaces knowledge survived Source, Relevance, configuration filtering, and conflict resolution. `findings` is empty.
-- `not-applicable` — the task context lacks an AL dimension (no AL changes in the diff, or `technologies` filter rejected the task).
-- `partial` — a time or token budget was hit before the worklist was exhausted. `summary.coverage` reflects the evaluated subset; `outcome-reason` explains the cause.
-- `failed` — an unrecoverable error occurred. `outcome-reason` is required.
+- `completed`, the skill evaluated every worklist item; default when the skill finishes normally, including when the resulting `findings` array is empty.
+- `no-knowledge`, no applicable interfaces knowledge survived Source, Relevance, configuration filtering, and conflict resolution. `findings` is empty.
+- `not-applicable`, the task context lacks an AL dimension (no AL changes in the diff, or `technologies` filter rejected the task).
+- `partial`, a time or token budget was hit before the worklist was exhausted. `summary.coverage` reflects the evaluated subset; `outcome-reason` explains the cause.
+- `failed`, an unrecoverable error occurred. `outcome-reason` is required.
 
 ## Output
 
@@ -129,7 +129,7 @@ Output conforms to the DO output contract. Every finding this skill emits MUST s
 }
 ```
 
-The empty-corpus case — BCQuality's state before interfaces knowledge files land — produces:
+The empty-corpus case, BCQuality's state before interfaces knowledge files land, produces:
 
 ```json
 {

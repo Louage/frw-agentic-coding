@@ -1,4 +1,4 @@
-# ALDC Community — Local Overlay
+# ALDC Community, Local Overlay
 
 Local assets and post-sync transformations that are **re-applied on every weekly external sync**
 of the `aldc-community` source (upstream: `javiarmesto/ALDC-AL-Development-Collection`).
@@ -23,10 +23,10 @@ Files here that do **not** exist upstream are copied in as-is:
 
 | Path | Purpose |
 |------|---------|
-| `instructions/copilot-instructions.md` | Project entrypoint — carries Lean SDD routing, the Lean SDD vs Full ALDC decision guide, the 17-skill tables, and the unified `specs/` tree. Replaces the upstream copy. |
+| `instructions/copilot-instructions.md` | Project entrypoint, carries Lean SDD routing, the Lean SDD vs Full ALDC decision guide, the 17-skill tables, and the unified `specs/` tree. Replaces the upstream copy. |
 
 > When upstream ships a meaningful `copilot-instructions.md` change, reconcile it manually into
-> this overlay copy — the overlay always wins at sync time.
+> this overlay copy, the overlay always wins at sync time.
 
 ## Post-sync transformations (applied by the sync script, not stored here)
 
@@ -39,7 +39,7 @@ Files here that do **not** exist upstream are copied in as-is:
 | `.github/plans/` | `specs/Plans/` |
 | `specs/spec-YYYY-MM-DD-` | `specs/SDD/YYYY-MM-DD-` |
 
-The rewrite is idempotent — running it on already-normalized overlay content is a no-op.
+The rewrite is idempotent, running it on already-normalized overlay content is a no-op.
 
 ## Flow
 

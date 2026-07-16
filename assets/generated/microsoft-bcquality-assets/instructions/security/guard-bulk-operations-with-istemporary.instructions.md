@@ -9,7 +9,7 @@ Source: community/knowledge/security/guard-bulk-operations-with-istemporary.md
 
 # Guard bulk operations with IsTemporary
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 

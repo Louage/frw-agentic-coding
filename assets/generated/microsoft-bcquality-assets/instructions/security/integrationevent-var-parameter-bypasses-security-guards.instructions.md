@@ -15,7 +15,7 @@ A `var` parameter on an `[IntegrationEvent]` is a mutable hook: any subscriber c
 
 ## Best Practice
 
-Keep the security decision inside the publisher, where it is not bypassable. Fire an `OnAfter*` informational event after the check completes, with the result passed by value (not `var`) so subscribers can react — log, audit, surface a warning — but cannot rewrite the outcome. When subscribers legitimately need to add their own checks, expose an `OnAfterCheckPermissions(...)` that can only tighten access (e.g., a subscriber can `Error()`), never loosen it. See sample: `integrationevent-var-parameter-bypasses-security-guards.good.al`.
+Keep the security decision inside the publisher, where it is not bypassable. Fire an `OnAfter*` informational event after the check completes, with the result passed by value (not `var`) so subscribers can react, log, audit, surface a warning, but cannot rewrite the outcome. When subscribers legitimately need to add their own checks, expose an `OnAfterCheckPermissions(...)` that can only tighten access (e.g., a subscriber can `Error()`), never loosen it. See sample: `integrationevent-var-parameter-bypasses-security-guards.good.al`.
 
 ## Anti Pattern
 

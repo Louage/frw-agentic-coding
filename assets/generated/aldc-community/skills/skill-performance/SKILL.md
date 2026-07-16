@@ -39,7 +39,7 @@ Item.SetLoadFields("Item Category Code");
 Item.SetRange("Third Party Item Exists", false);
 Item.FindFirst();
 
-// ❌ Wrong: No filter — full table scan
+// ❌ Wrong: No filter, full table scan
 procedure GetCustomersByCity(CityFilter: Text): Integer
 var
     Customer: Record Customer;
@@ -65,10 +65,10 @@ end;
 
 ### Pattern 2: Set-Based Aggregation (CalcSums / CalcFields)
 
-Avoid manual loops for aggregation — push the sum to the database.
+Avoid manual loops for aggregation, push the sum to the database.
 
 ```al
-// ❌ Loop accumulation — N rows fetched and processed in AL
+// ❌ Loop accumulation, N rows fetched and processed in AL
 procedure GetTotalSales(CustomerNo: Code[20]): Decimal
 var
     Entry: Record "Cust. Ledger Entry";
@@ -82,7 +82,7 @@ begin
     exit(Total);
 end;
 
-// ✅ CalcSums — single aggregation query at DB level
+// ✅ CalcSums, single aggregation query at DB level
 procedure GetTotalSales(CustomerNo: Code[20]): Decimal
 var
     Entry: Record "Cust. Ledger Entry";
@@ -97,7 +97,7 @@ For FlowFields accessed outside a page context, always call `CalcFields` before 
 ```al
 Customer.SetLoadFields("Balance (LCY)");
 Customer.Get(CustomerNo);
-Customer.CalcFields("Balance (LCY)");   // required — not auto-calculated in code
+Customer.CalcFields("Balance (LCY)");   // required, not auto-calculated in code
 ```
 
 ### Pattern 3: Temporary Tables / Dictionary / List
@@ -105,7 +105,7 @@ Customer.CalcFields("Balance (LCY)");   // required — not auto-calculated in c
 Pre-load data once, then process in-memory multiple times.
 
 ```al
-// ✅ Temporary table — structured record data, multi-pass processing
+// ✅ Temporary table, structured record data, multi-pass processing
 procedure ProcessSalesData(var TempSalesLine: Record "Sales Line" temporary)
 var
     SalesLine: Record "Sales Line";
@@ -117,12 +117,12 @@ begin
             TempSalesLine.Insert();
         until SalesLine.Next() = 0;
 
-    // Process in-memory — zero additional DB hits
+    // Process in-memory, zero additional DB hits
     ApplyDiscounts(TempSalesLine);
     CalculateTotals(TempSalesLine);
 end;
 
-// ✅ Dictionary — key-value lookup cache
+// ✅ Dictionary, key-value lookup cache
 procedure CacheCustomerNames(): Dictionary of [Code[20], Text]
 var
     Customer: Record Customer;
@@ -136,7 +136,7 @@ begin
     exit(Cache);
 end;
 
-// ✅ List — simple value collection
+// ✅ List, simple value collection
 procedure GetBlockedCustomerNos(): List of [Code[20]]
 var
     Customer: Record Customer;
@@ -157,7 +157,7 @@ end;
 Move database operations outside loops; batch writes.
 
 ```al
-// ❌ Nested DB call inside loop — O(n²) database hits
+// ❌ Nested DB call inside loop, O(n²) database hits
 if MainTable.FindSet() then
     repeat
         OtherTable.SetRange(Field, MainTable.Field);
@@ -177,11 +177,11 @@ if OtherTable.FindSet() then
 if MainTable.FindSet() then
     repeat
         if TempOther.Get(MainTable.Field) then
-            // process — no DB hit
+            // process, no DB hit
     until MainTable.Next() = 0;
 ```
 
-Batch writes — collect changes, write once:
+Batch writes, collect changes, write once:
 ```al
 // ✅ Calculate all values first, then single Modify
 procedure UpdateCustomerStats(CustomerNo: Code[20])
@@ -225,10 +225,10 @@ Compiler error AL0896: recursive dependency detected
 ```
 
 Resolution strategies (in order of preference):
-1. **Break the chain** — convert one FlowField to a regular field updated via trigger
-2. **Use CalcSums** — replace FlowField with explicit `CalcSums` in code
-3. **Restructure** — move the calculation to a dedicated codeunit called on demand
-4. **SumIndexFields** — use SIFT keys for frequently summed values
+1. **Break the chain**, convert one FlowField to a regular field updated via trigger
+2. **Use CalcSums**, replace FlowField with explicit `CalcSums` in code
+3. **Restructure**, move the calculation to a dedicated codeunit called on demand
+4. **SumIndexFields**, use SIFT keys for frequently summed values
 
 Avoid FlowFields:
 - With complex nested `CalcFormula` expressions
@@ -251,27 +251,27 @@ Patterns to detect manually or with `search` + `problems`:
 - Missing keys for columns used in `SetRange`
 
 Severity assessment:
-- 🔴 **Critical** — DB call in loop over large table, circular FlowField, timeout-causing query
-- 🟡 **High** — Missing `SetLoadFields` in high-frequency path, nested loops
-- 🟢 **Medium** — Suboptimal aggregation (loop instead of `CalcSums`)
-- 🔵 **Low** — Best-practice suggestion, minimal current impact
+- 🔴 **Critical**, DB call in loop over large table, circular FlowField, timeout-causing query
+- 🟡 **High**, Missing `SetLoadFields` in high-frequency path, nested loops
+- 🟢 **Medium**, Suboptimal aggregation (loop instead of `CalcSums`)
+- 🔵 **Low**, Best-practice suggestion, minimal current impact
 
 ### Step 2: Profile (Runtime Measurement)
 
 Generate CPU profile for runtime bottleneck identification:
 ```
-Capture a CPU profile in VS Code (VS Code command — not an agent tool)
+Capture a CPU profile in VS Code (VS Code command, not an agent tool)
 ```
 
 Analyze profile for:
-- **Hotspots** — procedures with highest cumulative execution time
-- **Frequency** — procedures called most often (especially in loops)
-- **DB operations** — expensive `FindSet` / `Get` calls
-- **FlowField evaluations** — unexpectedly costly `CalcFields`
+- **Hotspots**, procedures with highest cumulative execution time
+- **Frequency**, procedures called most often (especially in loops)
+- **DB operations**, expensive `FindSet` / `Get` calls
+- **FlowField evaluations**, unexpectedly costly `CalcFields`
 
 Compare before/after optimizations by re-profiling after each fix.
 
-⚠️ **Human Gate — cleanup**: Before clearing codelenses, confirm all findings are documented:
+⚠️ **Human Gate, cleanup**: Before clearing codelenses, confirm all findings are documented:
 ```
 Clear profile codelenses in VS Code  ← VS Code command (not an agent tool), only after approval
 ```
@@ -296,7 +296,7 @@ Performance targets:
 For significant optimizations, create a triage report at `specs/Plans/perf-triage-<scope>.md`:
 
 ```markdown
-# Performance Triage — <Scope>
+# Performance Triage, <Scope>
 
 **Date**: YYYY-MM-DD
 **Analyzed**: [path or objects]
@@ -310,28 +310,28 @@ For significant optimizations, create a triage report at `specs/Plans/perf-triag
 
 ## Changes Applied
 
-1. [Change] — before/after metric
-2. [Change] — before/after metric
+1. [Change], before/after metric
+2. [Change], before/after metric
 
 ## Remaining Items
 
 [Issues not yet fixed, prioritized]
 ```
 
-⚠️ **Human Gate — report**: Review findings before saving; confirm no sensitive code patterns are exposed.
+⚠️ **Human Gate, report**: Review findings before saving; confirm no sensitive code patterns are exposed.
 
 ## References
 
-- [SetLoadFields — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setloadfields-method)
+- [SetLoadFields, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/record/record-setloadfields-method)
 - [Performance Best Practices for AL](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/performance/performance-developer)
-- [AL0896 — Circular FlowField](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0896)
+- [AL0896, Circular FlowField](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0896)
 - [SumIndexFields (SIFT)](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-sift-and-performance)
 - [CPU Profiler](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/performance-profiler-overview)
 
 ## Constraints
 
-- This skill covers **analysis and fix patterns** — it does NOT duplicate the passive rules in `al-performance.instructions.md` (auto-applied to all `.al` files)
-- Do **NOT** modify source code automatically during triage — generate report and get approval first
+- This skill covers **analysis and fix patterns**, it does NOT duplicate the passive rules in `al-performance.instructions.md` (auto-applied to all `.al` files)
+- Do **NOT** modify source code automatically during triage, generate report and get approval first
 - Do **NOT** clear profile codelenses without human confirmation
 - Do **NOT** save triage report without human gate review
 - For runtime debugging of a specific issue (breakpoints, snapshots) → load `skill-debug.md`

@@ -27,5 +27,5 @@ See sample: `use-upgrade-tags-not-version-checks.bad.al`.
 
 ## See also
 
-- `first-install-dataversion-zero-check.md` — the one situation where reading `DataVersion()` is the right call.
-- `register-upgrade-tags-with-subscribers.md` — how to make a tag known to the platform.
+- `first-install-dataversion-zero-check.md`, the one situation where reading `DataVersion()` is the right call.
+- `register-upgrade-tags-with-subscribers.md`, how to make a tag known to the platform.

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/performance/admin-and-migration-pages-tolerate-lower
 
 ## Description
 
-Some pages run rarely and against small datasets, and the upstream guidance explicitly calls for treating them as lower severity. Per the review checklist, "Admin/migration pages (`Admin`, `Setup`, `Wizard`, `Migration`, `HybridBC14`, `HybridSL`, `HybridGP` namespaces, `Permissions`/`PermissionSet` pages) are infrequently used with small datasets — apply lower severity." The same logic covers one-time wizards and tenant-bootstrap routines: the code path runs a handful of times in the lifetime of a tenant, against a bounded dataset, by an administrator.
+Some pages run rarely and against small datasets, and the upstream guidance explicitly calls for treating them as lower severity. Per the review checklist, "Admin/migration pages (`Admin`, `Setup`, `Wizard`, `Migration`, `HybridBC14`, `HybridSL`, `HybridGP` namespaces, `Permissions`/`PermissionSet` pages) are infrequently used with small datasets, apply lower severity." The same logic covers one-time wizards and tenant-bootstrap routines: the code path runs a handful of times in the lifetime of a tenant, against a bounded dataset, by an administrator.
 
 ## Best Practice
 

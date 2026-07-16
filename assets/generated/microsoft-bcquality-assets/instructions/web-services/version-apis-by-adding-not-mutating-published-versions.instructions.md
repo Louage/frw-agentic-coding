@@ -11,7 +11,7 @@ Source: microsoft/knowledge/web-services/version-apis-by-adding-not-mutating-pub
 
 ## Description
 
-Once an API version is published, external clients depend on its exact shape — entity names, fields, keys, and behavior — as a stable contract. `APIVersion` can list several versions on one API page, but every listed route is generated from that same page object and therefore exposes the same shape. Adding `'v2.0'` to a page and then changing its fields changes what both `v1.0` and `v2.0` serve. To preserve the v1 shape while introducing a different v2 shape, keep the v1 page unchanged and create a separate page object for v2.
+Once an API version is published, external clients depend on its exact shape, entity names, fields, keys, and behavior, as a stable contract. `APIVersion` can list several versions on one API page, but every listed route is generated from that same page object and therefore exposes the same shape. Adding `'v2.0'` to a page and then changing its fields changes what both `v1.0` and `v2.0` serve. To preserve the v1 shape while introducing a different v2 shape, keep the v1 page unchanged and create a separate page object for v2.
 
 ## Best Practice
 

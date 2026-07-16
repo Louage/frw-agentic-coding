@@ -11,11 +11,11 @@ Source: microsoft/knowledge/error-handling/errortype-internal-vs-client-for-diag
 
 ## Description
 
-`ErrorInfo.ErrorType` controls where an error's message is shown. With `ErrorType::Client` — the behaviour of a normal `Error` — the message is both shown to the user and sent to telemetry. With `ErrorType::Internal` the user sees a generic message while the specific message you set is sent to telemetry only. The distinction matters for *unexpected* failures — a broken invariant, a failed internal assertion, a "this should never happen" branch — where the technical detail helps the partner diagnose the defect but would only confuse the end user. LLMs are unaware `ErrorType` exists, so they expose raw internal-failure text directly to users.
+`ErrorInfo.ErrorType` controls where an error's message is shown. With `ErrorType::Client`, the behaviour of a normal `Error`, the message is both shown to the user and sent to telemetry. With `ErrorType::Internal` the user sees a generic message while the specific message you set is sent to telemetry only. The distinction matters for *unexpected* failures, a broken invariant, a failed internal assertion, a "this should never happen" branch, where the technical detail helps the partner diagnose the defect but would only confuse the end user. LLMs are unaware `ErrorType` exists, so they expose raw internal-failure text directly to users.
 
 ## Best Practice
 
-Reserve `ErrorType::Internal` for errors the user cannot act on: corrupted internal state, an unreachable branch, a contract a caller violated. Set a precise, detail-rich `Message` for telemetry, raise it via `Error(ErrorInfo)`, and let the platform show the user a generic dialog. Keep `ErrorType::Client` (or a plain `Error`) for failures the user is expected to read and resolve — validation messages, missing setup, business-rule violations. The test is simple: if the message only makes sense to a developer, mark it `Internal`.
+Reserve `ErrorType::Internal` for errors the user cannot act on: corrupted internal state, an unreachable branch, a contract a caller violated. Set a precise, detail-rich `Message` for telemetry, raise it via `Error(ErrorInfo)`, and let the platform show the user a generic dialog. Keep `ErrorType::Client` (or a plain `Error`) for failures the user is expected to read and resolve, validation messages, missing setup, business-rule violations. The test is simple: if the message only makes sense to a developer, mark it `Internal`.
 
 See sample: `errortype-internal-vs-client-for-diagnostics.good.al`.
 

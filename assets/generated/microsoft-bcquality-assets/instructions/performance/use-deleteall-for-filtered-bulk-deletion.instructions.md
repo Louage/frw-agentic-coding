@@ -9,7 +9,7 @@ Source: microsoft/knowledge/performance/use-deleteall-for-filtered-bulk-deletion
 
 # Use DeleteAll for filtered bulk deletion
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 

@@ -1,4 +1,4 @@
-# Copilot — Testing with AI Test Toolkit (Phase 4)
+# Copilot, Testing with AI Test Toolkit (Phase 4)
 
 > Reference extracted from `skill-copilot/SKILL.md`. Load only when writing Copilot tests.
 
@@ -201,8 +201,8 @@ codeunit 50200 "Contoso Forecast Copilot Tests"
 
 1. Open BC → search **"AI Test Suite"**
 2. Create a new test suite for your Copilot feature
-3. Define **input datasets** — each row is a test prompt + expected behavior description
-4. Run the suite — each input is passed via `AITTestContext.GetInput()`
+3. Define **input datasets**, each row is a test prompt + expected behavior description
+4. Run the suite, each input is passed via `AITTestContext.GetInput()`
 5. Validate output **structure** (JSON schema), NOT exact text (AI varies)
 6. Use `AITTestContext.SetTestOutput()` to log results for manual review
 

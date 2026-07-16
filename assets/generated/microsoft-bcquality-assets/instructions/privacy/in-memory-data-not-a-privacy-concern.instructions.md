@@ -11,11 +11,11 @@ Source: microsoft/knowledge/privacy/in-memory-data-not-a-privacy-concern.md
 
 ## Description
 
-AL runs in a managed server environment. Local variables, `Dictionary`, `List`, temporary `Record` variables, and other in-process data structures exist only for the duration of the request or session and are released by the runtime when it ends — they are not persisted, not visible across sessions, and not exposed outside the server process. Memory dumps are not a realistic threat vector against Business Central's hosted architecture, so holding business data (emails, names, addresses, document content) in these structures while processing a request is normal and expected.
+AL runs in a managed server environment. Local variables, `Dictionary`, `List`, temporary `Record` variables, and other in-process data structures exist only for the duration of the request or session and are released by the runtime when it ends, they are not persisted, not visible across sessions, and not exposed outside the server process. Memory dumps are not a realistic threat vector against Business Central's hosted architecture, so holding business data (emails, names, addresses, document content) in these structures while processing a request is normal and expected.
 
 ## Best Practice
 
-Use whatever in-memory shape (`Dictionary`, `List`, temporary tables, plain variables) the algorithm needs. The privacy review applies to *persistent* surfaces — table fields, telemetry, outgoing HTTP — not to per-request memory.
+Use whatever in-memory shape (`Dictionary`, `List`, temporary tables, plain variables) the algorithm needs. The privacy review applies to *persistent* surfaces, table fields, telemetry, outgoing HTTP, not to per-request memory.
 
 ## Anti Pattern
 

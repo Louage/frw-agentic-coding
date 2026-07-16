@@ -11,7 +11,7 @@ Source: microsoft/knowledge/performance/do-not-locktable-in-read-only-procedure.
 
 ## Description
 
-`LockTable` is a transaction-wide signal: from the call onward, every read against that table in the same transaction acquires `UPDLOCK`. Per the upstream guidance, "`LockTable()` before Modify/Insert/Delete in the same procedure is the correct pattern" — locking the read against the write that follows is what the call exists for. The anti-pattern is "`LockTable()` in read-only procedures — unnecessary lock contention": the procedure never writes, but the lock cost is paid by everyone sharing the transaction.
+`LockTable` is a transaction-wide signal: from the call onward, every read against that table in the same transaction acquires `UPDLOCK`. Per the upstream guidance, "`LockTable()` before Modify/Insert/Delete in the same procedure is the correct pattern", locking the read against the write that follows is what the call exists for. The anti-pattern is "`LockTable()` in read-only procedures, unnecessary lock contention": the procedure never writes, but the lock cost is paid by everyone sharing the transaction.
 
 ## Best Practice
 
@@ -21,6 +21,6 @@ See sample: `do-not-locktable-in-read-only-procedure.good.al`.
 
 ## Anti Pattern
 
-A pure getter that opens with `Rec.LockTable();`. Every caller's transaction now acquires `UPDLOCK` on that table for every subsequent read until commit. The contention shows up as blocking on unrelated sessions whose own code path looks innocent — the locker is invisible to the blocked reader.
+A pure getter that opens with `Rec.LockTable();`. Every caller's transaction now acquires `UPDLOCK` on that table for every subsequent read until commit. The contention shows up as blocking on unrelated sessions whose own code path looks innocent, the locker is invisible to the blocked reader.
 
 See sample: `do-not-locktable-in-read-only-procedure.bad.al`.

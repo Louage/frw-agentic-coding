@@ -11,7 +11,7 @@ Source: microsoft/knowledge/events/do-not-publish-events-inside-loops.md
 
 ## Description
 
-Raising an event on every iteration of a loop multiplies the cost of every subscriber by the number of records. A subscriber doing even a little work per call can turn a fast batch into a timeout when the loop runs over thousands of rows, and the publisher has no control over how expensive a subscriber is. Unless a genuine per-row hook is required, publish once before the loop and once after it, passing enough context — filters, a key, or a buffer — for subscribers to act on the whole set at once. Generated code tends to drop an event inside the `repeat … until` without weighing the per-iteration multiplier.
+Raising an event on every iteration of a loop multiplies the cost of every subscriber by the number of records. A subscriber doing even a little work per call can turn a fast batch into a timeout when the loop runs over thousands of rows, and the publisher has no control over how expensive a subscriber is. Unless a genuine per-row hook is required, publish once before the loop and once after it, passing enough context, filters, a key, or a buffer, for subscribers to act on the whole set at once. Generated code tends to drop an event inside the `repeat … until` without weighing the per-iteration multiplier.
 
 ## Best Practice
 

@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/fieldcaption-not-fieldname-in-user-messages.md
 
 ## Description
 
-`FieldName` and `TableName` return the developer-facing identifier of a field or table — a fixed English string used in metadata and in code. `FieldCaption` and `TableCaption` return the translated, user-facing label declared by the field's or table's `Caption` property. When the value is embedded in a `Message`, `Error`, `Confirm`, or any other string shown to a user, the caption is the correct source. Otherwise the user sees the English internal name regardless of locale, and any caption change must be re-applied at every call site instead of being picked up from the single point of definition.
+`FieldName` and `TableName` return the developer-facing identifier of a field or table, a fixed English string used in metadata and in code. `FieldCaption` and `TableCaption` return the translated, user-facing label declared by the field's or table's `Caption` property. When the value is embedded in a `Message`, `Error`, `Confirm`, or any other string shown to a user, the caption is the correct source. Otherwise the user sees the English internal name regardless of locale, and any caption change must be re-applied at every call site instead of being picked up from the single point of definition.
 
 ## Best Practice
 

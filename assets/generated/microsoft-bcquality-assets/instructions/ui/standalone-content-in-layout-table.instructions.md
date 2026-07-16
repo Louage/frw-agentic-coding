@@ -11,7 +11,7 @@ Source: microsoft/knowledge/ui/standalone-content-in-layout-table.md
 
 ## Description
 
-A non-editable field with `ShowCaption = false` is acceptable inside a layout-table grid **only when** the field is **standalone content** — it displays a value that is meaningful on its own (for example a status message or a description) and is **not** intended to label or be labeled by another field in the grid.
+A non-editable field with `ShowCaption = false` is acceptable inside a layout-table grid **only when** the field is **standalone content**, it displays a value that is meaningful on its own (for example a status message or a description) and is **not** intended to label or be labeled by another field in the grid.
 
 Layout tables have no `<th>` column headers, so a captionless field that is meant to participate in a tabular relationship with a neighbour has no accessible label at all.
 

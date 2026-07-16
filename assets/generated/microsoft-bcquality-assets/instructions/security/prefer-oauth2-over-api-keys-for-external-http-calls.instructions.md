@@ -15,7 +15,7 @@ External HTTP integrations from AL can authenticate using OAuth 2.0 (client-cred
 
 ## Best Practice
 
-When the partner supports OAuth, use the platform `OAuth2` codeunit (`AcquireTokenWithClientCredentials` for service-to-service, `AcquireAuthorizationCodeTokenFromCache` for user-delegated flows) rather than hand-rolled token acquisition. Carry tokens and client secrets as `SecretText`, persist them only in IsolatedStorage, and refresh tokens proactively — on a buffer before the documented expiry — so routine calls never block on a token refresh.
+When the partner supports OAuth, use the platform `OAuth2` codeunit (`AcquireTokenWithClientCredentials` for service-to-service, `AcquireAuthorizationCodeTokenFromCache` for user-delegated flows) rather than hand-rolled token acquisition. Carry tokens and client secrets as `SecretText`, persist them only in IsolatedStorage, and refresh tokens proactively, on a buffer before the documented expiry, so routine calls never block on a token refresh.
 
 See sample: `prefer-oauth2-over-api-keys-for-external-http-calls.good.al`.
 

@@ -21,6 +21,6 @@ See sample: `use-isempty-for-existence-check.good.al`.
 
 ## Anti Pattern
 
-`if Customer.Count() > 0 then ...` and `if Customer.FindFirst() then ...` (when the record is discarded) — both are flagged by the upstream guidance as the wrong tool. The first asks the database for the full count; the second asks for a row's fields. Both answers go unused.
+`if Customer.Count() > 0 then ...` and `if Customer.FindFirst() then ...` (when the record is discarded), both are flagged by the upstream guidance as the wrong tool. The first asks the database for the full count; the second asks for a row's fields. Both answers go unused.
 
 See sample: `use-isempty-for-existence-check.bad.al`.

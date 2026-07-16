@@ -64,6 +64,6 @@ Official keywords that activate tools in the BC agent runtime.
 1. Page names, field names, and action names MUST match the agent's profile exactly
 2. **MEMORIZE** MUST appear BEFORE the value is referenced in later steps
 3. **MEMORIZE** SHOULD include an example format for accuracy
-4. Agents cannot use "Tell Me" — navigate explicitly via page names
+4. Agents cannot use "Tell Me", navigate explicitly via page names
 5. All outgoing messages (Reply, email) require user review by default
-6. The agent retains action history but NOT page state — use MEMORIZE
+6. The agent retains action history but NOT page state, use MEMORIZE

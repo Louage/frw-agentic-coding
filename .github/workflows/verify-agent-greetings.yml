@@ -1,0 +1,61 @@
+name: Verify Agent Greetings
+
+on:
+  pull_request:
+    paths:
+      - "assets/greetings.json"
+      - ".github/agents/**/*.agent.md"
+      - "assets/generated/aldc-community/agents/**/*.agent.md"
+      - "automation/overlays/aldc-community/agents/**/*.agent.md"
+      - "automation/scripts/Inject-AvatarGreeting.ps1"
+      - "automation/scripts/Normalize-EmDash.ps1"
+      - ".github/workflows/verify-agent-greetings.yml"
+  push:
+    branches: [main]
+    paths:
+      - "assets/greetings.json"
+      - ".github/agents/**/*.agent.md"
+      - "assets/generated/aldc-community/agents/**/*.agent.md"
+      - "automation/overlays/aldc-community/agents/**/*.agent.md"
+      - "automation/scripts/Inject-AvatarGreeting.ps1"
+      - "automation/scripts/Normalize-EmDash.ps1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate agent greetings
+        run: npm run regenerate:agents
+
+      - name: Fail if the working tree drifted
+        shell: pwsh
+        run: |
+          $diff = git status --porcelain
+          if ($diff) {
+            Write-Host "::error::Agent greetings are out of sync with assets/greetings.json."
+            Write-Host "Run 'npm run regenerate:agents' locally and commit the result."
+            Write-Host ""
+            Write-Host "Drifted files:"
+            git status --short
+            Write-Host ""
+            Write-Host "Diff:"
+            git --no-pager diff
+            exit 1
+          }
+          Write-Host "Agent greetings are in sync."

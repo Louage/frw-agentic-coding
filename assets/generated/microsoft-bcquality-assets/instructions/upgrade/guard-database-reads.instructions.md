@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/guard-database-reads.md
 
 ## Description
 
-Inside an upgrade codeunit (or any procedure transitively invoked from `OnUpgradePerCompany` / `OnUpgradePerDatabase`), an unguarded `Record.Get`, `Record.FindSet`, or `Record.FindLast` raises a runtime error when the row or set is missing. In upgrade context that error aborts the entire upgrade for the company or database — a far worse outcome than the missing data itself. Records the upgrade reasons about may legitimately not exist on every customer's tenant.
+Inside an upgrade codeunit (or any procedure transitively invoked from `OnUpgradePerCompany` / `OnUpgradePerDatabase`), an unguarded `Record.Get`, `Record.FindSet`, or `Record.FindLast` raises a runtime error when the row or set is missing. In upgrade context that error aborts the entire upgrade for the company or database, a far worse outcome than the missing data itself. Records the upgrade reasons about may legitimately not exist on every customer's tenant.
 
 ## Best Practice
 

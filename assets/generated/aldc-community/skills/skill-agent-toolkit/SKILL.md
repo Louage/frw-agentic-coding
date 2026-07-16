@@ -49,7 +49,7 @@ app/
         └── {Agent}TaskExecution.Codeunit.al      # IAgentTaskExecution
 ```
 
-## Registration — 4 required objects
+## Registration, 4 required objects
 
 ### 1. Copilot Capability EnumExt (feature switch)
 
@@ -75,7 +75,7 @@ enumextension 52101 "My Agent Metadata Provider" extends "Agent Metadata Provide
 }
 ```
 
-### 3. Install codeunit — Unregister + Register pattern
+### 3. Install codeunit, Unregister + Register pattern
 
 Always unregister before register to handle version updates cleanly. Re-install instructions for existing agent setup records.
 
@@ -118,11 +118,11 @@ codeunit 52101 "My Agent Install"
 
 ### 4. Upgrade codeunit
 
-Trigger `OnUpgradePerDatabase` — manage instruction updates per UpgradeTag.
+Trigger `OnUpgradePerDatabase`, manage instruction updates per UpgradeTag.
 
 ## The 3 core interfaces
 
-### IAgentFactory — creation & defaults
+### IAgentFactory, creation & defaults
 
 | Method                                                                     | Purpose                              |
 | -------------------------------------------------------------------------- | ------------------------------------ |
@@ -155,7 +155,7 @@ codeunit 52100 MyAgentFactory implements IAgentFactory
 }
 ```
 
-### IAgentMetadata — runtime UI
+### IAgentMetadata, runtime UI
 
 | Method                                                                                       |
 | -------------------------------------------------------------------------------------------- |
@@ -167,7 +167,7 @@ codeunit 52100 MyAgentFactory implements IAgentFactory
 
 `GetAgentAnnotations` is where you validate preconditions: licensing checks, configuration completeness, missing master data.
 
-### IAgentTaskExecution — message processing
+### IAgentTaskExecution, message processing
 
 | Method                                                                                      |
 | ------------------------------------------------------------------------------------------- |
@@ -236,7 +236,7 @@ codeunit 52104 MyAgentTaskExecution implements IAgentTaskExecution
 }
 ```
 
-## Setup Codeunit — centralized configuration
+## Setup Codeunit, centralized configuration
 
 Every agent has a Setup Codeunit that Factory and Metadata delegate to. It owns:
 
@@ -320,7 +320,7 @@ codeunit 52103 "My Agent Setup"
 }
 ```
 
-## ConfigurationDialog page — complete template
+## ConfigurationDialog page, complete template
 
 ```al
 page 52100 "My Agent Setup"
@@ -404,9 +404,9 @@ A boolean field with `ShowCaption = false` placed as first child of a group rend
 ```
 Consider the following fields:
 {% if page.id == 42 %}
-Field "The Answer" — the meaning of the universe
+Field "The Answer", the meaning of the universe
 {% else %}
-Field "Business Data" — standard business field
+Field "Business Data", standard business field
 {% endif %}
 ```
 
@@ -430,5 +430,5 @@ For task-creation troubleshooting (event subscribers not firing, agent loses con
 
 ## Related skills
 
-- `skill-agent-task-patterns` — 8 task integration patterns + API availability matrix per runtime
-- `skill-agent-instructions` — natural-language instructions for the agent runtime
+- `skill-agent-task-patterns`, 8 task integration patterns + API availability matrix per runtime
+- `skill-agent-instructions`, natural-language instructions for the agent runtime

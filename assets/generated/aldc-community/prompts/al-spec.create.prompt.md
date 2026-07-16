@@ -14,12 +14,12 @@ This is **NOT** the architecture phase. This phase produces the implementable bl
 ## Guardrails
 
 - **Never** create or modify real AL objects during this phase
-- **Never** output to `/specs/` — always output to `specs/Plans/YYYY-MM-DD-{req_name}/`
-- If `{req_name}.architecture.md` exists, read it first — the spec must implement what the architect designed
+- **Never** output to `/specs/`, always output to `specs/Plans/YYYY-MM-DD-{req_name}/`
+- If `{req_name}.architecture.md` exists, read it first, the spec must implement what the architect designed
 - If spec already exists, confirm with user before overwriting
 - Complexity drives depth: LOW = lighter spec, MEDIUM/HIGH = full spec with all sections
 
-## Step 1 — Read Context
+## Step 1, Read Context
 
 ### 1.1 Read global memory
 
@@ -36,7 +36,7 @@ Read specs/Plans/${input:req_name}/${input:req_name}.architecture.md
 ```
 
 If it exists: the spec MUST align with the architectural decisions (data flows, chosen patterns, integration points).
-If it does not exist: proceed — spec will define structure from scratch (typical for LOW complexity).
+If it does not exist: proceed, spec will define structure from scratch (typical for LOW complexity).
 
 ### 1.3 Analyze codebase
 
@@ -47,27 +47,27 @@ Search for:
 - Existing event publishers relevant to this feature
 - Existing API pages or codeunits if integration is involved
 
-> **Verify every base-app event you subscribe to against symbols — this is the spec's job, not the planner's.** For each event the feature hooks into, confirm it **exists** in the current BC version via `al_symbolsearch` / `bclsp_documentSymbols` against `.alpackages/` (download symbols first if absent). Record the **verified** publisher object + exact event name in §5. If you cannot confirm an event exists, it does **not** enter the spec as fact — move it to §12 Open Questions. (A wrong or nonexistent event name passed downstream silently becomes a blind search burst in planning and a defect the reviewer must catch. Verify it once, here, at the cheapest point.)
+> **Verify every base-app event you subscribe to against symbols, this is the spec's job, not the planner's.** For each event the feature hooks into, confirm it **exists** in the current BC version via `al_symbolsearch` / `bclsp_documentSymbols` against `.alpackages/` (download symbols first if absent). Record the **verified** publisher object + exact event name in §5. If you cannot confirm an event exists, it does **not** enter the spec as fact, move it to §12 Open Questions. (A wrong or nonexistent event name passed downstream silently becomes a blind search burst in planning and a defect the reviewer must catch. Verify it once, here, at the cheapest point.)
 
 ### 1.4 Ground the spec in the framework (token-light)
 
-This spec is the blueprint `@al-conductor` and `@al-developer` implement from — it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
+This spec is the blueprint `@al-conductor` and `@al-developer` implement from, it must be a **reliable guide**, not proposed from memory. Ground it without bloating this (cheap) primitive:
 
-- **Instructions (always) — reference, don't recite.** The hard micro-rules in `.github/instructions/al-*` (naming ≤26 PascalCase, `DataClassification` on every field, extension-only, the performance/error-handling safety-net) govern every object you propose. They are tiny — honor them, and cite the governing one where a section depends on it.
-- **Skills (on demand — one per domain the spec actually designs).** Load the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
+- **Instructions (always), reference, don't recite.** The hard micro-rules in `.github/instructions/al-*` (naming ≤26 PascalCase, `DataClassification` on every field, extension-only, the performance/error-handling safety-net) govern every object you propose. They are tiny, honor them, and cite the governing one where a section depends on it.
+- **Skills (on demand, one per domain the spec actually designs).** Load the `SKILL.md` for a domain **only when the spec covers it**: §5 events → `skill-events`; §6 pages → `skill-pages`; §8 permissions → `skill-permissions`; §9 API → `skill-api`; AI/Copilot → `skill-copilot`; performance-critical logic → `skill-performance`; §7 tests → `skill-testing`. Do **not** load skills for domains the spec doesn't touch; for **LOW** complexity keep it minimal.
 
 This keeps the median cost low (most specs touch 1–2 domains) while making the spec a framework-grounded guide instead of a from-memory proposal.
 
 ---
 
-## Step 2 — Generate Specification
+## Step 2, Generate Specification
 
 Create `specs/Plans/${input:req_name}/${input:req_name}.spec.md` with the following structure:
 
 ---
 
 ```markdown
-# ${input:req_name} — Technical Specification
+# ${input:req_name}, Technical Specification
 
 **Version:** 1.0
 **Date:** {current date}
@@ -83,7 +83,7 @@ Create `specs/Plans/${input:req_name}/${input:req_name}.spec.md` with the follow
 [What is included. What is explicitly excluded.]
 
 ### Architecture Reference
-[If architecture.md exists: "Implements {req_name}.architecture.md — {pattern chosen}". If not: "No architecture document — spec defines structure."]
+[If architecture.md exists: "Implements {req_name}.architecture.md, {pattern chosen}". If not: "No architecture document, spec defines structure."]
 
 ---
 
@@ -93,8 +93,8 @@ Create `specs/Plans/${input:req_name}/${input:req_name}.spec.md` with the follow
 |-------------|-----------|------|-----------------|---------|
 | TableExtension | {ID from range} | {Prefix} {BaseName} Ext | {Base Table} | {Why this extension} |
 | PageExtension  | {ID} | {Prefix} {BasePage} Ext | {Base Page} | {What fields/actions added} |
-| Codeunit       | {ID} | {Prefix} {Name} Mgt | — | {Core business logic} |
-| Codeunit       | {ID} | {Prefix} {Name} Subscriber | — | {Event subscriptions} |
+| Codeunit       | {ID} | {Prefix} {Name} Mgt |, | {Core business logic} |
+| Codeunit       | {ID} | {Prefix} {Name} Subscriber |, | {Event subscriptions} |
 
 > Object IDs MUST be within the app.json `idRanges`. Verify with codebase search before assigning.
 
@@ -131,7 +131,7 @@ tableextension {ID} "{Prefix} {BaseName} Ext" extends "{BaseName}"
 
 ---
 
-## 4. Business Logic — Codeunit Procedures
+## 4. Business Logic, Codeunit Procedures
 
 For each codeunit, list every public procedure with full signature:
 
@@ -176,7 +176,7 @@ begin
 end;
 ```
 
-> **The spec owns the *decision*; symbols own the *exact signature*.** Record the **verified** publisher object, the exact **event name**, and the **fields the subscriber consumes** (e.g. `SalesHeader."Sell-to Customer No."`). Do **not** transcribe the full parameter list verbatim — that is a version-specific platform fact the **implementer** resolves from symbols (`al_symbolsearch`) at code time. Copying it here creates a second source of truth that drifts on the next BC upgrade. The event name + publisher, however, MUST be symbol-verified (Step 1.3).
+> **The spec owns the *decision*; symbols own the *exact signature*.** Record the **verified** publisher object, the exact **event name**, and the **fields the subscriber consumes** (e.g. `SalesHeader."Sell-to Customer No."`). Do **not** transcribe the full parameter list verbatim, that is a version-specific platform fact the **implementer** resolves from symbols (`al_symbolsearch`) at code time. Copying it here creates a second source of truth that drifts on the next BC upgrade. The event name + publisher, however, MUST be symbol-verified (Step 1.3).
 
 ---
 
@@ -353,7 +353,7 @@ page {ID} "{Prefix} {Entity} API"
 - **Naming**: respect the prefix and naming conventions found in `memory.md` and existing `/src` objects (≤26-char object names, PascalCase).
 - **Architecture alignment**: if `{req_name}.architecture.md` exists, every object and event in this spec must trace back to a decision in that document. Do not introduce objects that are not justified by the architecture.
 
-> The structure above is the single source of truth. Do not read `.github/docs/templates/spec-template.md` to obtain the layout — that file is a human reference; the prompt already encodes the contract.
+> The structure above is the single source of truth. Do not read `.github/docs/templates/spec-template.md` to obtain the layout, that file is a human reference; the prompt already encodes the contract.
 
 ## Next Steps
 

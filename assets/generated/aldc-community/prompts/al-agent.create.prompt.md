@@ -6,7 +6,7 @@ description: "End-to-end workflow to create a coded Business Central agent using
 
 # Workflow: Create Coded Agent (Agent SDK)
 
-End-to-end orchestration to produce a production-ready agent. This prompt does not contain SDK knowledge — it applies patterns from the loaded skills:
+End-to-end orchestration to produce a production-ready agent. This prompt does not contain SDK knowledge, it applies patterns from the loaded skills:
 
 - `skill-agent-toolkit` → registration, 3 interfaces, Setup Codeunit, ConfigurationDialog, project structure
 - `skill-agent-task-patterns` → Patterns A–H for task integration (Phase 6)
@@ -16,21 +16,21 @@ End-to-end orchestration to produce a production-ready agent. This prompt does n
 
 🛑 markers require human approval before proceeding to the next phase.
 
-## Phase 1 — Agent specification
+## Phase 1, Agent specification
 
 ### 1.1 Gather requirements
 
 Ask the developer:
 
-1. **Agent purpose** — business process being automated
-2. **Creation rules** — single instance? multi? always?
-3. **Trigger type** — manual (page action) / EventSubscriber / email / mixed?
-4. **Data scope** — tables and pages the agent needs access to
-5. **Setup properties** — any agent-specific configuration beyond standard?
-6. **Message processing** — input validation? output post-processing?
-7. **User intervention suggestions** — what help options when stuck?
-8. **Summary KPIs** — what metrics on hover card?
-9. **Annotations** — what preconditions to validate (licensing, config completeness)?
+1. **Agent purpose**, business process being automated
+2. **Creation rules**, single instance? multi? always?
+3. **Trigger type**, manual (page action) / EventSubscriber / email / mixed?
+4. **Data scope**, tables and pages the agent needs access to
+5. **Setup properties**, any agent-specific configuration beyond standard?
+6. **Message processing**, input validation? output post-processing?
+7. **User intervention suggestions**, what help options when stuck?
+8. **Summary KPIs**, what metrics on hover card?
+9. **Annotations**, what preconditions to validate (licensing, config completeness)?
 
 ### 1.2 Generate Agent Spec
 
@@ -71,42 +71,42 @@ See skill-agent-toolkit project structure section.
 - Patterns Applied: {A / B / C / D / E / F / G / H}
 ```
 
-🛑 **STOP — Review spec before proceeding.**
+🛑 **STOP, Review spec before proceeding.**
 
-## Phase 2 — Registration + Integration
+## Phase 2, Registration + Integration
 
-Apply: `skill-agent-toolkit` → "Registration — 4 required objects".
+Apply: `skill-agent-toolkit` → "Registration, 4 required objects".
 
 Generate:
 
-1. **Copilot Capability EnumExt** — unique value ID
-2. **Metadata Provider EnumExt** — links the 3 interface implementations
-3. **Install Codeunit** — `OnInstallAppPerDatabase`, Unregister+Register, re-install instructions for existing setup records
-4. **Upgrade Codeunit** — `OnUpgradePerDatabase`, instruction updates with `UpgradeTag`
+1. **Copilot Capability EnumExt**, unique value ID
+2. **Metadata Provider EnumExt**, links the 3 interface implementations
+3. **Install Codeunit**, `OnInstallAppPerDatabase`, Unregister+Register, re-install instructions for existing setup records
+4. **Upgrade Codeunit**, `OnUpgradePerDatabase`, instruction updates with `UpgradeTag`
 
-🛑 **STOP — Verify enum IDs are unique.**
+🛑 **STOP, Verify enum IDs are unique.**
 
-## Phase 3 — Setup Infrastructure
+## Phase 3, Setup Infrastructure
 
 Apply: `skill-agent-toolkit` → "Setup Codeunit" and "ConfigurationDialog page".
 
 Generate:
 
-1. **Setup Table** — PK = `"User Security ID": Guid`, `DataPerCompany = false`, custom fields
-2. **Setup Codeunit** — `GetInitials`, `GetSetupPageId`, `GetSummaryPageId`, `GetInstructions (SecretText)`, `GetDefaultProfile`, `GetDefaultAccessControls`, `InitializeSetupRecord`, `SaveSetupRecord`, `SaveCustomProperties`
-3. **ConfigurationDialog Page** — invariants from the skill (SourceTableTemporary, AgentSetupPart first, AzureOpenAI check, system actions)
+1. **Setup Table**, PK = `"User Security ID": Guid`, `DataPerCompany = false`, custom fields
+2. **Setup Codeunit**, `GetInitials`, `GetSetupPageId`, `GetSummaryPageId`, `GetInstructions (SecretText)`, `GetDefaultProfile`, `GetDefaultAccessControls`, `InitializeSetupRecord`, `SaveSetupRecord`, `SaveCustomProperties`
+3. **ConfigurationDialog Page**, invariants from the skill (SourceTableTemporary, AgentSetupPart first, AzureOpenAI check, system actions)
 
-🛑 **STOP — Review setup infrastructure.**
+🛑 **STOP, Review setup infrastructure.**
 
-## Phase 4 — Interface implementations
+## Phase 4, Interface implementations
 
 Apply: `skill-agent-toolkit` → "The 3 core interfaces".
 
-Generate the 3 codeunits delegating to Setup Codeunit. `IAgentTaskExecution.AnalyzeAgentTaskMessage` uses `AgentMessage.GetText()` / `UpdateText()` — never raw record fields.
+Generate the 3 codeunits delegating to Setup Codeunit. `IAgentTaskExecution.AnalyzeAgentTaskMessage` uses `AgentMessage.GetText()` / `UpdateText()`, never raw record fields.
 
-🛑 **STOP — Review interface implementations.**
+🛑 **STOP, Review interface implementations.**
 
-## Phase 5 — Profile + Permissions + KPI
+## Phase 5, Profile + Permissions + KPI
 
 Generate:
 
@@ -117,33 +117,33 @@ Generate:
 5. **KPI Table** (PK = User Security ID, custom KPI fields)
 6. **KPI Page** (`PageType = CardPart`, cuegroup with metrics)
 
-🛑 **STOP — Review profile and permissions.**
+🛑 **STOP, Review profile and permissions.**
 
-## Phase 6 — Task Integration + Public API
+## Phase 6, Task Integration + Public API
 
 Apply: `skill-agent-task-patterns` → relevant patterns (A always, plus B/C/D/E/H depending on spec). **Verify each method against the API Availability Matrix** before generating code.
 
 Generate:
 
-1. **Public API codeunit** (`Access = Public`) — Pattern A, with the standard overloads
-2. **Public API Impl codeunit** (`Access = Internal`) — uses Agent Task Builder
-3. **Page Extension** — example integration (Pattern B)
-4. **EventSubscriber codeunit** — if Pattern C applies (TryFunction + telemetry)
-5. **Agent Session Events** — if Pattern H applies (SingleInstance + BindSubscription)
+1. **Public API codeunit** (`Access = Public`), Pattern A, with the standard overloads
+2. **Public API Impl codeunit** (`Access = Internal`), uses Agent Task Builder
+3. **Page Extension**, example integration (Pattern B)
+4. **EventSubscriber codeunit**, if Pattern C applies (TryFunction + telemetry)
+5. **Agent Session Events**, if Pattern H applies (SingleInstance + BindSubscription)
 
-🛑 **STOP — Review task integration.**
+🛑 **STOP, Review task integration.**
 
-## Phase 7 — Instructions + Tests
+## Phase 7, Instructions + Tests
 
 Apply: `skill-agent-instructions` → RGI framework + keywords.
 Apply: `al-agent.test` prompt for the test codeunit.
 
 Generate:
 
-1. **InstructionsV1.txt** — Responsibilities → Guidelines → Instructions, English, environment-agnostic
-2. **Test Codeunit** — 6 categories (run `al-agent.test`)
+1. **InstructionsV1.txt**, Responsibilities → Guidelines → Instructions, English, environment-agnostic
+2. **Test Codeunit**, 6 categories (run `al-agent.test`)
 
-🛑 **STOP — Review instructions and tests.**
+🛑 **STOP, Review instructions and tests.**
 
 ## Deliverables checklist
 

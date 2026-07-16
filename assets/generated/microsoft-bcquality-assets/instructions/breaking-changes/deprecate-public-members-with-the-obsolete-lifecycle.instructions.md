@@ -21,6 +21,6 @@ See sample: `deprecate-public-members-with-the-obsolete-lifecycle.good.al`.
 
 ## Anti Pattern
 
-Renaming or deleting the published `CalcNet` procedure in place — replacing it with `CalculateNetAmount` and nothing else — so consumers calling `CalcNet` break immediately with no deprecation notice. Detection: a previously shipped non-`local` procedure that vanished or was renamed between versions with no `[Obsolete]` marker left behind during a prior warning window. Do not suggest `ObsoleteState = Removed` for a method; that property belongs to supported object and element types.
+Renaming or deleting the published `CalcNet` procedure in place, replacing it with `CalculateNetAmount` and nothing else, so consumers calling `CalcNet` break immediately with no deprecation notice. Detection: a previously shipped non-`local` procedure that vanished or was renamed between versions with no `[Obsolete]` marker left behind during a prior warning window. Do not suggest `ObsoleteState = Removed` for a method; that property belongs to supported object and element types.
 
 See sample: `deprecate-public-members-with-the-obsolete-lifecycle.bad.al`.

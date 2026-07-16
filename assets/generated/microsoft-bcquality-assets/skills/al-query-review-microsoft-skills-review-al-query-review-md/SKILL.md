@@ -29,8 +29,8 @@ Match relevant entries against changed `query` objects, variables typed as `Quer
 
 The following targeted checks cover every current `query` article:
 
-- `SetFilter` or `SetRange` occurs after `Open()` without a new `Open()` before the next `Read()` — `set-query-filters-before-open`.
-- An already-open query is opened again as if that advanced the cursor, or a query variable is reused for an independent operation without `Clear` even though old filters must not carry over — `reopening-query-resets-cursor-but-keeps-filters`.
+- `SetFilter` or `SetRange` occurs after `Open()` without a new `Open()` before the next `Read()`, `set-query-filters-before-open`.
+- An already-open query is opened again as if that advanced the cursor, or a query variable is reused for an independent operation without `Clear` even though old filters must not carry over, `reopening-query-resets-cursor-but-keeps-filters`.
 
 Resolve layer conflicts per READ. When no query knowledge exists, emit `no-knowledge`; when knowledge exists but no article matches the changed Query usage, emit `completed` with no findings.
 

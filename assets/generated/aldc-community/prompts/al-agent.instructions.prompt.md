@@ -6,7 +6,7 @@ description: "Generate optimized natural language instructions for Business Cent
 
 # Workflow: Generate Agent Instructions
 
-Applies the Responsibilities-Guidelines-Instructions framework from `skill-agent-instructions` to produce a runtime-ready instruction file. This prompt does not contain the framework — it executes it.
+Applies the Responsibilities-Guidelines-Instructions framework from `skill-agent-instructions` to produce a runtime-ready instruction file. This prompt does not contain the framework, it executes it.
 
 **Load skill first**: `skill-agent-instructions` (framework, keywords table, validation checklist, anti-patterns).
 
@@ -21,13 +21,13 @@ Applies the Responsibilities-Guidelines-Instructions framework from `skill-agent
 
 From the developer:
 
-1. **Agent purpose** — one-sentence business goal
-2. **Pages in scope** — pages included in the agent's profile
-3. **Fields to read/write** — exact field names from those pages
-4. **Actions to invoke** — exact action captions on those pages
-5. **Decision criteria** — business rules for branching (if/then)
-6. **Output format** — how should the agent report results?
-7. **Safety gates** — which actions need user intervention?
+1. **Agent purpose**, one-sentence business goal
+2. **Pages in scope**, pages included in the agent's profile
+3. **Fields to read/write**, exact field names from those pages
+4. **Actions to invoke**, exact action captions on those pages
+5. **Decision criteria**, business rules for branching (if/then)
+6. **Output format**, how should the agent report results?
+7. **Safety gates**, which actions need user intervention?
 
 ### 2. Draft RESPONSIBILITY
 
@@ -78,7 +78,7 @@ End with:
 ```
 **Skills loaded**: skill-agent-instructions
 **Patterns applied**:
-- RGI framework — Responsibilities/Guidelines/Instructions structure
+- RGI framework, Responsibilities/Guidelines/Instructions structure
 - Keywords applied: {list keywords used: Navigate to, Memorize, Reply, etc.}
 - Safety gates: {list user intervention / review points}
 ```

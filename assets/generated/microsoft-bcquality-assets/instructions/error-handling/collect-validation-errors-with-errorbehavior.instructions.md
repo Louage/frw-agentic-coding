@@ -15,7 +15,7 @@ By default a procedure stops on the first `Error`, so a user fixing ten bad rows
 
 ## Best Practice
 
-Mark the orchestrating procedure `[ErrorBehavior(ErrorBehavior::Collect)]` and run each item's validation so one failure doesn't abandon the rest — typically by calling the per-item routine through `Codeunit.Run`. When the run finishes, inspect `HasCollectedErrors()`, retrieve and clear the list with `GetCollectedErrors(true)`, and fail the operation with the collected messages. The sample intentionally produces a text aggregate and does not claim to retain record/field metadata in the final error. If that metadata is needed, map each `ErrorInfo` to a custom error UI before clearing, following the Microsoft Learn pattern. Do not replace validation failure with `Message`: clearing collected errors suppresses the platform failure, so the custom handler must still block the invalid operation.
+Mark the orchestrating procedure `[ErrorBehavior(ErrorBehavior::Collect)]` and run each item's validation so one failure doesn't abandon the rest, typically by calling the per-item routine through `Codeunit.Run`. When the run finishes, inspect `HasCollectedErrors()`, retrieve and clear the list with `GetCollectedErrors(true)`, and fail the operation with the collected messages. The sample intentionally produces a text aggregate and does not claim to retain record/field metadata in the final error. If that metadata is needed, map each `ErrorInfo` to a custom error UI before clearing, following the Microsoft Learn pattern. Do not replace validation failure with `Message`: clearing collected errors suppresses the platform failure, so the custom handler must still block the invalid operation.
 
 See sample: `collect-validation-errors-with-errorbehavior.good.al`.
 

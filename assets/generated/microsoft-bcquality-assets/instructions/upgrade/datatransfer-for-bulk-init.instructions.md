@@ -11,7 +11,7 @@ Source: microsoft/knowledge/upgrade/datatransfer-for-bulk-init.md
 
 ## Description
 
-Tables that can contain more than 300,000 records, and any newly added field on an existing table, should be initialized with `DataTransfer` rather than a `repeat ... Modify ... until Next() = 0` loop. `DataTransfer` issues a single set-based statement to the database; the loop/modify pattern issues one round-trip per row and accumulates write locks for the duration of the upgrade. On the volumes that drive upgrade pain — ledger entries, item ledger entries, price list lines — the difference is the upgrade running for minutes instead of hours.
+Tables that can contain more than 300,000 records, and any newly added field on an existing table, should be initialized with `DataTransfer` rather than a `repeat ... Modify ... until Next() = 0` loop. `DataTransfer` issues a single set-based statement to the database; the loop/modify pattern issues one round-trip per row and accumulates write locks for the duration of the upgrade. On the volumes that drive upgrade pain, ledger entries, item ledger entries, price list lines, the difference is the upgrade running for minutes instead of hours.
 
 ## Best Practice
 
@@ -27,4 +27,4 @@ See sample: `datatransfer-for-bulk-init.bad.al`.
 
 ## See also
 
-- `datatransfer-skips-triggers-and-subscribers.md` — `DataTransfer` does not raise field validation triggers or event subscribers; if a row needs validation logic, `DataTransfer` is the wrong tool.
+- `datatransfer-skips-triggers-and-subscribers.md`, `DataTransfer` does not raise field validation triggers or event subscribers; if a row needs validation logic, `DataTransfer` is the wrong tool.

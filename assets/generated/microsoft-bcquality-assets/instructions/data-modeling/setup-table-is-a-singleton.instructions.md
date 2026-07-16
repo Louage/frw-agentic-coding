@@ -11,9 +11,9 @@ Source: microsoft/knowledge/data-modeling/setup-table-is-a-singleton.md
 
 ## Description
 
-An application-area setup table (`Sales & Receivables Setup`, `Inventory Setup`, and any custom `* Setup`) holds exactly one record per company. Its primary key is a single `Code[10]` field named `Primary Key`, and the row's value is left blank. Nothing else identifies the row — there is only ever one.
+An application-area setup table (`Sales & Receivables Setup`, `Inventory Setup`, and any custom `* Setup`) holds exactly one record per company. Its primary key is a single `Code[10]` field named `Primary Key`, and the row's value is left blank. Nothing else identifies the row, there is only ever one.
 
-The setup **card** page enforces the singleton: `InsertAllowed = false` and `DeleteAllowed = false` stop a second row or an empty table, and the page guarantees the row exists on first open — typically `OnOpenPage` with `if not Rec.Get() then begin Rec.Init(); Rec.Insert(); end;`, or a `GetRecordOnce` helper on the table. Consuming code then reads it with a plain `Get()`. The read side needs no access optimization — see `singleton-setup-tables-need-no-access-optimization.md`.
+The setup **card** page enforces the singleton: `InsertAllowed = false` and `DeleteAllowed = false` stop a second row or an empty table, and the page guarantees the row exists on first open, typically `OnOpenPage` with `if not Rec.Get() then begin Rec.Init(); Rec.Insert(); end;`, or a `GetRecordOnce` helper on the table. Consuming code then reads it with a plain `Get()`. The read side needs no access optimization, see `singleton-setup-tables-need-no-access-optimization.md`.
 
 ## Best Practice
 

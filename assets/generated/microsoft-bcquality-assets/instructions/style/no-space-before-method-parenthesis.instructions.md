@@ -21,6 +21,6 @@ See sample: `no-space-before-method-parenthesis.good.al`.
 
 ## Anti Pattern
 
-`Customer.Get ( CustomerNo )`, `Message ( GreetingMsg, UserName )`. Both trip AA0002 and read as if the call had an extra unnamed parameter — a small but persistent friction every reader pays.
+`Customer.Get ( CustomerNo )`, `Message ( GreetingMsg, UserName )`. Both trip AA0002 and read as if the call had an extra unnamed parameter, a small but persistent friction every reader pays.
 
 See sample: `no-space-before-method-parenthesis.bad.al`.

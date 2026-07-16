@@ -1,5 +1,5 @@
 // Pattern D + C combined: Business event triggers agent task with attachment.
-// Rescued from al-agent-toolkit.instructions.md — the canonical end-to-end example
+// Rescued from al-agent-toolkit.instructions.md, the canonical end-to-end example
 // for hot-lead handoff to the Quote Builder agent.
 
 procedure HandoffLeadToQuoteBuilder(var Lead: Record Lead; var EstimateBlob: Codeunit "Temp Blob")
@@ -43,7 +43,7 @@ begin
     Lead."BCA2A Handoff ID" := 'QB-' + Lead."No.";
     Lead.Modify(false);
 
-    // 6. Telemetry — never silent
+    // 6. Telemetry, never silent
     Session.LogMessage(
         'BCA2A-HANDOFF',
         StrSubstNo('Lead %1 handed off to QB', Lead."No."),

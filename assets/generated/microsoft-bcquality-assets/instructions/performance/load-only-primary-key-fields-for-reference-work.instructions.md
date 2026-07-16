@@ -9,11 +9,11 @@ Source: microsoft/knowledge/performance/load-only-primary-key-fields-for-referen
 
 # Load only primary key fields for reference work
 
-> Contributions welcome — open a PR to refine or extend this article.
+> Contributions welcome, open a PR to refine or extend this article.
 
 ## Description
 
-Work that uses a record only for its identity — passing it to another procedure that will re-fetch what it needs, queueing a key for later processing, running existence checks, or building a reference collection — does not need non-key payload fields. `SetLoadFields` with only the primary key fields loads the minimum that preserves record identity while skipping everything else. On wide tables with large text, BLOB, or media fields the difference in memory and transfer is substantial.
+Work that uses a record only for its identity, passing it to another procedure that will re-fetch what it needs, queueing a key for later processing, running existence checks, or building a reference collection, does not need non-key payload fields. `SetLoadFields` with only the primary key fields loads the minimum that preserves record identity while skipping everything else. On wide tables with large text, BLOB, or media fields the difference in memory and transfer is substantial.
 
 ## Best Practice
 

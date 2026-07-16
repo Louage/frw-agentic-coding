@@ -11,7 +11,7 @@ Source: microsoft/knowledge/ui/show-caption-false-allowed-on-non-editable-fields
 
 ## Description
 
-When a field is explicitly non-editable (`Editable = false`), it serves as content rather than as a form field. In that case, `ShowCaption = false` is acceptable: there is no input control whose label could be lost. The combination signals to a reviewer (and to the platform) that the field displays a value standalone — for example a status message or a description that is meaningful on its own.
+When a field is explicitly non-editable (`Editable = false`), it serves as content rather than as a form field. In that case, `ShowCaption = false` is acceptable: there is no input control whose label could be lost. The combination signals to a reviewer (and to the platform) that the field displays a value standalone, for example a status message or a description that is meaningful on its own.
 
 This exception does **not** extend to dynamically editable fields. A field with `Editable = SomeBooleanExpression` may be editable at runtime and must keep its caption.
 

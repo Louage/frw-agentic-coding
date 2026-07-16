@@ -11,7 +11,7 @@ Source: microsoft/knowledge/style/this-keyword-in-codeunits.md
 
 ## Description
 
-CodeCop AA0248 recommends prefixing self-references inside a codeunit with `this`. `this.ValidateCustomer(Customer)` is unambiguous: the call resolves to a procedure on the current codeunit, not to a local variable or a procedure on a passed-in object. Without the prefix, a reader of a 200-line procedure has to scan the whole codeunit to confirm whether `ValidateCustomer` is local. `this` also makes it possible to pass the current codeunit as an argument — `SomeOtherCodeunit.DoWork(this)` — which is the only way to expose the running codeunit instance to a collaborator. The rule applies only to codeunits, not to pages, reports, queries, or tables — those object types do not have a `this` reference in AL.
+CodeCop AA0248 recommends prefixing self-references inside a codeunit with `this`. `this.ValidateCustomer(Customer)` is unambiguous: the call resolves to a procedure on the current codeunit, not to a local variable or a procedure on a passed-in object. Without the prefix, a reader of a 200-line procedure has to scan the whole codeunit to confirm whether `ValidateCustomer` is local. `this` also makes it possible to pass the current codeunit as an argument, `SomeOtherCodeunit.DoWork(this)`, which is the only way to expose the running codeunit instance to a collaborator. The rule applies only to codeunits, not to pages, reports, queries, or tables, those object types do not have a `this` reference in AL.
 
 ## Best Practice
 

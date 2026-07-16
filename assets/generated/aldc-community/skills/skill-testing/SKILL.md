@@ -74,11 +74,11 @@ codeunit 50100 "Discount Calculation Tests"
 }
 ```
 
-**Naming convention**: `Action_Condition_ExpectedOutcome` — reads as a sentence.
+**Naming convention**: `Action_Condition_ExpectedOutcome`, reads as a sentence.
 
 ### Pattern 2: Library Codeunit (Reusable Test Helpers)
 
-Encapsulate test data creation in library codeunits — one per domain:
+Encapsulate test data creation in library codeunits, one per domain:
 
 ```al
 codeunit 50200 "Library - Contoso Sales"
@@ -115,7 +115,7 @@ codeunit 50200 "Library - Contoso Sales"
 **Rules:**
 - Always delegate to standard BC library codeunits (`Library - Sales`, `Library - Inventory`, `Library - ERM`, `Library - Random`) for base data creation
 - Add extension-specific fields on top
-- Keep helpers stateless — no global variables in library codeunits
+- Keep helpers stateless, no global variables in library codeunits
 - Place in `Test/src/Libraries/` folder
 
 ### Pattern 3: Test Data Builder (Fluent API)
@@ -310,7 +310,7 @@ codeunit 50210 "Copilot Suggestion Tests"
 **AI Test Toolkit workflow:**
 1. Create test suite in BC: search "AI Test Suite" page
 2. Define input datasets (prompts + expected behavior descriptions)
-3. Run suite — each input is passed via `AITTestContext.GetInput()`
+3. Run suite, each input is passed via `AITTestContext.GetInput()`
 4. Validate output structure, not exact text (AI responses vary)
 5. Use `AITTestContext.SetTestOutput()` to log results for review
 
@@ -333,11 +333,11 @@ specs/Plans/memory.md                    ← context and conventions
 ```
 
 Categorize test scenarios:
-- **Unit** — isolated logic: calculations, validations, transformations
-- **Integration** — component interaction: posting, event subscribers, API calls
-- **UI** — page behavior: field validation, actions, navigation (TestPage)
-- **Edge/Error** — boundaries, invalid inputs, missing data, permission errors
-- **AI** — Copilot features (AI Test Toolkit)
+- **Unit**, isolated logic: calculations, validations, transformations
+- **Integration**, component interaction: posting, event subscribers, API calls
+- **UI**, page behavior: field validation, actions, navigation (TestPage)
+- **Edge/Error**, boundaries, invalid inputs, missing data, permission errors
+- **AI**, Copilot features (AI Test Toolkit)
 
 Coverage targets:
 | Area | Target |
@@ -355,7 +355,7 @@ Create `specs/Plans/{req_name}.test-plan.md` using `.github/docs/templates/test-
 - Group by unit / integration / UI / edge case
 - Define library codeunits needed
 - Set coverage targets
-- **PAUSE — wait for user approval before implementing**
+- **PAUSE, wait for user approval before implementing**
 
 ### Step 3: Implement Tests (TDD Integration)
 
@@ -385,7 +385,7 @@ REFACTOR phase:
 
 ### Step 4: Test Isolation
 
-Each test MUST be independent — no shared mutable state between tests:
+Each test MUST be independent, no shared mutable state between tests:
 
 ```al
 // ✅ Initialize procedure resets state
@@ -423,13 +423,13 @@ end;
 ### Step 5: Validate and Report
 
 1. Run full test suite
-2. Verify all tests pass — zero tolerance for flaky tests
+2. Verify all tests pass, zero tolerance for flaky tests
 3. Update coverage metrics in `specs/Plans/{req_name}.test-plan.md`
 4. Update `memory.md` with test results summary
 
 ## References
 
-- [AL Test Framework — Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-application)
+- [AL Test Framework, Microsoft Docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-testing-application)
 - [Test Codeunits and Methods](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-test-codeunits-and-test-methods)
 - [TestPage Data Type](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/testpage/testpage-data-type)
 - [Handler Functions](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-creating-handler-methods-in-tests)
@@ -438,12 +438,12 @@ end;
 
 ## Constraints
 
-- This skill covers **active test design, patterns, and TDD integration** — it does NOT duplicate passive rules in `al-testing.instructions.md` (auto-applied to `**/test/**/*.al`)
+- This skill covers **active test design, patterns, and TDD integration**, it does NOT duplicate passive rules in `al-testing.instructions.md` (auto-applied to `**/test/**/*.al`)
 - Tests MUST live in the Test project, NEVER in the App folder (per AL-Go structure)
 - Do NOT generate tests without explicit user request
 - Do NOT create interdependent tests that rely on execution order
-- Do NOT write tests without assertions — every `[Test]` must verify something
-- Do NOT test private implementation details — test public contracts only
+- Do NOT write tests without assertions, every `[Test]` must verify something
+- Do NOT test private implementation details, test public contracts only
 - For debugging test failures → load `skill-debug.md`
 - For event subscriber testing → load `skill-events.md`
 - For permission testing with `TestPermissions = Restrictive` → load `skill-permissions.md`

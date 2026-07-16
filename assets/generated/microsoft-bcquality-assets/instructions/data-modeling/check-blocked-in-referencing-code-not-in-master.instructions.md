@@ -13,7 +13,7 @@ Source: microsoft/knowledge/data-modeling/check-blocked-in-referencing-code-not-
 
 The `Blocked` field on a master record (`Item`, `Customer`, `Resource`, or a custom master) is inert data. The master table holds **no** logic that acts on it. Enforcement belongs in the **consuming** code: when a journal line, document line, or posting routine references the master by its `No.`, that referencing object tests the flag at the point of use, e.g. `LoyaltyMember.Get("Member No."); LoyaltyMember.TestField(Blocked, false);` in the line's `OnValidate` and again before posting.
 
-Putting the block check inside the master's own `OnInsert`/`OnModify` does nothing to stop transactional use: a blocked master is edited rarely, but it is *referenced* constantly, and those references never touch the master's own triggers. Base BC follows this split — `Item.Blocked` is checked by sales/purchase/journal code, not by the `Item` table. A boolean `Blocked` uses `TestField(Blocked, false)`; an option-style block (e.g. `Sales`/`All`) needs the specific option compared at each relevant path.
+Putting the block check inside the master's own `OnInsert`/`OnModify` does nothing to stop transactional use: a blocked master is edited rarely, but it is *referenced* constantly, and those references never touch the master's own triggers. Base BC follows this split, `Item.Blocked` is checked by sales/purchase/journal code, not by the `Item` table. A boolean `Blocked` uses `TestField(Blocked, false)`; an option-style block (e.g. `Sales`/`All`) needs the specific option compared at each relevant path.
 
 ## Best Practice
 

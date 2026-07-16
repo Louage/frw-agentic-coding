@@ -21,7 +21,7 @@ When these three conditions hold, the group caption becomes the accessible label
 
 ## Best Practice
 
-Do not second-guess this exception. If the three conditions are met, the pattern is acceptable — even if the group caption seems generic (e.g. "General Information") or does not exactly match the field name.
+Do not second-guess this exception. If the three conditions are met, the pattern is acceptable, even if the group caption seems generic (e.g. "General Information") or does not exactly match the field name.
 
 See sample: `group-labeled-first-child-exception.good.al`.
 

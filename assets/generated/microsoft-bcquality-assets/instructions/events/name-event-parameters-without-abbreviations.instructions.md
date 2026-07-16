@@ -11,7 +11,7 @@ Source: microsoft/knowledge/events/name-event-parameters-without-abbreviations.m
 
 ## Description
 
-Event parameter names are part of the public contract a subscriber codes against, so they must be self-explanatory. Record parameters take the full table name with the spaces removed — `SalesHeader` for `"Sales Header"`, not `SalesHdr` or `SH`. Simple parameters get a descriptive, spelled-out name — `DocumentNo`, not `DocNo`; `Amount`, not `Amt`. Abbreviated names force every subscriber author to guess intent and tend to be inconsistent across a codebase, where the same concept appears under several contractions. The cost of a clear name is paid once at the publisher; the cost of a cryptic one is paid by every subscriber that has to decode it.
+Event parameter names are part of the public contract a subscriber codes against, so they must be self-explanatory. Record parameters take the full table name with the spaces removed, `SalesHeader` for `"Sales Header"`, not `SalesHdr` or `SH`. Simple parameters get a descriptive, spelled-out name, `DocumentNo`, not `DocNo`; `Amount`, not `Amt`. Abbreviated names force every subscriber author to guess intent and tend to be inconsistent across a codebase, where the same concept appears under several contractions. The cost of a clear name is paid once at the publisher; the cost of a cryptic one is paid by every subscriber that has to decode it.
 
 ## Best Practice
 

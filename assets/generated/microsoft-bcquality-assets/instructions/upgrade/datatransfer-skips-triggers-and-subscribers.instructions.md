@@ -17,7 +17,7 @@ For *new fields and tables added in the same change* this is fine: nothing yet d
 
 ## Best Practice
 
-Use `DataTransfer` when set-based transfer is safe and row-level business logic is intentionally unnecessary — initial population of a new field is the canonical case. When an existing field's validation must run, loop through records and call `Validate(Field, Value)`; if the table's modify trigger must also run, follow with `Modify(true)`. If performance requires `DataTransfer`, document exactly which field-validation and row-modification triggers or subscribers are intentionally bypassed and verify that derived data remains correct.
+Use `DataTransfer` when set-based transfer is safe and row-level business logic is intentionally unnecessary, initial population of a new field is the canonical case. When an existing field's validation must run, loop through records and call `Validate(Field, Value)`; if the table's modify trigger must also run, follow with `Modify(true)`. If performance requires `DataTransfer`, document exactly which field-validation and row-modification triggers or subscribers are intentionally bypassed and verify that derived data remains correct.
 
 See sample: `datatransfer-skips-triggers-and-subscribers.good.al`.
 

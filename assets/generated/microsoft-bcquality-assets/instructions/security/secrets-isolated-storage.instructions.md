@@ -11,7 +11,7 @@ Source: microsoft/knowledge/security/secrets-isolated-storage.md
 
 ## Description
 
-API keys, OAuth tokens, client secrets, and connection strings must not be stored in an ordinary table `Text` field — not even on a hidden setup table. A regular field is exposed through record reads, page display, RapidStart and Excel export, report datasets, and surfaces in `DataClassification` review; anyone with table permission can read it. The correct home is `IsolatedStorage`, which is invisible to database queries, API pages, and configuration packages. The storage-*location* decision is the rule here; how to scope and encrypt the value once it is in IsolatedStorage is covered separately.
+API keys, OAuth tokens, client secrets, and connection strings must not be stored in an ordinary table `Text` field, not even on a hidden setup table. A regular field is exposed through record reads, page display, RapidStart and Excel export, report datasets, and surfaces in `DataClassification` review; anyone with table permission can read it. The correct home is `IsolatedStorage`, which is invisible to database queries, API pages, and configuration packages. The storage-*location* decision is the rule here; how to scope and encrypt the value once it is in IsolatedStorage is covered separately.
 
 ## Best Practice
 
@@ -21,6 +21,6 @@ See sample: `secrets-isolated-storage.good.al`.
 
 ## Anti Pattern
 
-A "Setup" or "Connection" table carrying a `Text` field named `API Key`, `Password`, or `Client Secret`. The value is now readable by any object with table permission, ships in RapidStart packages and Excel exports, and appears in record snapshots — a credential disclosure that no amount of encryption-in-transit elsewhere makes up for. Reviewer signal: a secret-shaped field declared on a table instead of an `IsolatedStorage` call.
+A "Setup" or "Connection" table carrying a `Text` field named `API Key`, `Password`, or `Client Secret`. The value is now readable by any object with table permission, ships in RapidStart packages and Excel exports, and appears in record snapshots, a credential disclosure that no amount of encryption-in-transit elsewhere makes up for. Reviewer signal: a secret-shaped field declared on a table instead of an `IsolatedStorage` call.
 
 See sample: `secrets-isolated-storage.bad.al`.
