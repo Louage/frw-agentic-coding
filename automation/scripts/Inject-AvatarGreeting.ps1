@@ -85,7 +85,7 @@ function Get-GreetingBlock {
         $variantLines += "> $index. $prefix $tail"
         $index++
     }
-    $variants = ($variantLines -join "`r`n")
+    $variants = ($variantLines -join "`n")
 
     return @"
 $BeginMarker
@@ -117,6 +117,8 @@ function Update-AgentFile {
     if ([string]::IsNullOrEmpty($content)) {
         return $false
     }
+    # Normalize to LF so output is consistent across Windows and Linux runners.
+    $content = $content -replace '\r\n', "`n" -replace '\r', "`n"
 
     # Strip any existing occurrence of our marker-delimited block anywhere in
     # the file (previous run, wrong placement, etc.).
@@ -143,22 +145,22 @@ function Update-AgentFile {
     if ($flowMatch.Success) {
         $before = $stripped.Substring(0, $flowMatch.Index).TrimEnd("`r", "`n")
         $after = $stripped.Substring($flowMatch.Index)
-        $newContent = $before + "`r`n`r`n" + $newBlock + "`r`n`r`n" + $after
+        $newContent = $before + "`n`n" + $newBlock + "`n`n" + $after
     }
     else {
         $frontmatterPattern = "(?s)^(---\r?\n.*?\r?\n---)(\r?\n)"
         $fmMatch = [regex]::Match($stripped, $frontmatterPattern)
         if (-not $fmMatch.Success) {
-            $newContent = "$newBlock`r`n`r`n" + $stripped.TrimStart()
+            $newContent = "$newBlock`n`n" + $stripped.TrimStart()
         }
         else {
             $frontmatter = $fmMatch.Groups[1].Value
             $rest = $stripped.Substring($fmMatch.Index + $fmMatch.Length).TrimStart("`r", "`n")
-            $newContent = "$frontmatter`r`n`r`n$newBlock`r`n`r`n$rest"
+            $newContent = "$frontmatter`n`n$newBlock`n`n$rest"
         }
     }
 
-    $newContent = $newContent.TrimEnd() + "`r`n"
+    $newContent = $newContent.TrimEnd() + "`n"
 
     if ($newContent -eq $content) {
         return $false

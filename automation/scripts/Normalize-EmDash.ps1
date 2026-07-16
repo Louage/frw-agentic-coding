@@ -71,6 +71,8 @@ function Convert-File {
     if ([string]::IsNullOrEmpty($content)) {
         return $false
     }
+    # Normalize to LF so output is consistent across Windows and Linux runners.
+    $content = $content -replace '\r\n', "`n" -replace '\r', "`n"
 
     if ($content -notmatch "\u2014") {
         return $false
