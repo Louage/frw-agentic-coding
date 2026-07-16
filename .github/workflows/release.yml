@@ -2,7 +2,11 @@ name: Release
 
 # Triggers on:
 #  - pushing a version tag, e.g. `git tag v0.1.0 && git push origin v0.1.0`, or
-#  - pushing to main branch (merge), which auto-increments patch version, or
+#  - pushing to main branch (merge) — hybrid version selection:
+#      * If package.json's version is newer than the latest v* tag, release that
+#        (manual bump in the merged PR wins → good for minor/major).
+#      * Otherwise auto-increment the patch from the latest tag (default → good
+#        for hotfixes without touching package.json).
 #  - manually from the Actions tab ("Run workflow") where you type the version.
 on:
   push:
@@ -42,20 +46,34 @@ jobs:
         id: version
         # The version is the single source of truth for this release.
         # - For tag pushes: extract from tag name (v0.1.0)
-        # - For main branch pushes: auto-increment patch version from latest release tag
-        # - For manual dispatch: use the provided input
+        # - For main branch pushes: hybrid
+        #     * If package.json's version is newer than the latest v* tag, use it
+        #       (the merged PR manually bumped for a minor/major release).
+        #     * Otherwise auto-increment the patch of the latest tag
+        #       (default behaviour — no manual bump needed for hotfixes).
+        # - For manual dispatch: use the provided input.
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             RAW="${{ inputs.version }}"
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            # Auto-increment patch version based on latest release tag
             LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
-            CURRENT="${LATEST_TAG#v}"
-            MAJOR=$(echo $CURRENT | cut -d. -f1)
-            MINOR=$(echo $CURRENT | cut -d. -f2)
-            PATCH=$(echo $CURRENT | cut -d. -f3)
-            PATCH=$((PATCH + 1))
-            RAW="${MAJOR}.${MINOR}.${PATCH}"
+            LATEST="${LATEST_TAG#v}"
+            PKG=$(node -p "require('./package.json').version")
+            # Compare package.json vs latest tag using `sort -V`.
+            HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$PKG" | sort -V | tail -n1)
+            if [ "$PKG" != "$LATEST" ] && [ "$HIGHEST" = "$PKG" ]; then
+              # package.json is strictly greater than latest tag → manual bump wins.
+              echo "Using manually bumped package.json version: $PKG (latest tag was $LATEST_TAG)"
+              RAW="$PKG"
+            else
+              # Auto-increment patch from latest tag.
+              MAJOR=$(echo "$LATEST" | cut -d. -f1)
+              MINOR=$(echo "$LATEST" | cut -d. -f2)
+              PATCH=$(echo "$LATEST" | cut -d. -f3)
+              PATCH=$((PATCH + 1))
+              RAW="${MAJOR}.${MINOR}.${PATCH}"
+              echo "Auto-incrementing patch: $LATEST_TAG → v$RAW (package.json = $PKG)"
+            fi
           else
             RAW="${GITHUB_REF_NAME}"
           fi
