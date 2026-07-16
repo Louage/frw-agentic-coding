@@ -115,7 +115,6 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | **AC/DC: Show Settings Reference** | Open the full settings reference in a Markdown preview |
 | **AC/DC: Manage AL Base Code / ISV Code** | Configure mounted BC base app or ISV source repositories |
 | **AC/DC: Sync AL Base Code / ISV Code** | Clone or pull the configured BC/ISV repositories |
-| **AC/DC: Check for extension updates** | Manually check for a new version |
 
 ---
 
@@ -124,9 +123,9 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
-| `acdc.update.repository` | `Louage/frw-agentic-coding` | GitHub repository to check for updates |
-| `acdc.update.checkOnStartup` | `true` | Automatically check for updates on startup |
 | `acdc.agents.enableHooksOverlay` | `false` | Enable deterministic agent lifecycle events in the sidebar |
+
+> Updates are delivered automatically through the VS Code Marketplace — no manual configuration needed.
 
 Open the full reference: `Ctrl+Shift+P` → **AC/DC: Show Settings Reference**.
 

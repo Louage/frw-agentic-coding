@@ -1039,11 +1039,6 @@
     ],
     "commands": [
       {
-        "command": "acdc.checkForUpdates",
-        "title": "Check for extension updates",
-        "category": "AC/DC"
-      },
-      {
         "command": "acdc.useAgent",
         "title": "Use Agent",
         "category": "AC/DC"
@@ -1127,31 +1122,6 @@
       ]
     },
     "configuration": [
-      {
-        "id": "acdc.update",
-        "title": "Update",
-        "order": 1,
-        "properties": {
-          "acdc.update.repository": {
-            "type": "string",
-            "default": "Louage/frw-agentic-coding",
-            "order": 3,
-            "markdownDescription": "The private GitHub repository (in `owner/repo` form) that publishes new `.vsix` releases of this extension. Used by the in-editor update check."
-          },
-          "acdc.update.checkOnStartup": {
-            "type": "boolean",
-            "default": true,
-            "order": 1,
-            "description": "Check the configured GitHub repository for a newer release when VS Code starts."
-          },
-          "acdc.update.includePrereleases": {
-            "type": "boolean",
-            "default": false,
-            "order": 2,
-            "description": "Also consider GitHub pre-releases when checking for updates."
-          }
-        }
-      },
       {
         "id": "acdc.alBaseCode",
         "title": "AL Base Code / ISV Code",

@@ -12,7 +12,6 @@ import {
   type AgentWorkflowViewModel,
 } from "./workflows/agentWorkflowService";
 import { FlowStateService } from "./workflows/flowStateService";
-import { checkForUpdates } from "./update/updateChecker";
 import {
   syncAlBaseCode,
   syncOnStartup,
@@ -174,13 +173,6 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
   );
 
-  // 3. Command: manual update check.
-  context.subscriptions.push(
-    vscode.commands.registerCommand("acdc.checkForUpdates", () =>
-      checkForUpdates(context, true)
-    )
-  );
-
   // 3b. Command: set an agent placeholder via a two-step live QuickPick.
   context.subscriptions.push(
     vscode.commands.registerCommand("acdc.setAgentPlaceholder", async () => {
@@ -246,10 +238,6 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // 5. Startup checks.
-  const config = vscode.workspace.getConfiguration("acdc");
-  if (config.get<boolean>("update.checkOnStartup", true)) {
-    void checkForUpdates(context, false);
-  }
   void syncOnStartup(output);
   // Keep already-mounted AL source folders out of the Source Control view.
   void syncGitIgnoredRepositories();
