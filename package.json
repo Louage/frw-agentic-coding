@@ -1074,11 +1074,6 @@
         "command": "acdc.pickSddPlansRoot",
         "title": "Pick SDD Plans Root Folder…",
         "category": "AC/DC"
-      },
-      {
-        "command": "acdc.showSettingsHelp",
-        "title": "Show Settings Reference",
-        "category": "AC/DC"
       }
     ],
     "viewsContainers": {
@@ -1138,7 +1133,7 @@
                 "enabled": false
               }
             ],
-            "markdownDescription": "Read-only AL/BC & ISV source repositories mounted into the workspace so agents can read real AL code. **[▶ Open table editor](command:acdc.manageAlBaseCode)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Read-only AL source repositories (BC base app and ISV products) mounted so agents can search real AL code. Click to open the full reference.\")**",
+            "markdownDescription": "Read-only AL/BC & ISV source repositories mounted into the workspace so agents can read real AL code. **[▶ Open table editor](command:acdc.manageAlBaseCode)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp)**",
             "items": {
               "type": "object",
               "properties": {
@@ -1202,7 +1197,7 @@
               "conductorAgent": "Malcolm, AL Conductor",
               "auditorAgent": "Bon, AL Auditor"
             },
-            "markdownDescription": "Maps `${placeholderName}` tokens used in agent prose/prompts/skills to concrete agent display names, resolved at runtime. **[▶ Set via quick pick](command:acdc.setAgentPlaceholder)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Maps placeholder names to concrete agent display names resolved at runtime. Click to open the full reference.\")**",
+            "markdownDescription": "Maps `${placeholderName}` tokens used in agent prose/prompts/skills to concrete agent display names, resolved at runtime. **[▶ Set via quick pick](command:acdc.setAgentPlaceholder)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp)**",
             "additionalProperties": {
               "type": "string",
               "description": "Display name of the agent or tool this placeholder resolves to."
@@ -1225,25 +1220,25 @@
             "type": "string",
             "default": ".github/plans",
             "order": 1,
-            "markdownDescription": "Workspace-relative folder for SDD artifacts (spec, architecture, plan, test-plan, ...). Default: `.github/plans`.\n\n**[▶ Pick folder…](command:acdc.pickSddPlansRoot)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp \"Workspace-relative folder where AC⚡DC agents create spec artifacts. Click to open the full reference.\")**"
+            "markdownDescription": "Workspace-relative folder for SDD artifacts (spec, architecture, plan, test-plan, ...). Default: `.github/plans`.\n\n**[▶ Pick folder…](command:acdc.pickSddPlansRoot)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp)**"
           },
           "acdc.specFolderFormat": {
             "type": "string",
             "default": "{req_name}",
             "order": 2,
-            "markdownDescription": "Template for per-requirement folder names under `plansRoot`. Supports date/time, sequence, identity and `{req_name}` / `{slug}` variables.\n\nExamples: `{req_name}`, `SDD-{YYYYMMDD}-{slug}`, `{000seq}-{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for the per-requirement spec folder name. Click to open the full variable reference.\")**"
+            "markdownDescription": "Template for per-requirement folder names under `plansRoot`. Supports date/time, sequence, identity and `{req_name}` / `{slug}` variables.\n\nExamples: `{req_name}`, `SDD-{YYYYMMDD}-{slug}`, `{000seq}-{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp)**"
           },
           "acdc.specFileFormat": {
             "type": "string",
             "default": "{req_name}.{type}.md",
             "order": 3,
-            "markdownDescription": "Template for spec file names. `{type}` is `spec`, `architecture`, `test-plan`, `plan` or `delivery`.\n\nExamples: `{req_name}.{type}.md`, `{YYYYMMDD}-{slug}.{type}.md`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for spec file names inside a spec folder. Click to open the full variable reference.\")**"
+            "markdownDescription": "Template for spec file names. `{type}` is `spec`, `architecture`, `test-plan`, `plan` or `delivery`.\n\nExamples: `{req_name}.{type}.md`, `{YYYYMMDD}-{slug}.{type}.md`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp)**"
           },
           "acdc.branchFormat": {
             "type": "string",
             "default": "feature/{slug}",
             "order": 4,
-            "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp \"Template for git branch names created for a spec-driven requirement. Click to open the full variable reference.\")**"
+            "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp)**"
           }
         }
       }

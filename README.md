@@ -2,8 +2,8 @@
 
 > Spec-driven, TDD-orchestrated AI development for **Microsoft Dynamics 365 Business Central** — powered by GitHub Copilot agent mode.
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/theframework.acdc?style=flat-square&label=marketplace&color=d8723c)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/theframework.acdc?style=flat-square&color=7a9e00)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
+[![Version](https://vsmarketplacebadges.dev/version-short/theframework.acdc.svg?style=flat-square&color=d8723c&label=marketplace)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/theframework.acdc.svg?style=flat-square&color=7a9e00)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
 [![License](https://img.shields.io/badge/license-MIT-7a9e00?style=flat-square)](./LICENSE)
 
 Stop generating AL code ad-hoc. AC⚡DC gives GitHub Copilot a full team of specialized agents, pre-loaded coding standards, and structured workflows — so every feature starts from a spec, follows TDD, and passes a review gate before it lands.
@@ -12,8 +12,7 @@ No files are copied into your workspace. Install once, works everywhere.
 
 ---
 
-<!-- SCREENSHOT: Add a GIF or screenshot here showing the Agents sidebar and one of the agents being selected via "AC/DC: Use Agent". Recommended size: 800×500 px. -->
-> **Tip:** Place a GIF here showing the agent picker in action (e.g. selecting Angus and asking it to design a feature).
+![Agent Selector](img/Code_GrMLc1rVxA.gif)
 
 ---
 
@@ -33,7 +32,7 @@ No files are copied into your workspace. Install once, works everywhere.
 4. Pick an agent from the **AC⚡DC sidebar** (or press `Ctrl+Shift+P` → **AC/DC: Use Agent**).
 5. Describe your requirement — the agent guides you from spec to working code.
 
-<!-- SCREENSHOT: Add a GIF here of step 4-5: opening the sidebar, clicking an agent, and typing a requirement in chat. -->
+![Start chat](img/Code_GrMLc1rVxA.gif)
 
 ---
 
@@ -126,8 +125,6 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | `acdc.agents.enableHooksOverlay` | `false` | Enable deterministic agent lifecycle events in the sidebar |
 
 > Updates are delivered automatically through the VS Code Marketplace — no manual configuration needed.
-
-Open the full reference: `Ctrl+Shift+P` → **AC/DC: Show Settings Reference**.
 
 ---
 
