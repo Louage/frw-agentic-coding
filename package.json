@@ -9,9 +9,25 @@
   "engines": {
     "vscode": "^1.95.0"
   },
+  "keywords": [
+    "ALDC",
+    "AL",
+    "ACDC",
+    "AC/DC",
+    "Business Central",
+    "BC",
+    "Dynamics 365",
+    "Agentic Coding",
+    "Direct Coding",
+    "Copilot",
+    "agent",
+    "skills"
+  ],
   "categories": [
     "AI",
     "Chat",
+    "Programming Languages",
+    "Linters",
     "Other"
   ],
   "repository": {
