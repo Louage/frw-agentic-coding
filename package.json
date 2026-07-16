@@ -26,15 +26,15 @@
   "contributes": {
     "languageModelTools": [
       {
-        "name": "frw_get_coding_standard",
+        "name": "acdc_get_coding_standard",
         "displayName": "Get The Framework Coding Standard",
         "modelDescription": "Returns the official AL / Business Central coding standard from The Framework for a given topic. Available topics: code-style, naming-conventions, performance, error-handling, events, testing, upgrade, guidelines-rules. Use this tool whenever the user asks how something should be done according to company standards, or before generating or reviewing AL code that must follow company conventions. Returns the full Markdown rule file. If the requested topic is unknown, the tool returns the list of available topics.",
-        "toolReferenceName": "frwCodingStandard",
+        "toolReferenceName": "acdcCodingStandard",
         "canBeReferencedInPrompt": true,
         "icon": "$(book)",
         "userDescription": "Look up an AL / Business Central coding standard from The Framework by topic.",
         "tags": [
-          "frw",
+          "acdc",
           "standards",
           "al",
           "business-central"
@@ -53,15 +53,15 @@
         }
       },
       {
-        "name": "frw_list_agent_placeholders",
+        "name": "acdc_list_agent_placeholders",
         "displayName": "List Agent Placeholders",
         "modelDescription": "Returns the current mapping of agent/tool placeholder names (e.g. reviewAgent, architectAgent) to their configured concrete values for this workspace. Call this to discover which agents are wired to specific roles, or to resolve a placeholder before mentioning an agent by name.",
-        "toolReferenceName": "frwAgentPlaceholders",
+        "toolReferenceName": "acdcAgentPlaceholders",
         "canBeReferencedInPrompt": true,
         "icon": "$(person)",
         "userDescription": "Show the configured agent placeholder mappings (e.g. reviewAgent → AL Code Review Subagent) for this workspace.",
         "tags": [
-          "frw",
+          "acdc",
           "agents",
           "placeholders",
           "al",
@@ -73,15 +73,15 @@
         }
       },
       {
-        "name": "frw_update_agent_flow",
+        "name": "acdc_update_agent_flow",
         "displayName": "Update Agent Flow",
         "modelDescription": "Updates the Agent Flow view in the AC⚡DC sidebar to reflect the current position in this agent's workflow. Call this at the start of a new task or when switching to a new skill so the user sees where in the SDD/orchestration flow the agent currently is. Provide `step` with a short label (2–4 words). Optionally set `action` to 'start' (default — mark as current in-progress step), 'complete' (mark the current step done and move it to history), or 'reset' (clear history and start fresh). Optionally pass `skill` to record which SKILL.md is being applied at this step.",
-        "toolReferenceName": "frwUpdateAgentFlow",
+        "toolReferenceName": "acdcUpdateAgentFlow",
         "canBeReferencedInPrompt": true,
         "icon": "$(pulse)",
         "userDescription": "Let the active agent update the current step shown in the AC⚡DC Agent Flow view.",
         "tags": [
-          "frw",
+          "acdc",
           "agents",
           "flow",
           "state"
@@ -115,15 +115,15 @@
         }
       },
       {
-        "name": "frw_get_sdd_config",
+        "name": "acdc_get_sdd_config",
         "displayName": "Get SDD Configuration",
         "modelDescription": "Returns the current Spec-Driven Development configuration for this workspace: the plans folder location, the spec folder naming format, the spec file naming format, and the git branch naming format — plus the reference of every template variable that can appear in those formats (dates, sequences, GUID, USER, HOST, env vars, `{req_name}`, `{slug}`, `{type}`, ...). ALWAYS call this tool BEFORE creating a spec folder, a spec file, or a git branch, so you honour the workspace conventions instead of hardcoding `.github/plans/` or naming shapes.",
-        "toolReferenceName": "frwSddConfig",
+        "toolReferenceName": "acdcSddConfig",
         "canBeReferencedInPrompt": true,
         "icon": "$(settings-gear)",
         "userDescription": "Show the configured SDD paths and naming formats used by agents.",
         "tags": [
-          "frw",
+          "acdc",
           "sdd",
           "spec",
           "plans",
@@ -135,15 +135,15 @@
         }
       },
       {
-        "name": "frw_render_sdd_path",
+        "name": "acdc_render_sdd_path",
         "displayName": "Render SDD Path",
         "modelDescription": "Renders the configured spec folder, spec file, and git branch names for a given requirement, substituting workspace-configured templates and the standard template variables (dates, sequences, GUID, USER, HOST, ...). Call this INSTEAD of manually building paths like `.github/plans/{req_name}/{req_name}.spec.md` — the result reflects the user's `acdc.*` SDD settings. Provide `req_name` (kebab-case) and, when creating a spec file, `type` (`spec`, `architecture`, `test-plan`, ...). Optional: `slug`, `seq`, `env`.",
-        "toolReferenceName": "frwRenderSddPath",
+        "toolReferenceName": "acdcRenderSddPath",
         "canBeReferencedInPrompt": true,
         "icon": "$(folder-opened)",
         "userDescription": "Render workspace-configured SDD folder, file, and branch paths for a requirement.",
         "tags": [
-          "frw",
+          "acdc",
           "sdd",
           "spec",
           "plans",
@@ -1040,17 +1040,17 @@
     ],
     "commands": [
       {
-        "command": "frwAgenticCoding.checkForUpdates",
+        "command": "acdc.checkForUpdates",
         "title": "Check for extension updates",
         "category": "AC/DC"
       },
       {
-        "command": "frwAgenticCoding.runRepoScopedAction",
+        "command": "acdc.runRepoScopedAction",
         "title": "Run guarded repository action",
         "category": "AC/DC"
       },
       {
-        "command": "frwAgenticCoding.useAgent",
+        "command": "acdc.useAgent",
         "title": "Use Agent",
         "category": "AC/DC"
       },
@@ -1065,13 +1065,13 @@
         "category": "AC/DC"
       },
       {
-        "command": "frwAgenticCoding.refreshAgents",
+        "command": "acdc.refreshAgents",
         "title": "Refresh Agents",
         "category": "AC/DC",
         "icon": "$(refresh)"
       },
       {
-        "command": "frwAgenticCoding.resetAgentFlow",
+        "command": "acdc.resetAgentFlow",
         "title": "Reset Agent Flow",
         "category": "AC/DC",
         "icon": "$(clear-all)"
@@ -1095,23 +1095,23 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "frwAgenticCoding",
+          "id": "acdc",
           "title": "AC⚡DC",
           "icon": "images/icon.png"
         }
       ]
     },
     "views": {
-      "frwAgenticCoding": [
+      "acdc": [
         {
-          "id": "frwAgents",
+          "id": "acdc.agents",
           "name": "Agents",
           "icon": "$(hubot)",
           "contextualTitle": "AC⚡DC"
         },
         {
           "type": "webview",
-          "id": "frwAgentFlow",
+          "id": "acdc.agentFlow",
           "name": "Agent Flow",
           "icon": "$(pulse)",
           "contextualTitle": "AC⚡DC"
@@ -1121,13 +1121,13 @@
     "menus": {
       "view/title": [
         {
-          "command": "frwAgenticCoding.refreshAgents",
-          "when": "view == frwAgents",
+          "command": "acdc.refreshAgents",
+          "when": "view == acdc.agents",
           "group": "navigation"
         },
         {
-          "command": "frwAgenticCoding.resetAgentFlow",
-          "when": "view == frwAgentFlow",
+          "command": "acdc.resetAgentFlow",
+          "when": "view == acdc.agentFlow",
           "group": "navigation"
         }
       ]

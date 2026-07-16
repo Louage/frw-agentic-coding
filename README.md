@@ -10,7 +10,7 @@ development, but it can grow to cover other stacks.
      contributed via the `chatSkills` manifest point and served live from the
      extension.
    - _Executable tool_ — an optional [Language Model Tool](https://code.visualstudio.com/api/extension-guides/ai/tools)
-     (`#frwCodingStandard`) that the agent can invoke automatically in agent mode.
+     (`#acdcCodingStandard`) that the agent can invoke automatically in agent mode.
 2. **Rules** — bundled AL custom instructions (`*.instructions.md`) contributed via
    the `chatInstructions` manifest point.
 

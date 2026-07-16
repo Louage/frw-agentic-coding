@@ -8,7 +8,7 @@
 - Configurable Spec-Driven Development (SDD) paths (issue #25):
   - `acdc.plansRoot` — workspace-relative plans folder, with a **Pick folder…** button that supports adding out-of-workspace folders.
   - `acdc.specFolderFormat`, `acdc.specFileFormat`, `acdc.branchFormat` — template-based naming with date/time, sequence, identity and feature variables.
-  - New tools `frw_get_sdd_config` and `frw_render_sdd_path` so agents resolve paths at runtime instead of hardcoding `.github/plans/`.
+  - New tools `acdc_get_sdd_config` and `acdc_render_sdd_path` so agents resolve paths at runtime instead of hardcoding `.github/plans/`.
 - Renamed the "AC⚡DC" settings section to "Update" (it only contained update-related settings).
 
 ## [0.2.0] - 2026-06-10
@@ -21,7 +21,7 @@
 ## [0.1.0] - 2026-06-10
 
 - Initial scaffold.
-- Language Model Tool: `frw_get_coding_standard` (`#frwCodingStandard`).
+- Language Model Tool: `frw_get_coding_standard` (`#frwCodingStandard`). *(Renamed to `acdc_get_coding_standard` / `#acdcCodingStandard` in v1.1.0.)*
 - Command to install bundled skills & instruction rules into a workspace.
 - In-editor update check against private GitHub Releases.
 - GitHub Actions release workflow.

@@ -3,7 +3,7 @@ name: AL Triage, Reactive Diagnosis Specialist
 description: 'Reactive support for EXISTING Business Central AL code, reproduce, localize, root-cause, and recommend a minimal fix for bugs, regressions, and incidents. Read-only on code: produces a diagnosis and hands the fix to @al-developer. The dynamic counterpart to Dredd (static audit).'
 user-invocable: true
 argument-hint: 'The symptom / error / bug report (+ reproduction steps or environment, if known). E.g., "posting throws Conflict for customer X intermittently"'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, frw_update_agent_flow, changes, search, execute, al-symbols-mcp/*, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_update_agent_flow, changes, search, execute, al-symbols-mcp/*, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Hand the fix to the implementer
@@ -52,7 +52,7 @@ handoffs:
 >
 > **Immediate handoff switch (required):** right before handoff, report the target agent explicitly so the sidebar switches name immediately. Use one of these:
 >
-> 1. Preferred: call `frw_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
+> 1. Preferred: call `acdc_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
 > 2. File fallback: add a line `handoff: <target agent>` followed by `--- agent: <target agent> ---`.
 >
 > **Write ordering is critical**: write the file **BEFORE** doing the work of a step, not after. The sidebar shows the LAST step line as the *active* step (highlighted blue). If you load a skill and then write "loading-skill", the user sees the step light up only after it's already done. Do this instead:
@@ -75,7 +75,7 @@ handoffs:
 >
 > Optional: mirror a concise summary to `/memories/session/acdc-flow.md` (append-only) so handoff context survives within the current chat session even when no file watcher is available.
 >
-> Keep labels stable across runs so the user learns to recognise them. If your session has the `frw_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
+> Keep labels stable across runs so the user learns to recognise them. If your session has the `acdc_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
 <!-- END:AC-DC-FLOW-REPORTING -->
 
 # AL Triage, Reactive Diagnosis Specialist

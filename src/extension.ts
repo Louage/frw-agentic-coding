@@ -73,19 +73,19 @@ export function activate(context: vscode.ExtensionContext): void {
   //    and served live from the extension — no workspace copy needed.
   context.subscriptions.push(
     vscode.lm.registerTool(
-      "frw_get_coding_standard",
+      "acdc_get_coding_standard",
       new GetCodingStandardTool(context.extensionUri)
     ),
     vscode.lm.registerTool(
-      "frw_list_agent_placeholders",
+      "acdc_list_agent_placeholders",
       new ListAgentPlaceholdersTool()
     ),
     vscode.lm.registerTool(
-      "frw_update_agent_flow",
+      "acdc_update_agent_flow",
       new UpdateAgentFlowTool(flowState, output)
     ),
-    vscode.lm.registerTool("frw_get_sdd_config", new GetSddConfigTool()),
-    vscode.lm.registerTool("frw_render_sdd_path", new RenderSddPathTool())
+    vscode.lm.registerTool("acdc_get_sdd_config", new GetSddConfigTool()),
+    vscode.lm.registerTool("acdc_render_sdd_path", new RenderSddPathTool())
   );
 
   // Validate placeholder values on startup and on configuration change.
@@ -139,21 +139,21 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   });
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider("frwAgents", agentsProvider),
+    vscode.window.registerTreeDataProvider("acdc.agents", agentsProvider),
     vscode.window.registerWebviewViewProvider(
       AgentFlowViewProvider.viewType,
       agentFlowProvider
     ),
-    vscode.commands.registerCommand("frwAgenticCoding.refreshAgents", () =>
+    vscode.commands.registerCommand("acdc.refreshAgents", () =>
       agentsProvider.refresh()
     ),
-    vscode.commands.registerCommand("frwAgenticCoding.resetAgentFlow", () =>
+    vscode.commands.registerCommand("acdc.resetAgentFlow", () =>
       flowState.resetFlow()
     ),
     // Clicking an agent activates it: switches the chat participant, updates the
     // Agent Flow view, auto-enables its declared tools, and warns about missing ones.
     vscode.commands.registerCommand(
-      "frwAgenticCoding.useAgent",
+      "acdc.useAgent",
       async (displayName: string | undefined, stableId?: string) => {
         if (!displayName) {
           const picked = await pickAgent(context.extensionUri);
@@ -174,7 +174,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     ),
     vscode.commands.registerCommand(
-      "frwAgenticCoding.runRepoScopedAction",
+      "acdc.runRepoScopedAction",
       async (explicitRepositoryName?: string) => {
         await withRepositoryGuard(
           "The Framework repository action",
@@ -191,7 +191,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 3. Command: manual update check.
   context.subscriptions.push(
-    vscode.commands.registerCommand("frwAgenticCoding.checkForUpdates", () =>
+    vscode.commands.registerCommand("acdc.checkForUpdates", () =>
       checkForUpdates(context, true)
     )
   );
@@ -550,7 +550,7 @@ async function activateAgent(
 
   // 4. Reveal the Agent Flow view so the user sees the flow surface.
   try {
-    await vscode.commands.executeCommand("frwAgentFlow.focus");
+    await vscode.commands.executeCommand("acdc.agentFlow.focus");
   } catch { /* view not registered yet — ignore */ }
 
   // 5. Notify about missing tools/MCP servers.

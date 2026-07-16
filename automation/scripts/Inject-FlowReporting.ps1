@@ -7,7 +7,7 @@ work through their tasks.
 .DESCRIPTION
 This script appends (or replaces) a marker-delimited block at the end of each
 agent's Markdown body. The block instructs the model on WHEN to call the
-`frw_update_agent_flow` language-model tool contributed by this extension so
+`acdc_update_agent_flow` language-model tool contributed by this extension so
 the user can see, in the sidebar, where the agent currently is in its process.
 
 The block is delimited by:
@@ -18,7 +18,7 @@ The script is idempotent — running it multiple times replaces the existing
 block with the current canonical template instead of appending duplicates.
 
 Companion:
-- Normalize-AgentTools.ps1 adds `frw_update_agent_flow` to every agent's
+- Normalize-AgentTools.ps1 adds `acdc_update_agent_flow` to every agent's
   `tools:` array so the tool is actually available to invoke.
 
 This script should run AFTER Normalize-AgentTools.ps1 in the CI/CD pipeline.
@@ -70,7 +70,7 @@ $BeginMarker
 >
 > **Immediate handoff switch (required):** right before handoff, report the target agent explicitly so the sidebar switches name immediately. Use one of these:
 >
-> 1. Preferred: call ``frw_update_agent_flow`` with ``{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }``.
+> 1. Preferred: call ``acdc_update_agent_flow`` with ``{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }``.
 > 2. File fallback: add a line ``handoff: <target agent>`` followed by ``--- agent: <target agent> ---``.
 >
 > **Write ordering is critical**: write the file **BEFORE** doing the work of a step, not after. The sidebar shows the LAST step line as the *active* step (highlighted blue). If you load a skill and then write "loading-skill", the user sees the step light up only after it's already done. Do this instead:
@@ -93,7 +93,7 @@ $BeginMarker
 >
 > Optional: mirror a concise summary to ``/memories/session/acdc-flow.md`` (append-only) so handoff context survives within the current chat session even when no file watcher is available.
 >
-> Keep labels stable across runs so the user learns to recognise them. If your session has the ``frw_update_agent_flow`` LM tool enabled you may call it instead — the two feed the same view — but the file write always works. Silent-fail is fine: never let a failed write block your work.
+> Keep labels stable across runs so the user learns to recognise them. If your session has the ``acdc_update_agent_flow`` LM tool enabled you may call it instead — the two feed the same view — but the file write always works. Silent-fail is fine: never let a failed write block your work.
 $EndMarker
 "@
 

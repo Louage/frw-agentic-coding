@@ -1,6 +1,6 @@
 ---
 name: "AL Agent Builder"
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, frw_update_agent_flow, read, edit/createFile, edit/editFiles, web, markitdown/*, microsoft-learn/*, upstash/context7/*, github/*, al-symbols-mcp/*, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_update_agent_flow, read, edit/createFile, edit/editFiles, web, markitdown/*, microsoft-learn/*, upstash/context7/*, github/*, al-symbols-mcp/*, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
 description: "Agent Toolkit Builder, specialist in designing and coding Business Central agents using the AI Development Toolkit and Agent SDK. Follows the official Agent Template project structure. Handles both Designer (no-code) and SDK (pro-code) paths."
 user-invocable: true
 model: Claude Sonnet 4.6 (copilot)
@@ -44,7 +44,7 @@ model: Claude Sonnet 4.6 (copilot)
 >
 > **Immediate handoff switch (required):** right before handoff, report the target agent explicitly so the sidebar switches name immediately. Use one of these:
 >
-> 1. Preferred: call `frw_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
+> 1. Preferred: call `acdc_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
 > 2. File fallback: add a line `handoff: <target agent>` followed by `--- agent: <target agent> ---`.
 >
 > **Write ordering is critical**: write the file **BEFORE** doing the work of a step, not after. The sidebar shows the LAST step line as the *active* step (highlighted blue). If you load a skill and then write "loading-skill", the user sees the step light up only after it's already done. Do this instead:
@@ -67,7 +67,7 @@ model: Claude Sonnet 4.6 (copilot)
 >
 > Optional: mirror a concise summary to `/memories/session/acdc-flow.md` (append-only) so handoff context survives within the current chat session even when no file watcher is available.
 >
-> Keep labels stable across runs so the user learns to recognise them. If your session has the `frw_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
+> Keep labels stable across runs so the user learns to recognise them. If your session has the `acdc_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
 <!-- END:AC-DC-FLOW-REPORTING -->
 
 # Agent: AL Agent Builder

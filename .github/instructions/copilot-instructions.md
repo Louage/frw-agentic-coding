@@ -128,8 +128,8 @@ Requirement sets live in `.github/plans/`, one subdirectory per requirement:
 > **Paths are configurable.** The `.github/plans/` root, spec folder naming (`{req_name}` by default), spec file naming (`{req_name}.{type}.md` by default) and git branch naming (`feature/{slug}` by default) are all workspace settings under `acdc.plansRoot`, `acdc.specFolderFormat`, `acdc.specFileFormat`, and `acdc.branchFormat`. Templates support date/time (`{YYYY}`, `{MM}`, `{DD}`, `{HH}`, ...), sequences (`{seq}`, `{00seq}`, ...), identity (`{USER}`, `{HOST}`, `{GUID}`), env vars (`{env:NAME}`), and feature variables (`{req_name}`, `{slug}`, `{type}`).
 >
 > **Before creating any spec folder, spec file, or git branch, agents MUST:**
-> 1. Call the `frw_get_sdd_config` tool to read the current configuration.
-> 2. Call `frw_render_sdd_path` (passing `req_name` and, for files, `type`) to obtain the concrete paths.
+> 1. Call the `acdc_get_sdd_config` tool to read the current configuration.
+> 2. Call `acdc_render_sdd_path` (passing `req_name` and, for files, `type`) to obtain the concrete paths.
 > 3. Use the rendered values verbatim — do NOT hardcode `.github/plans/`, `{req_name}/{req_name}.spec.md`, or a branch name.
 
 ### Workflow with plans

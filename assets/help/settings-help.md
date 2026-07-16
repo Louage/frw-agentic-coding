@@ -114,7 +114,7 @@ The **SDD Paths** group configures where AC⚡DC agents create spec artifacts (s
 architecture, plan, test-plan, phase-complete, memory) and how they name spec folders,
 spec files, and git branches.
 
-Agents call the `frw_get_sdd_config` and `frw_render_sdd_path` tools to resolve these
+Agents call the `acdc_get_sdd_config` and `acdc_render_sdd_path` tools to resolve these
 values at runtime — do **NOT** hardcode `.github/plans/` or naming shapes in agent
 output.
 
@@ -209,8 +209,8 @@ are left unchanged.
 
 Every AC⚡DC agent that creates a spec folder, spec file, or git branch is required to:
 
-1. Call `frw_get_sdd_config` to read the current configuration.
-2. Call `frw_render_sdd_path` (passing `req_name` and, for files, `type`) to obtain the
+1. Call `acdc_get_sdd_config` to read the current configuration.
+2. Call `acdc_render_sdd_path` (passing `req_name` and, for files, `type`) to obtain the
    concrete paths.
 3. Use the rendered values verbatim.
 

@@ -2,7 +2,7 @@
 name: AL Pre-Sales & Project Estimation Specialist
 description: 'Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time & budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Orchestrates AL Architecture & Design Specialist and al-spec.create for comprehensive proposals. CREATES Technical_PreSales folder and documents dynamically on demand.'
 argument-hint: 'Project name, description, or request for proposal/cost estimation (e.g., "Evaluate customer loyalty system project", "Estimate cost for inventory optimization")'
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, frw_update_agent_flow, vscode, execute, read, search, web, github/search_code, github/search_repositories, markitdown/*, microsoft-learn/*, upstash/context7/*, ms-vscode.vscode-websearchforcopilot/websearch]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_update_agent_flow, vscode, execute, read, search, web, github/search_code, github/search_repositories, markitdown/*, microsoft-learn/*, upstash/context7/*, ms-vscode.vscode-websearchforcopilot/websearch]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Design Architecture
@@ -51,7 +51,7 @@ handoffs:
 >
 > **Immediate handoff switch (required):** right before handoff, report the target agent explicitly so the sidebar switches name immediately. Use one of these:
 >
-> 1. Preferred: call `frw_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
+> 1. Preferred: call `acdc_update_agent_flow` with `{ "action": "handoff", "agent": "<target agent>", "step": "handoff-received" }`.
 > 2. File fallback: add a line `handoff: <target agent>` followed by `--- agent: <target agent> ---`.
 >
 > **Write ordering is critical**: write the file **BEFORE** doing the work of a step, not after. The sidebar shows the LAST step line as the *active* step (highlighted blue). If you load a skill and then write "loading-skill", the user sees the step light up only after it's already done. Do this instead:
@@ -74,7 +74,7 @@ handoffs:
 >
 > Optional: mirror a concise summary to `/memories/session/acdc-flow.md` (append-only) so handoff context survives within the current chat session even when no file watcher is available.
 >
-> Keep labels stable across runs so the user learns to recognise them. If your session has the `frw_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
+> Keep labels stable across runs so the user learns to recognise them. If your session has the `acdc_update_agent_flow` LM tool enabled you may call it instead, the two feed the same view, but the file write always works. Silent-fail is fine: never let a failed write block your work.
 <!-- END:AC-DC-FLOW-REPORTING -->
 
 # AL Technical PreSales Agent - Project Planning & Estimation
