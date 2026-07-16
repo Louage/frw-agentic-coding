@@ -1,160 +1,153 @@
-# The Framework Agentic Coding
+# Agentic Coding ⚡ Direct Coding
 
-Internal VS Code extension that distributes **AI agent customizations** across the
-company. For now it is focused on **Microsoft Dynamics 365 Business Central (AL)**
-development, but it can grow to cover other stacks.
+> Spec-driven, TDD-orchestrated AI development for **Microsoft Dynamics 365 Business Central** — powered by GitHub Copilot agent mode.
 
-1. **Skills**
-   - _Knowledge skills_ — bundled `SKILL.md` workflows (e.g. `create-feature-spec`,
-     `finalise-feature`, `generate-docs`, `run-al-tests`, `setup-al-vibe-rules`)
-     contributed via the `chatSkills` manifest point and served live from the
-     extension.
-   - _Executable tool_ — an optional [Language Model Tool](https://code.visualstudio.com/api/extension-guides/ai/tools)
-     (`#acdcCodingStandard`) that the agent can invoke automatically in agent mode.
-2. **Rules** — bundled AL custom instructions (`*.instructions.md`) contributed via
-   the `chatInstructions` manifest point.
+[![Version](https://img.shields.io/visual-studio-marketplace/v/theframework.acdc?style=flat-square&label=marketplace&color=d8723c)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/theframework.acdc?style=flat-square&color=7a9e00)](https://marketplace.visualstudio.com/items?itemName=theframework.acdc)
+[![License](https://img.shields.io/badge/license-MIT-7a9e00?style=flat-square)](./LICENSE)
 
-Skills and rules are delivered **declaratively** through the extension manifest, so
-they are available in every workspace as soon as the extension is installed — no
-files are copied into `.github/`.
+Stop generating AL code ad-hoc. AC⚡DC gives GitHub Copilot a full team of specialized agents, pre-loaded coding standards, and structured workflows — so every feature starts from a spec, follows TDD, and passes a review gate before it lands.
 
-This extension is **internal only** and is never published to the public Marketplace.
+No files are copied into your workspace. Install once, works everywhere.
 
-## External Asset Authority
+---
 
-Skills and instructions are external-source driven.
+<!-- SCREENSHOT: Add a GIF or screenshot here showing the Agents sidebar and one of the agents being selected via "AC/DC: Use Agent". Recommended size: 800×500 px. -->
+> **Tip:** Place a GIF here showing the agent picker in action (e.g. selecting Angus and asking it to design a feature).
 
-- External repositories are declared in `automation/sources/catalog.json`.
-- Generated artifacts are written to `assets/generated/<source>/...`.
-- Active extension assets in `assets/skills` and `assets/instructions` are published from generated content during sync.
-- Contribution entries in `package.json` are generated-authoritative and are applied from `assets/generated/contributions.generated.json`.
+---
 
-Current source model:
+## Requirements
 
-- `aldc-community` (external `extension-assets` source)
-- `microsoft-bcquality-assets` (external `extension-assets` source, normalized from BCQuality markdown content)
-- `microsoft-bcquality` (`mcp-knowledge` source for MCP knowledge syncing/locking)
+- **VS Code** 1.95 or higher
+- **GitHub Copilot** (with agent mode enabled)
+- **AL Language extension** (`ms-dynamics-smb.al`) — for Business Central development
 
-Operational commands:
+---
 
-```pwsh
-npm run sync:sources
-npm run generate:contributions
-npm run apply:contributions
-npm run validate:source-contract:strict
+## Quick Start
+
+1. Install the extension from the Marketplace.
+2. Open your **AL project** in VS Code.
+3. Open the chat panel and switch to **Agent mode**.
+4. Pick an agent from the **AC⚡DC sidebar** (or press `Ctrl+Shift+P` → **AC/DC: Use Agent**).
+5. Describe your requirement — the agent guides you from spec to working code.
+
+<!-- SCREENSHOT: Add a GIF here of step 4-5: opening the sidebar, clicking an agent, and typing a requirement in chat. -->
+
+---
+
+## What You Get
+
+Everything is delivered automatically through the extension — no `.github/` setup, no file copies.
+
+**8 specialized agents** — each a named persona with a distinct role:
+
+| Agent | When to use |
+|-------|-------------|
+| **Angus, AL Architect** | Design a solution, model data, plan integrations |
+| **Phil, AL Developer** | Implement a feature, fix a bug, quick code edits |
+| **Malcolm, AL Conductor** | Full TDD cycle: plan → implement → review → commit |
+| **Brian, AL Pre-Sales** | Estimate effort, SWOT analysis, project proposals |
+| **Bon, AL Auditor** | Independent read-only code audit against BCQuality |
+| **Chief, AL Agent Builder** | Build BC agents with the Agent SDK or Designer |
+| **Wrench, AL Triage** | Diagnose a bug, reproduce it, get a fix recommendation |
+| **Ink, AL Documenter** | Write or update technical documentation |
+
+**Auto-applied coding standards** — instructions that activate automatically based on the file you edit (table, codeunit, page, test, query). No manual setup.
+
+**Composable skills** — domain knowledge modules (API, events, performance, testing, permissions, pages, debug, and more) loaded on demand by the agents.
+
+**`#acdcCodingStandard` tool** — agents can look up your company's AL coding standard mid-conversation. Also invokable directly in chat: `#acdcCodingStandard`.
+
+---
+
+## Routing Guide
+
+Not sure which agent to start with? Use this table:
+
+| Complexity | Route | Example |
+|------------|-------|---------|
+| **Low** | `@Phil, AL Developer` directly | Add a field, fix a validation |
+| **Medium** | `@Angus, AL Architect` → `@Malcolm, AL Conductor` | New document flow, event-driven feature |
+| **High** | `@Angus, AL Architect` → `@Malcolm, AL Conductor` | Multi-module integration, AppSource feature |
+| **Bug / incident** | `@Wrench, AL Triage` | Reproduce → root-cause → minimal fix |
+| **Code quality** | `@Bon, AL Auditor` | Audit changes vs main, BCQuality findings |
+
+**Not sure?** Start here:
+
+```
+@Angus, AL Architect
+
+I need to [describe your requirement]
 ```
 
-Full local asset pipeline:
+Angus will assess the complexity and recommend the right workflow.
 
-```pwsh
-npm run pipeline:assets
-```
+---
 
-Do not manually curate `assets/skills`, `assets/instructions`, or contribution entries in `package.json`; these are regenerated and reapplied from external sources.
+## TDD Orchestration with Malcolm
 
-## MCP Knowledge Source Files
+When you route through `@Malcolm, AL Conductor`, each feature goes through a structured cycle:
 
-This repository tracks MCP-related knowledge sources with two files:
+<!-- SCREENSHOT: Add a GIF or screenshot showing Malcolm's multi-phase output in chat — e.g. Phase 1 planning summary, then Phase 2 test creation, then the HITL approval prompt. -->
 
-- [automation/mcp/sources.json](automation/mcp/sources.json): the declarative input file you edit.
-  It defines which repositories are enabled and which branch to track.
-- [automation/mcp/sources.lock.json](automation/mcp/sources.lock.json): the generated lock file.
-  It pins each source to an exact commit SHA for reproducibility.
+1. **Plan** — research context, define phases
+2. **RED** — write failing tests first
+3. **GREEN** — minimal code to pass tests
+4. **REFACTOR** — apply AL patterns and standards
+5. **Review gate** — code review subagent validates against spec
+6. **Your approval** — human-in-the-loop before moving to the next phase
 
-Contract expectations:
-
-- `sources.json` = desired state (editable configuration)
-- `sources.lock.json` = resolved state (generated artifact)
-
-Privacy guardrail:
-
-- `sources.lock.json` must remain environment-agnostic.
-- No absolute local file system paths (for example user home directories) are allowed.
-- CI validates this and will fail if machine-specific paths appear in generated artifacts.
-
-## How it is delivered
-
-- Built and packaged to a `.vsix` by the GitHub Actions [release workflow](.github/workflows/release.yml) on every `v*` tag.
-- The `.vsix` is attached to a **GitHub Release** on a private repository.
-- Installed VS Code clients check that repository on startup and offer to update
-  (see `acdc.update.*` settings). Updating uses your VS Code GitHub
-  sign-in to read the private release.
-
-## Develop
-
-```pwsh
-npm install
-npm run compile      # one-off build
-npm run watch        # rebuild on change (or press F5 to launch the Extension Host)
-```
-
-Press **F5** to launch a second VS Code window with the extension loaded.
+---
 
 ## Commands
 
-All commands are grouped under the **AC/DC** category in the command palette (`Ctrl+Shift+P`).
+All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 
 | Command | What it does |
 |---------|--------------|
-| **AC/DC: Check for extension updates** | Manual update check against the private GitHub release. |
-| **AC/DC: Use Agent** | Prompts to pick an agent, then activates it (opens the chat participant, switches Agent Flow, auto-enables its declared tools). Also fired by clicking an agent in the sidebar. |
-| **AC/DC: Reload Agent List** | Re-reads `.agent.md` files and refreshes the **Agents** tree in the sidebar. |
-| **AC/DC: Reset Agent Flow** | Clears the current flow state shown in the **Agent Flow** sidebar. |
-| **AC/DC: Set Agent Placeholder…** | Two-step QuickPick to configure `acdc.agents.placeholders.*` (the `${architectAgent}`, `${developerAgent}`, `${conductorAgent}`, `${auditorAgent}`, `${reviewAgent}` values that agent files reference). |
-| **AC/DC: Pick SDD Plans Root Folder…** | Sets `acdc.plansRoot`; supports out-of-workspace folders. Also linked from the setting itself. |
-| **AC/DC: Show Settings Reference** | Opens a Markdown preview of the settings reference. Also linked from every setting's `[ⓘ Details]` link. |
-| **AC/DC: Manage AL Base Code / ISV Code** | Opens the AL Base Code panel to configure mounted BC / ISV repositories. |
-| **AC/DC: Sync AL Base Code / ISV Code** | Clones or pulls the mounted BC / ISV repositories. |
+| **AC/DC: Use Agent** | Pick an agent from a list — activates it in chat and enables its tools |
+| **AC/DC: Reload Agent List** | Refresh the Agents sidebar after adding custom agents |
+| **AC/DC: Reset Agent Flow** | Clear the current phase shown in the Agent Flow sidebar |
+| **AC/DC: Set Agent Placeholder…** | Configure which persona names are used in agent cross-references |
+| **AC/DC: Pick SDD Plans Root Folder…** | Set where spec/architecture/plan files are stored |
+| **AC/DC: Show Settings Reference** | Open the full settings reference in a Markdown preview |
+| **AC/DC: Manage AL Base Code / ISV Code** | Configure mounted BC base app or ISV source repositories |
+| **AC/DC: Sync AL Base Code / ISV Code** | Clone or pull the configured BC/ISV repositories |
+| **AC/DC: Check for extension updates** | Manually check for a new version |
 
-## Agents (Personas)
+---
 
-Agents ship under stable persona names so they never collide with agents from other extensions (e.g. **ALDC**) in the chat picker:
+## Settings
 
-| Persona | Role |
-|---------|------|
-| **Angus, AL Architect** | Solution design, data modeling, integration strategy |
-| **Phil, AL Developer** | Tactical implementation, coding, debugging |
-| **Malcolm, AL Conductor** | Orchestrates plan → implement → review cycles |
-| **Brian, AL Pre-Sales** | Estimation, SWOT, proposals |
-| **Bon, AL Auditor** | Independent read-only code audit against BCQuality |
-| **Chief, AL Agent Builder** | Builds BC agents (Agent SDK / Designer) |
-| **Wrench, AL Triage** | Reactive support for existing AL code |
-| **Ink, AL Documenter** | Documentation authoring |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
+| `acdc.update.repository` | `Louage/frw-agentic-coding` | GitHub repository to check for updates |
+| `acdc.update.checkOnStartup` | `true` | Automatically check for updates on startup |
+| `acdc.agents.enableHooksOverlay` | `false` | Enable deterministic agent lifecycle events in the sidebar |
 
-Subagents (invoked by other agents, not user-facing in the picker) are prefixed `acdc-*.subagent.md`.
+Open the full reference: `Ctrl+Shift+P` → **AC/DC: Show Settings Reference**.
 
-## Agent Flow Hooks Overlay (Optional)
+---
 
-The Agent Flow sidebar is primarily driven by agent self-reporting to the temp
-file `acdc-agent-flow.txt`. This repository also includes an optional hooks
-overlay that records deterministic lifecycle boundaries (session start, subagent
-start/stop, stop) to a JSONL stream in the OS temp folder.
+## Agent Flow Sidebar
 
-Files:
+The **Agent Flow** panel shows which agent is active and what phase it is in. It updates automatically as agents report their progress. To see it, open the AC⚡DC sidebar from the activity bar.
 
-- `.github/hooks/acdc-flow.json`
-- `.github/hooks/write-flow-hook-event.cjs`
+<!-- SCREENSHOT: Add a screenshot of the Agent Flow sidebar showing an active Malcolm orchestration with phase indicators. -->
 
-How to enable:
+---
 
-1. Ensure hook files are loaded by VS Code (default includes `.github/hooks`).
-2. Enable extension setting `acdc.agents.enableHooksOverlay`.
+## Source & Weekly Sync
 
-When enabled, AC⚡DC reads `%TEMP%/acdc-agent-flow-hooks.jsonl` (Windows) or
-`/tmp/acdc-agent-flow-hooks.jsonl` (macOS/Linux) and overlays deterministic
-boundary events onto the sidebar flow.
+The agents, skills, and coding standards bundled in this extension are sourced from the **[ALDC — AL Development Collection](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot)** community framework and the **[microsoft/BCQuality](https://github.com/microsoft/BCQuality)** knowledge base.
 
-## Release
+Both sources are synced automatically on a weekly schedule. Updates land in the next extension release — no manual steps needed on your end.
 
-1. Update `CHANGELOG.md`.
-2. `git tag v0.2.0 && git push origin v0.2.0`.
-3. The release workflow stamps the version from the tag, packages the `.vsix`, and creates the GitHub Release.
+---
 
-## Configure who can install / auto-update
+## License
 
-Set the repository clients check in settings:
-
-```jsonc
-"acdc.update.repository": "Louage/frw-agentic-coding",
-"acdc.update.checkOnStartup": true
-```
+MIT — See [LICENSE](LICENSE) for details.
