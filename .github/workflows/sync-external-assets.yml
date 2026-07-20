@@ -115,6 +115,7 @@ jobs:
             - synchronized package contributions
           branch: chore/sync-external-ai-assets
           delete-branch: true
+          force-push: true
           labels: |
             automation
             assets
