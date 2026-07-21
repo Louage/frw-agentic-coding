@@ -1,6 +1,15 @@
 # Changelog
 
 
+## [Unreleased]
+
+### Removed
+
+- **feat(agent-flow): the entire Agent Flow visualisation feature.** Removed the sidebar `Agent Flow` webview view, the `acdc_update_agent_flow` language-model tool, the `acdc.setAgentFlowStyle` and `acdc.resetAgentFlow` commands, the `acdc.agentFlow.diagramStyle` setting, the bundled Mermaid runtime (`mermaid` dependency + `dist/webview/mermaid.min.js`), and the `Inject-FlowReporting.ps1` asset-pipeline step (with its `inject:flow-reporting` npm script and `pipeline:assets` reference). The `FLOW REPORTING` protocol block previously injected into every `.agent.md` is stripped, and `acdc_update_agent_flow` is removed from every agent's `tools:` array and moved to the `$DeprecatedTools` list in `Normalize-AgentTools.ps1` so future upstream syncs strip it automatically.
+  - **Why:** the sidebar could not reliably track chat-panel navigation. VS Code exposes no public API for Copilot Chat panel visibility, the currently-active chat session id, or the "chat list vs. active chat" state (`vscode.chat` only offers `createChatParticipant`; every observation-oriented `vscode.proposed.chat*.d.ts` proposal is either irrelevant to observation or forbidden in Marketplace-published extensions). The transcript-mtime proxy shipped in earlier iterations followed the newest-modified `.jsonl` file rather than the visible chat, so selecting an older chat from the history list left the sidebar showing the wrong flow. The feature is shelved until VS Code exposes a stable chat-session observation API.
+  - **Migration:** none needed. Any persisted `acdc.agentFlowState` workspace-state key becomes dead data (harmless). Custom agents that still call `acdc_update_agent_flow` will silently no-op (the tool is not registered).
+
+
 ## [1.3.0] - 2026-07-21
 
 ### Added

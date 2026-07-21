@@ -42,12 +42,7 @@ $CoreTools = @(
     "search/listDirectory",
     "search/textSearch",
     "search/usages",
-    "todo",
-    # AC⚡DC extension-contributed tool: lets the agent update the sidebar
-    # "Agent Flow" view as it moves through phases of its workflow.
-    # See automation/scripts/Inject-FlowReporting.ps1 for the matching body block
-    # that tells the agent WHEN to call this tool.
-    "acdc_update_agent_flow"
+    "todo"
 )
 
 # Tools that are deprecated, renamed, or environment-specific and must be removed
@@ -65,7 +60,11 @@ $DeprecatedTools = @(
     # when the extension's tool prefix moved from `frw_` to `acdc_`. Old
     # references are stripped so the CoreTools entry (with the new name)
     # remains the single source of truth.
-    "frw_update_agent_flow"
+    "frw_update_agent_flow",
+    # Removed in 1.4.0 along with the entire Agent Flow sidebar feature
+    # (VS Code exposes no API to observe chat panel state; the sidebar
+    # could not track chat selection reliably — see CHANGELOG.md).
+    "acdc_update_agent_flow"
 )
 
 # Frontmatter keys that belong exclusively to the extension (read from assets/agent-metadata.json)

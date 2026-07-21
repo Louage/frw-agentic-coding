@@ -108,7 +108,6 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 |---------|--------------|
 | **AC/DC: Use Agent** | Pick an agent from a list — activates it in chat and enables its tools |
 | **AC/DC: Reload Agent List** | Refresh the Agents sidebar after adding custom agents |
-| **AC/DC: Reset Agent Flow** | Clear the current phase shown in the Agent Flow sidebar |
 | **AC/DC: Set Agent Placeholder…** | Configure which persona names are used in agent cross-references |
 | **AC/DC: Pick SDD Plans Root Folder…** | Set where spec/architecture/plan files are stored |
 | **AC/DC: Show Settings Reference** | Open the full settings reference in a Markdown preview |
@@ -125,20 +124,11 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
-| `acdc.agents.enableHooksOverlay` | `false` | Enable deterministic agent lifecycle events in the sidebar |
 | `acdc.bcquality.customLayers` | `[]` | Ordered list of customer/partner BCQuality forks to import (see below) |
 | `acdc.bcquality.syncOnStartup` | `false` | Re-sync all enabled custom layers when VS Code starts (no-op when SHA is unchanged) |
 | `acdc.bcquality.registerInstructionsLocation` | `true` | Register the custom-layer instructions folder with `chat.instructionsFilesLocations` so Copilot Chat auto-discovers the rules |
 
 > Updates are delivered automatically through the VS Code Marketplace — no manual configuration needed.
-
----
-
-## Agent Flow Sidebar
-
-The **Agent Flow** panel shows which agent is active and what phase it is in. It updates automatically as agents report their progress. To see it, open the AC⚡DC sidebar from the activity bar.
-
-<!-- SCREENSHOT: Add a screenshot of the Agent Flow sidebar showing an active Malcolm orchestration with phase indicators. -->
 
 ---
 
