@@ -2,11 +2,12 @@ name: Release
 
 # Triggers on:
 #  - pushing a version tag, e.g. `git tag v0.1.0 && git push origin v0.1.0`, or
-#  - pushing to main branch (merge) — hybrid version selection:
-#      * If package.json's version is newer than the latest v* tag, release that
-#        (manual bump in the merged PR wins → good for minor/major).
-#      * Otherwise auto-increment the patch from the latest tag (default → good
-#        for hotfixes without touching package.json).
+#  - pushing to main branch (merge) — releases ONLY when `package.json`'s
+#    version is strictly greater than the latest `v*` tag (i.e. the merged PR
+#    ran `Cut-Release.ps1` / `npm run release:cut`). Merges that do not bump
+#    `package.json` are a no-op — no auto patch bump. This keeps the changelog
+#    invariant enforceable: every release matches a promoted `[Unreleased]`
+#    block in CHANGELOG.md.
 #  - manually from the Actions tab ("Run workflow") where you type the version.
 on:
   push:
@@ -45,37 +46,34 @@ jobs:
       - name: Determine version
         id: version
         # The version is the single source of truth for this release.
-        # - For tag pushes: extract from tag name (v0.1.0)
-        # - For main branch pushes: hybrid
-        #     * If package.json's version is newer than the latest v* tag, use it
-        #       (the merged PR manually bumped for a minor/major release).
-        #     * Otherwise auto-increment the patch of the latest tag
-        #       (default behaviour — no manual bump needed for hotfixes).
+        # - For tag pushes: extract from tag name (v0.1.0).
+        # - For main branch pushes: `package.json`'s version MUST be strictly
+        #   greater than the latest `v*` tag; otherwise the release step is
+        #   skipped (no auto-bump). This makes `Cut-Release.ps1` the canonical
+        #   release path and keeps CHANGELOG.md in sync.
         # - For manual dispatch: use the provided input.
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             RAW="${{ inputs.version }}"
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
             LATEST="${LATEST_TAG#v}"
             PKG=$(node -p "require('./package.json').version")
-            # Compare package.json vs latest tag using `sort -V`.
             HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$PKG" | sort -V | tail -n1)
             if [ "$PKG" != "$LATEST" ] && [ "$HIGHEST" = "$PKG" ]; then
-              # package.json is strictly greater than latest tag → manual bump wins.
-              echo "Using manually bumped package.json version: $PKG (latest tag was $LATEST_TAG)"
+              echo "Using bumped package.json version: $PKG (latest tag was $LATEST_TAG)"
               RAW="$PKG"
+              echo "should-release=true" >> "$GITHUB_OUTPUT"
             else
-              # Auto-increment patch from latest tag.
-              MAJOR=$(echo "$LATEST" | cut -d. -f1)
-              MINOR=$(echo "$LATEST" | cut -d. -f2)
-              PATCH=$(echo "$LATEST" | cut -d. -f3)
-              PATCH=$((PATCH + 1))
-              RAW="${MAJOR}.${MINOR}.${PATCH}"
-              echo "Auto-incrementing patch: $LATEST_TAG → v$RAW (package.json = $PKG)"
+              echo "::notice::package.json ($PKG) is not ahead of latest tag ($LATEST_TAG). Skipping release."
+              echo "::notice::Run 'npm run release:cut' locally (or push a v* tag) to publish a new release."
+              RAW="$PKG"
+              echo "should-release=false" >> "$GITHUB_OUTPUT"
             fi
           else
             RAW="${GITHUB_REF_NAME}"
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
           fi
           VERSION="${RAW#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -83,6 +81,7 @@ jobs:
 
       - name: Check if version already released
         id: check-tag
+        if: steps.version.outputs.should-release == 'true'
         run: |
           if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
@@ -92,22 +91,22 @@ jobs:
           fi
 
       - name: Set version from tag
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         # Strip the leading "v" and write the version into package.json without
         # creating a commit/tag, so the .vsix is stamped with the release version.
         run: |
           npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Lint
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         run: npm run lint
 
       - name: Validate generated contribution paths
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         run: npm run validate:contribution-paths
 
       - name: Create git tag (for main branch releases)
-        if: steps.check-tag.outputs.skipped == 'false' && github.ref == 'refs/heads/main'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false' && github.ref == 'refs/heads/main'
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "GitHub Actions"
@@ -115,11 +114,11 @@ jobs:
           git push origin "${{ steps.version.outputs.tag }}" || echo "Tag push failed or already exists"
 
       - name: Package VSIX
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         run: npx @vscode/vsce package --no-dependencies -o acdc-${{ steps.version.outputs.tag }}.vsix
 
       - name: Create GitHub Release
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
@@ -127,7 +126,7 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to VS Code Marketplace
-        if: steps.check-tag.outputs.skipped == 'false'
+        if: steps.version.outputs.should-release == 'true' && steps.check-tag.outputs.skipped == 'false'
         run: npx @vscode/vsce publish --no-dependencies --packagePath acdc-${{ steps.version.outputs.tag }}.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
