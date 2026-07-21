@@ -18,7 +18,22 @@ import {
   syncGitIgnoredRepositories,
 } from "./alBaseCode";
 import { AlBaseCodePanel } from "./views/alBaseCodePanel";
+import { BcqualityCustomLayersPanel } from "./views/bcqualityCustomLayersPanel";
 import { PlaceholderResolver, DEFAULT_PLACEHOLDERS } from "./placeholderResolver";
+import {
+  syncCustomLayers,
+  syncCustomLayersOnStartup,
+} from "./bcquality/sync";
+import { removeAllLayers } from "./bcquality/storage";
+import { pruneStaleEntries } from "./bcquality/instructionsLocation";
+import {
+  GetBcqualityCustomRuleTool,
+  ListBcqualityCustomRulesTool,
+} from "./tools/bcqualityCustomRulesTool";
+import {
+  GetBcqualityCustomSkillTool,
+  ListBcqualityCustomSkillsTool,
+} from "./tools/bcqualityCustomSkillsTool";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -83,7 +98,23 @@ export function activate(context: vscode.ExtensionContext): void {
       new UpdateAgentFlowTool(flowState, output)
     ),
     vscode.lm.registerTool("acdc_get_sdd_config", new GetSddConfigTool()),
-    vscode.lm.registerTool("acdc_render_sdd_path", new RenderSddPathTool())
+    vscode.lm.registerTool("acdc_render_sdd_path", new RenderSddPathTool()),
+    vscode.lm.registerTool(
+      "acdc_list_bcquality_custom_rules",
+      new ListBcqualityCustomRulesTool(context)
+    ),
+    vscode.lm.registerTool(
+      "acdc_get_bcquality_custom_rule",
+      new GetBcqualityCustomRuleTool(context)
+    ),
+    vscode.lm.registerTool(
+      "acdc_list_bcquality_custom_skills",
+      new ListBcqualityCustomSkillsTool(context)
+    ),
+    vscode.lm.registerTool(
+      "acdc_get_bcquality_custom_skill",
+      new GetBcqualityCustomSkillTool(context)
+    )
   );
 
   // Validate placeholder values on startup and on configuration change.
@@ -233,6 +264,56 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // 6. BCQuality custom layers (customer/partner forks — see aldc.yaml
+  //    external.bcquality.customLayers). Table editor + manual sync command
+  //    + startup hook (guarded by `acdc.bcquality.syncOnStartup`).
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.manageBcqualityCustomLayers", () =>
+      BcqualityCustomLayersPanel.show(context, output)
+    ),
+    vscode.commands.registerCommand("acdc.syncBcqualityCustomLayers", async () => {
+      const results = await syncCustomLayers(context, output, {
+        promptOnFirstInstall: true,
+      });
+      const installed = results.filter((r) => r.outcome === "installed").length;
+      const upToDate = results.filter((r) => r.outcome === "up-to-date").length;
+      const declined = results.filter((r) => r.outcome === "declined").length;
+      const errors = results.filter((r) => r.outcome === "error").length;
+      if (errors > 0) {
+        vscode.window.showWarningMessage(
+          `BCQuality custom layers: ${errors} error(s). See the AC⚡DC output for details.`
+        );
+      } else if (installed === 0 && upToDate === 0 && declined === 0) {
+        vscode.window.showInformationMessage(
+          `No enabled BCQuality custom layers to sync. Add one in "acdc.bcquality.customLayers".`
+        );
+      } else {
+        vscode.window.showInformationMessage(
+          `BCQuality custom layers: ${installed} installed, ${upToDate} up-to-date, ${declined} declined.`
+        );
+      }
+    }),
+    vscode.commands.registerCommand("acdc.clearBcqualityCustomLayers", async () => {
+      const confirm = await vscode.window.showWarningMessage(
+        `Remove ALL imported BCQuality custom layers from extension globalStorage? ` +
+          `They will be re-installable via "Sync BCQuality Custom Layers".`,
+        { modal: true },
+        "Remove"
+      );
+      if (confirm !== "Remove") {
+        return;
+      }
+      const removed = await removeAllLayers(context);
+      await pruneStaleEntries(context, output);
+      vscode.window.showInformationMessage(
+        removed.length === 0
+          ? `No imported BCQuality custom layers found.`
+          : `Removed ${removed.length} custom layer(s): ${removed.join(", ")}.`
+      );
+    })
+  );
+  void syncCustomLayersOnStartup(context, output);
 
   // 5. Startup checks.
   void syncOnStartup(output);
