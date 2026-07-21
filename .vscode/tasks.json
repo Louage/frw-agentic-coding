@@ -15,6 +15,56 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "AC/DC: Update Changelog from git",
+      "detail": "Populate CHANGELOG.md '[Unreleased]' section from commits since the last v* tag (merges with existing entries, no duplicates).",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/automation/scripts/Update-Changelog.ps1"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "AC/DC: Cut release (bump + commit)",
+      "detail": "Bump package.json version, promote [Unreleased] to a dated heading, and stage a chore(release) commit. Does NOT push or tag.",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/automation/scripts/Cut-Release.ps1",
+        "-Bump",
+        "${input:releaseBump}",
+        "-AllowChangelogEdits"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "releaseBump",
+      "type": "pickString",
+      "description": "Semver bump",
+      "options": ["patch", "minor", "major"],
+      "default": "patch"
     }
   ]
 }
