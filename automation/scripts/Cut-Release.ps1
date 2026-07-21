@@ -33,6 +33,14 @@ Explicit version string (e.g. `1.3.0`). Takes precedence over `-Bump`.
 Permit an uncommitted `CHANGELOG.md` in the working tree — useful when you
 edited the `[Unreleased]` block by hand before running.
 
+.PARAMETER NoConfirm
+Skip the interactive confirmation prompt. Intended for CI / release workflow
+use.
+
+.PARAMETER SkipCi
+Append ` [skip ci]` to the commit message so a subsequent push does not
+re-trigger CI workflows guarded on that marker.
+
 .EXAMPLE
 pwsh -File automation/scripts/Cut-Release.ps1
 
@@ -47,7 +55,9 @@ param(
   [ValidateSet("major", "minor", "patch")]
   [string]$Bump = "patch",
   [string]$Version = "",
-  [switch]$AllowChangelogEdits
+  [switch]$AllowChangelogEdits,
+  [switch]$NoConfirm,
+  [switch]$SkipCi
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,11 +120,13 @@ if ($newVersion -eq $currentVersion) {
 
 Write-Host "[release] Bumping $currentVersion -> $newVersion" -ForegroundColor Cyan
 
-# Confirm.
-$reply = Read-Host "Proceed? [y/N]"
-if ($reply -notmatch '^(y|Y)') {
-  Write-Host "[release] Aborted." -ForegroundColor Yellow
-  return
+# Confirm (unless -NoConfirm).
+if (-not $NoConfirm) {
+  $reply = Read-Host "Proceed? [y/N]"
+  if ($reply -notmatch '^(y|Y)') {
+    Write-Host "[release] Aborted." -ForegroundColor Yellow
+    return
+  }
 }
 
 # ---------------------------------------------------------------------------
@@ -132,40 +144,25 @@ if ($pkgNew -eq $pkgRaw) {
 Set-Content -LiteralPath $pkgPath -Value $pkgNew -Encoding UTF8 -NoNewline
 
 # ---------------------------------------------------------------------------
-# 5. Promote [Unreleased] and insert fresh scaffold.
+# 5. Promote [Unreleased] to a dated version heading.
 # ---------------------------------------------------------------------------
+# The `[Unreleased]` block is transient — it is expected to have been just
+# populated by `Update-Changelog.ps1` (either locally or in CI). We do NOT
+# re-insert an empty scaffold above the dated heading: keeping the committed
+# CHANGELOG.md free of empty `_None yet._` sections avoids ugly noise on the
+# VS Code Marketplace "Changelog" tab. The next `Update-Changelog.ps1` run
+# will re-create `[Unreleased]` on demand.
 $logRaw = Get-Content -LiteralPath $logPath -Raw -Encoding UTF8
 $today = (Get-Date -Format "yyyy-MM-dd")
 
 $unrelHeadingRe = '(?m)^##\s+\[Unreleased\][^\r\n]*'
 $unrelMatch = [regex]::Match($logRaw, $unrelHeadingRe)
 if (-not $unrelMatch.Success) {
-  throw "CHANGELOG.md has no '## [Unreleased]' heading. Run Update-Changelog.ps1 first."
+  throw "CHANGELOG.md has no '## [Unreleased]' heading. Run 'npm run changelog:update' first to populate one from git."
 }
-
-# Replace the existing Unreleased heading with the dated version heading,
-# then prepend a fresh [Unreleased] scaffold above it.
-$scaffold = @"
-## [Unreleased]
-
-### Added
-
-_None yet._
-
-### Fixed
-
-_None yet._
-
-### Changed
-
-_None yet._
-
-
-"@
 
 $dated = "## [$newVersion] - $today"
 $logNew = $logRaw.Substring(0, $unrelMatch.Index) `
-  + $scaffold `
   + $dated `
   + $logRaw.Substring($unrelMatch.Index + $unrelMatch.Length)
 
@@ -175,10 +172,12 @@ Set-Content -LiteralPath $logPath -Value $logNew -Encoding UTF8 -NoNewline
 # 6. Stage and commit.
 # ---------------------------------------------------------------------------
 git add -- package.json CHANGELOG.md | Out-Null
-git commit -m "chore(release): v$newVersion" | Out-Null
+$commitMsg = "chore(release): v$newVersion"
+if ($SkipCi) { $commitMsg = "$commitMsg [skip ci]" }
+git commit -m $commitMsg | Out-Null
 
 Write-Host ""
-Write-Host "[release] Committed chore(release): v$newVersion" -ForegroundColor Green
+Write-Host "[release] Committed $commitMsg" -ForegroundColor Green
 Write-Host ""
 Write-Host "Review the commit, then push + tag to trigger the release workflow:" -ForegroundColor Cyan
 Write-Host ""

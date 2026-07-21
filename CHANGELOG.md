@@ -1,28 +1,13 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-_None yet._
-
-### Fixed
-
-_None yet._
-
-### Changed
-
-_None yet._
-
-## [1.2.9] - 2026-07-21
+## [1.2.10] - 2026-07-21
 
 ### Added
 
 - feat: add MIT License to the project (`fcb7b89`)
 - feat: update keywords and categories in package.json for better discoverability (`1fb6296`)
-- feat: Enhance version determination logic in release workflow for hybrid version selection (`860a1b1`)
-- feat: semi-automated release notes (Update-Changelog + Cut-Release scripts + tasks) (`127fba0`)
 - feat: BCQuality custom layers (table editor, tools, docs) (`2186de8`)
+- feat: fully-automated release-on-merge (CI computes SemVer bump from Conventional Commits, populates `[Unreleased]`, promotes CHANGELOG, bumps `package.json`, tags, publishes).
 
 ### Fixed
 
@@ -34,6 +19,7 @@ _None yet._
 - Refactor code structure for improved readability and maintainability (`096851b`)
 - refactor: remove update checking functionality and related commands from extension (`0d1d551`)
 - chore: update README and package.json for clarity and licensing changes (`4e375f1`)
+- **`package.json` version is now CI-owned.** Do not bump it manually; commit with a Conventional Commit prefix (`feat:`, `fix:`, …) and the merge to `main` will compute the next version, update this CHANGELOG, tag, and publish.
 
 ## [1.2.0] - 2026-07-16
 
