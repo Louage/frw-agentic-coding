@@ -150,6 +150,108 @@
         }
       },
       {
+        "name": "acdc_list_bcquality_custom_rules",
+        "displayName": "List BCQuality Custom Rules",
+        "modelDescription": "Lists the customer/partner-authored BCQuality rules currently installed from configured custom layers (see `acdc.bcquality.customLayers`). Returns each rule's qualified name (in the form `<layerId>__<rule-name>`), its `applyTo` glob, the layer id + repository it came from, and a one-line description. Use this when reviewing AL code so you can decide whether a customer-specific rule applies. Rules are transformed from the fork's `custom/knowledge/*.md` files.",
+        "toolReferenceName": "acdcListBcqualityCustomRules",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(book)",
+        "userDescription": "List BCQuality rules imported from configured customer/partner custom layers.",
+        "tags": [
+          "acdc",
+          "bcquality",
+          "custom-layer",
+          "rules"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "layerId": {
+              "type": "string",
+              "description": "Optional. Filter to a single custom layer id."
+            }
+          }
+        }
+      },
+      {
+        "name": "acdc_get_bcquality_custom_rule",
+        "displayName": "Get BCQuality Custom Rule",
+        "modelDescription": "Returns the full markdown of a customer/partner-authored BCQuality rule by its qualified name (`<layerId>__<rule-name>`, as returned by `acdc_list_bcquality_custom_rules`). Rule content is served from `globalStorage` and includes the transformed `applyTo` frontmatter plus a provenance banner pointing at the source fork + commit.",
+        "toolReferenceName": "acdcGetBcqualityCustomRule",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(book)",
+        "userDescription": "Read a specific BCQuality custom rule (imported from a customer/partner fork).",
+        "tags": [
+          "acdc",
+          "bcquality",
+          "custom-layer",
+          "rules"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Qualified rule name (`<layerId>__<rule-name>`)."
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      },
+      {
+        "name": "acdc_list_bcquality_custom_skills",
+        "displayName": "List BCQuality Custom Skills",
+        "modelDescription": "Lists the customer/partner-authored BCQuality action skills currently installed from configured custom layers. Returns each skill's qualified name (`<layerId>__<skill-name>`), the layer id + repository it came from, and a one-line description parsed from the SKILL.md frontmatter. Skills come from the fork's `custom/skills/**` folder — either the flat `.md` shape or the agentskills.io folder-per-skill shape.",
+        "toolReferenceName": "acdcListBcqualityCustomSkills",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-method)",
+        "userDescription": "List BCQuality action skills imported from configured customer/partner custom layers.",
+        "tags": [
+          "acdc",
+          "bcquality",
+          "custom-layer",
+          "skills"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "layerId": {
+              "type": "string",
+              "description": "Optional. Filter to a single custom layer id."
+            }
+          }
+        }
+      },
+      {
+        "name": "acdc_get_bcquality_custom_skill",
+        "displayName": "Get BCQuality Custom Skill",
+        "modelDescription": "Returns the full SKILL.md of a customer/partner-authored BCQuality skill by its qualified name (`<layerId>__<skill-name>`, as returned by `acdc_list_bcquality_custom_skills`). Content is served from `globalStorage` and includes a provenance banner pointing at the source fork + commit.",
+        "toolReferenceName": "acdcGetBcqualityCustomSkill",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(symbol-method)",
+        "userDescription": "Read a specific BCQuality custom skill (imported from a customer/partner fork).",
+        "tags": [
+          "acdc",
+          "bcquality",
+          "custom-layer",
+          "skills"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Qualified skill name (`<layerId>__<skill-name>`)."
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      },
+      {
         "name": "acdc_render_sdd_path",
         "displayName": "Render SDD Path",
         "modelDescription": "Renders the configured spec folder, spec file, and git branch names for a given requirement, substituting workspace-configured templates and the standard template variables (dates, sequences, GUID, USER, HOST, ...). Call this INSTEAD of manually building paths like `.github/plans/{req_name}/{req_name}.spec.md` — the result reflects the user's `acdc.*` SDD settings. Provide `req_name` (kebab-case) and, when creating a spec file, `type` (`spec`, `architecture`, `test-plan`, ...). Optional: `slug`, `seq`, `env`.",
@@ -1090,6 +1192,21 @@
         "command": "acdc.pickSddPlansRoot",
         "title": "Pick SDD Plans Root Folder…",
         "category": "AC/DC"
+      },
+      {
+        "command": "acdc.manageBcqualityCustomLayers",
+        "title": "Manage BCQuality Custom Layers",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.syncBcqualityCustomLayers",
+        "title": "Sync BCQuality Custom Layers",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.clearBcqualityCustomLayers",
+        "title": "Clear BCQuality Custom Layers (globalStorage)",
+        "category": "AC/DC"
       }
     ],
     "viewsContainers": {
@@ -1257,6 +1374,67 @@
             "markdownDescription": "Template for git branch names for a spec-driven requirement.\n\nExamples: `feature/{slug}`, `spec/{YYYY}-{MM}-{DD}-{slug}`, `{USER}/{slug}`.\n\n**[ⓘ Details & full variable reference](command:acdc.showSettingsHelp)**"
           }
         }
+      },
+      {
+        "id": "acdc.bcquality",
+        "title": "BCQuality Custom Layers",
+        "order": 5,
+        "properties": {
+          "acdc.bcquality.customLayers": {
+            "type": "array",
+            "order": 1,
+            "default": [],
+            "markdownDescription": "Customer/partner BCQuality forks whose `custom/knowledge/**` and `custom/skills/**` folders are pulled into this extension's `globalStorage` and made available to agents (rules via `chat.instructionsFilesLocations`, skills via the `acdcListBcqualityCustomSkills` / `acdcGetBcqualityCustomSkill` tools). Files never leave `globalStorage` — nothing is written into your workspace.\n\nEach layer's artifacts are prefixed with `<id>__` to prevent name collisions with the bundled Microsoft/Community layers.\n\n**[▶ Open table editor](command:acdc.manageBcqualityCustomLayers)** &nbsp;·&nbsp; **[▶ Sync now](command:acdc.syncBcqualityCustomLayers)** &nbsp;·&nbsp; **[ⓘ Details](command:acdc.showSettingsHelp)**",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{1,31}$",
+                  "description": "Short layer id used as filename prefix (`<id>__…`). Lowercase, 2–32 chars, letters/digits/hyphens, must start with a letter. Must be unique across entries and must not collide with any bundled agent/skill/instruction name."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Human-friendly display name (shown in logs and consent prompts)."
+                },
+                "repository": {
+                  "type": "string",
+                  "description": "Git URL of the BCQuality fork (public HTTPS or SSH). Only the `custom/` folder is pulled."
+                },
+                "ref": {
+                  "type": "string",
+                  "description": "Branch, tag, or 40-hex commit SHA to pin. Prefer a SHA for reproducibility. Defaults to `main` when empty."
+                },
+                "tokenSecretKey": {
+                  "type": "string",
+                  "description": "Optional. Key used to look up a Personal Access Token from VS Code SecretStorage (never store the token in settings.json). Only needed for private repositories."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether this layer is synced and exposed to agents."
+                }
+              },
+              "required": [
+                "id",
+                "repository",
+                "enabled"
+              ]
+            }
+          },
+          "acdc.bcquality.syncOnStartup": {
+            "type": "boolean",
+            "default": false,
+            "order": 2,
+            "markdownDescription": "When enabled, refresh every enabled BCQuality custom layer on startup: resolve the pinned `ref` on the remote, and re-sync only if the resolved SHA differs from the last install. Read-only — nothing is pushed back to the fork."
+          },
+          "acdc.bcquality.registerInstructionsFileLocation": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "markdownDescription": "When enabled, after a successful sync the extension adds its `globalStorage/bcquality-custom/instructions` folder to your user-scoped `chat.instructionsFilesLocations` setting so Copilot Chat auto-discovers the imported `.instructions.md` files with their `applyTo` globs. First-time addition asks for consent. Turn off if you only want the LM-tool access path (`acdcGetBcqualityCustomRule` / `acdcListBcqualityCustomRules`)."
+          }
+        }
       }
     ],
     "chatPromptFiles": [
@@ -1355,7 +1533,9 @@
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
     "rename:personas": "pwsh -File automation/scripts/Rename-AgentsToPersonas.ps1",
     "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:em-dash && npm run rename:personas && npm run inject:flow-reporting && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
-    "pipeline:mcp": "npm run sync:mcp-sources"
+    "pipeline:mcp": "npm run sync:mcp-sources",
+    "changelog:update": "pwsh -File automation/scripts/Update-Changelog.ps1",
+    "release:cut": "pwsh -File automation/scripts/Cut-Release.ps1"
   },
   "devDependencies": {
     "@types/node": "^20.x",

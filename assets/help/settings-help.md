@@ -88,6 +88,81 @@ Prefer `mcp` when you value a clean Explorer over search efficiency.
 
 ---
 
+## BCQuality Custom Layers
+
+AC⚡DC ships Microsoft's public BCQuality knowledge as bundled generated skills
+under `assets/generated/microsoft-bcquality-assets`. On top of that, each installation
+can attach its own private BCQuality forks — "custom layers" — that carry the
+customer's or partner's house rules (e.g. `highway-security-review`, `thunderstruck-events-review`).
+These layers are pulled from git and installed into the extension's per-user
+**globalStorage** folder; nothing is written into the AL workspace, and nothing is
+required at build time.
+
+Where custom-layer content ends up on disk:
+
+```
+<globalStorage>/bcquality-custom/<layer-id>/
+    instructions/<layer-id>__<rule>.instructions.md   -> Copilot rules
+    skills/<layer-id>__<skill>/SKILL.md               -> action skills
+    provenance.json                                    -> repo, ref, resolved SHA, license
+    .acdc-managed                                      -> safety marker used by "Clear"
+```
+
+Rule and skill names are **always** prefixed with `<layer-id>__` to avoid collision
+with the bundled Microsoft/community namespaces. The extension refuses to install a
+layer whose id would shadow a bundled name.
+
+### `acdc.bcquality.customLayers`
+
+Ordered list of custom BCQuality forks to sync. Each entry:
+
+- `id` — short lowercase namespace (`^[a-z][a-z0-9-]{1,31}$`), used as the file
+  prefix. Example: `highway`.
+- `name` — human-readable label shown in the sync summary.
+- `repository` — git URL of the fork (`https://github.com/org/repo.git` or SSH).
+- `ref` — branch, tag, or 40-hex commit SHA. Defaults to `main`.
+- `enabled` — set to `false` to keep the entry configured but skip it during sync.
+- `tokenSecretKey` *(optional)* — key under which a Personal Access Token was stored
+  via `context.secrets` (VS Code SecretStorage). The token is injected into HTTPS
+  clone URLs at runtime and never persisted to settings. Leave empty for public
+  forks or SSH URLs.
+
+Duplicate ids are rejected. Only files under the fork's `custom/knowledge/**` and
+`custom/skills/**` folders are imported — the fork's Microsoft mirror is ignored.
+
+**Recommended**: use the **▶ Open table editor** link in the setting description
+instead of hand-editing JSON. The table editor provides id-pattern validation, a
+live branch picker per row (via `git ls-remote`), a per-row install status column
+(showing the resolved SHA + counts once synced), and a **Save & Sync** button
+that runs the same interactive sync as `AC⚡DC: Sync BCQuality Custom Layers`.
+
+### `acdc.bcquality.syncOnStartup`
+
+Re-sync all enabled custom layers when VS Code starts. If the resolved commit SHA
+matches the last-installed SHA (recorded in `provenance.json`), the layer is a
+no-op. First-time installs are **never** performed on startup — instead the user is
+asked to accept via a modal the next time they run `AC⚡DC: Sync BCQuality Custom Layers`.
+
+### `acdc.bcquality.registerInstructionsLocation`
+
+When enabled, add the extension's globalStorage instructions folder(s) to the
+user-scoped `chat.instructionsFilesLocations` setting so VS Code's Copilot Chat
+auto-discovers custom rules. Modifying that setting requires a one-time consent
+modal per user; declining still leaves the tools
+`acdc_list_bcquality_custom_rules` / `acdc_get_bcquality_custom_rule` (and their
+skill equivalents) available to agents.
+
+### Commands
+
+- `AC⚡DC: Manage BCQuality Custom Layers` — opens the table editor (Id · Name · Repository
+  · Ref · Token · Enabled · Status) with a live branch picker and **Save & Sync** button.
+- `AC⚡DC: Sync BCQuality Custom Layers` — interactive sync (asks for consent on
+  first install of each layer).
+- `AC⚡DC: Clear BCQuality Custom Layers` — removes every folder under
+  `bcquality-custom/*` that was created by the extension (safety marker checked).
+
+---
+
 ## Agent Placeholders
 
 ### `acdc.agents.placeholders`

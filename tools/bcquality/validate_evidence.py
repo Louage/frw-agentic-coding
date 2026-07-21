@@ -33,6 +33,17 @@ import sys
 
 SHA_RE = re.compile(r'pinnedCommit:\s*"?([0-9a-f]{40})"?')
 
+# Citation basenames that carry the mandatory `<layer-id>__` prefix used by
+# `acdc.bcquality.customLayers` (VS Code extension side). We cannot resolve
+# these against the Microsoft BCQuality clone because they come from a
+# private/partner fork whose local clone is not available to CI. Treat them
+# as informational: the sync engine already validates their provenance when it
+# writes them to globalStorage, and the layer's own audit trail (globalStorage
+# `provenance.json`) captures the source repo + resolved SHA.
+CUSTOM_LAYER_CITATION_RE = re.compile(
+    r'(^|/)([a-z][a-z0-9-]{1,31})__[^/]+$'
+)
+
 
 def repo_root() -> str:
     return subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode().strip()
@@ -147,7 +158,15 @@ def main() -> int:
                 errors.append(f"{rel}: missing required field '{field}'.")
         cites = collect_citations(report)
         total_cites += len(cites)
+        customer_cites = 0
         for c in cites:
+            # Customer-layer citations (see CUSTOM_LAYER_CITATION_RE) are
+            # accepted without local resolution — they live in a partner fork
+            # the CI job cannot reach. The extension's sync engine + globalStorage
+            # provenance.json are the authoritative record for them.
+            if CUSTOM_LAYER_CITATION_RE.search(c):
+                customer_cites += 1
+                continue
             if not populated:
                 continue
             # A citation must resolve to a file INSIDE the BCQuality clone. Reject
@@ -160,7 +179,10 @@ def main() -> int:
                 errors.append(f"{rel}: citation escapes the BCQuality clone (absolute path or '..' traversal): {c}")
             elif not os.path.isfile(target):
                 errors.append(f"{rel}: citation does not resolve in BCQuality clone: {c}")
-        notes.append(f"{rel}: outcome={report.get('outcome', '?')}, {len(cites)} citation(s).")
+        cust_note = f", {customer_cites} customer-layer" if customer_cites else ""
+        notes.append(
+            f"{rel}: outcome={report.get('outcome', '?')}, {len(cites)} citation(s){cust_note}."
+        )
 
     # --- Report --------------------------------------------------------------
     for n in notes:

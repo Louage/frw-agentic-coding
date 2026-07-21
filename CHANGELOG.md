@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- feat: add MIT License to the project (`fcb7b89`)
+- feat: update keywords and categories in package.json for better discoverability (`1fb6296`)
+- feat: Enhance version determination logic in release workflow for hybrid version selection (`860a1b1`)
+- feat: semi-automated release notes (Update-Changelog + Cut-Release scripts + tasks) (`127fba0`)
+- feat: BCQuality custom layers (table editor, tools, docs) (`2186de8`)
+
+### Fixed
+
+- fix: prevent stash-pop conflicts in sync PR creation by adding force-push (#38) (`e962c0e`)
+- fix: normalize line endings to LF in regenerate scripts (`bfb762f`)
+
+### Changed
+
+- Refactor code structure for improved readability and maintainability (`096851b`)
+- refactor: remove update checking functionality and related commands from extension (`0d1d551`)
+- chore: update README and package.json for clarity and licensing changes (`4e375f1`)
+
 ## [1.2.0] - 2026-07-16
 
 > **Breaking release** — combines two user-visible rename programs (`frw` → `acdc` identifier/prefix sweep, and agent → persona rename). Read the **Migration** subsections below before installing.

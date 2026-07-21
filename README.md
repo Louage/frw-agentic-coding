@@ -114,6 +114,9 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | **AC/DC: Show Settings Reference** | Open the full settings reference in a Markdown preview |
 | **AC/DC: Manage AL Base Code / ISV Code** | Configure mounted BC base app or ISV source repositories |
 | **AC/DC: Sync AL Base Code / ISV Code** | Clone or pull the configured BC/ISV repositories |
+| **AC/DC: Manage BCQuality Custom Layers** | Open the table editor for customer/partner BCQuality forks |
+| **AC/DC: Sync BCQuality Custom Layers** | Clone or refresh every enabled custom layer |
+| **AC/DC: Clear BCQuality Custom Layers** | Remove every imported custom layer from extension globalStorage |
 
 ---
 
@@ -123,6 +126,9 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 |---------|---------|-------------|
 | `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
 | `acdc.agents.enableHooksOverlay` | `false` | Enable deterministic agent lifecycle events in the sidebar |
+| `acdc.bcquality.customLayers` | `[]` | Ordered list of customer/partner BCQuality forks to import (see below) |
+| `acdc.bcquality.syncOnStartup` | `false` | Re-sync all enabled custom layers when VS Code starts (no-op when SHA is unchanged) |
+| `acdc.bcquality.registerInstructionsLocation` | `true` | Register the custom-layer instructions folder with `chat.instructionsFilesLocations` so Copilot Chat auto-discovers the rules |
 
 > Updates are delivered automatically through the VS Code Marketplace — no manual configuration needed.
 
@@ -141,6 +147,61 @@ The **Agent Flow** panel shows which agent is active and what phase it is in. It
 The agents, skills, and coding standards bundled in this extension are sourced from the **[ALDC — AL Development Collection](https://github.com/javiarmesto/AL-Development-Collection-for-GitHub-Copilot)** community framework and the **[microsoft/BCQuality](https://github.com/microsoft/BCQuality)** knowledge base.
 
 Both sources are synced automatically on a weekly schedule. Updates land in the next extension release — no manual steps needed on your end.
+
+---
+
+## Bring Your Own Rules — BCQuality Custom Layers
+
+On top of Microsoft's bundled BCQuality knowledge, you can attach private **BCQuality forks** — "custom layers" — that carry your customer's or partner's house rules (naming conventions, prefix policies, security checks, etc.). Layers are pulled from git into the extension's per-user **globalStorage**; nothing is written into your AL workspace.
+
+### 1. Add a layer
+
+Run **AC/DC: Manage BCQuality Custom Layers** to open the table editor. Each row is one fork:
+
+| Column | Notes |
+|--------|-------|
+| **Id** | Short lowercase namespace (`^[a-z][a-z0-9-]{1,31}$`) — used as the file prefix. Example: `comp-a` |
+| **Name** | Human-readable label shown in the sync summary |
+| **Repository** | Git URL of the fork (`https://…` or SSH) |
+| **Ref** | Branch / tag / SHA — picker populated via `git ls-remote` |
+| **Token secret key** | *(optional)* SecretStorage key holding a PAT for private forks |
+| **Enabled** | Uncheck to keep the row but skip it during sync |
+| **Status** | Resolved SHA + rule/skill counts once installed |
+
+Save & Sync runs the same interactive install as **AC/DC: Sync BCQuality Custom Layers**.
+
+### 2. Fork layout
+
+Only files under `custom/` are imported (the fork's Microsoft mirror is ignored):
+
+```
+custom/
+  knowledge/**/*.md      -> Copilot rules  (<layer-id>__*.instructions.md)
+  skills/<name>.md       -> action skill   (<layer-id>__<name>/SKILL.md)
+  skills/<name>/SKILL.md -> folder skill   (agentskills.io layout)
+```
+
+All names are prefixed with `<layer-id>__` so a custom layer can never shadow a bundled Microsoft/community namespace.
+
+### 3. Where to find the imported content
+
+- **Rules** show up automatically in the VS Code **Copilot Chat instructions picker** — the extension registers the layer's `instructions/` folder with `chat.instructionsFilesLocations`.
+- **Skills** are NOT in the chat Skills picker (that surface is a static package.json manifest and has no runtime-registration API). Instead, review/audit agents (`@Bon, AL Auditor`, `@Wrench, AL Triage`, the AL Code Review Subagent) consult them automatically via four language-model tools:
+
+  | Tool | Purpose |
+  |------|---------|
+  | `#acdc_list_bcquality_custom_rules` | List every imported rule |
+  | `#acdc_get_bcquality_custom_rule` | Read a rule by qualified name |
+  | `#acdc_list_bcquality_custom_skills` | List every imported skill |
+  | `#acdc_get_bcquality_custom_skill` | Read a skill by qualified name |
+
+  You can invoke them yourself in chat — e.g. `#acdc_list_bcquality_custom_skills` prints a Name / Layer / Description table.
+
+### 4. Priority on conflict
+
+`custom > community > microsoft`. A finding raised by a custom-layer skill outranks the bundled equivalents.
+
+See [assets/help/settings-help.md](assets/help/settings-help.md) for the full setting reference.
 
 ---
 

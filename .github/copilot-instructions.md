@@ -87,6 +87,12 @@ BCQuality is a **citation/audit layer, not a replacement** for the 7 auto-applie
 
 > **Pilot scope**: only `al-performance-review`, `al-security-review`, and `al-style-review` are enabled. These are shipped as bundled generated skills; no `../bcquality` clone is required for Step 0 runtime consultation.
 
+### BCQuality custom layers (customer/partner forks)
+
+On top of the bundled Microsoft baseline, an installation can attach private BCQuality forks — "custom layers" — that carry the customer's or partner's house rules. They are configured via the extension setting `acdc.bcquality.customLayers` and installed by the `AC⚡DC: Sync BCQuality Custom Layers` command into the extension's per-user **globalStorage** folder (never into the workspace). Every imported rule and skill is namespaced with a mandatory `<layer-id>__` prefix so it cannot shadow a bundled name.
+
+Review and audit agents (AL Code Review Subagent, `@Bon, AL Auditor`, `@Wrench, AL Triage`) consult these layers in addition to the bundled leaves via four language-model tools: `acdc_list_bcquality_custom_rules` / `acdc_get_bcquality_custom_rule` (Copilot instructions) and `acdc_list_bcquality_custom_skills` / `acdc_get_bcquality_custom_skill` (action skills). **Priority on conflict**: `custom > community > microsoft`. See [assets/help/settings-help.md](../assets/help/settings-help.md) for the full setting reference.
+
 ## Skills Evidencing
 
 Agents MUST declare which skills they loaded and which patterns they applied:
