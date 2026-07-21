@@ -1,5 +1,21 @@
 # Changelog
 
+
+## [1.3.0] - 2026-07-21
+
+### Added
+
+- feat: enhance release workflow with automated version determination and changelog promotion (`e14d594`)
+- feat: add PR changelog check workflow to enforce versioning rules (#40) (`e62ebd8`)
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+_None yet._
+
 ## [1.2.10] - 2026-07-21
 
 ### Added
