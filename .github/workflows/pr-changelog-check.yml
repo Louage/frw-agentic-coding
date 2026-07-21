@@ -1,0 +1,74 @@
+name: PR Changelog check
+
+# Enforces the release-cut invariant on every PR targeting main:
+#
+#   IF `package.json` "version" changed in this PR
+#   THEN CHANGELOG.md MUST contain a matching `## [<new-version>]` heading
+#        AND a fresh `## [Unreleased]` scaffold above it.
+#
+# This is the CI-side of `automation/scripts/Cut-Release.ps1`: any PR that
+# bumps the version must have run that script (or produced its output by
+# hand). PRs that don't touch the version are unaffected.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "package.json"
+      - "CHANGELOG.md"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare package.json version against base
+        id: bump
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          BASE_VERSION=$(git show "$BASE_SHA:package.json" | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).version))")
+          HEAD_VERSION=$(node -p "require('./package.json').version")
+          echo "base=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::package.json version unchanged ($HEAD_VERSION) — no changelog gate to enforce."
+          else
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::package.json version bumped: $BASE_VERSION → $HEAD_VERSION"
+          fi
+
+      - name: Validate CHANGELOG.md was promoted
+        if: steps.bump.outputs.bumped == 'true'
+        run: |
+          VERSION="${{ steps.bump.outputs.head }}"
+          if [ ! -f CHANGELOG.md ]; then
+            echo "::error::CHANGELOG.md is missing but package.json was bumped to $VERSION."
+            exit 1
+          fi
+          # 1. Must have a heading matching the new version.
+          if ! grep -qE "^##[[:space:]]+\[${VERSION//./\\.}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' heading. Run 'npm run release:cut' locally to promote [Unreleased] to the new version."
+            exit 1
+          fi
+          # 2. Must still have a top-level [Unreleased] scaffold above it.
+          if ! grep -qE "^##[[:space:]]+\[Unreleased\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md must keep a '## [Unreleased]' scaffold above the released version heading."
+            exit 1
+          fi
+          # 3. The [Unreleased] heading must come before the released one.
+          UNREL_LINE=$(grep -nE "^##[[:space:]]+\[Unreleased\]" CHANGELOG.md | head -n1 | cut -d: -f1)
+          VER_LINE=$(grep -nE "^##[[:space:]]+\[${VERSION//./\\.}\]" CHANGELOG.md | head -n1 | cut -d: -f1)
+          if [ -z "$UNREL_LINE" ] || [ -z "$VER_LINE" ] || [ "$UNREL_LINE" -ge "$VER_LINE" ]; then
+            echo "::error::'## [Unreleased]' must appear before '## [$VERSION]' in CHANGELOG.md."
+            exit 1
+          fi
+          echo "::notice::CHANGELOG.md contains '## [$VERSION]' at line $VER_LINE with '## [Unreleased]' scaffold above at line $UNREL_LINE. ✓"
