@@ -88,48 +88,6 @@
         }
       },
       {
-        "name": "acdc_update_agent_flow",
-        "displayName": "Update Agent Flow",
-        "modelDescription": "Updates the Agent Flow view in the AC⚡DC sidebar to reflect the current position in this agent's workflow. Call this at the start of a new task or when switching to a new skill so the user sees where in the SDD/orchestration flow the agent currently is. Provide `step` with a short label (2–4 words). Optionally set `action` to 'start' (default — mark as current in-progress step), 'complete' (mark the current step done and move it to history), or 'reset' (clear history and start fresh). Optionally pass `skill` to record which SKILL.md is being applied at this step.",
-        "toolReferenceName": "acdcUpdateAgentFlow",
-        "canBeReferencedInPrompt": true,
-        "icon": "$(pulse)",
-        "userDescription": "Let the active agent update the current step shown in the AC⚡DC Agent Flow view.",
-        "tags": [
-          "acdc",
-          "agents",
-          "flow",
-          "state"
-        ],
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "step": {
-              "type": "string",
-              "description": "Short label for the current step (e.g. 'create-feature-spec', 'implement-feature', 'review')."
-            },
-            "action": {
-              "type": "string",
-              "enum": [
-                "start",
-                "complete",
-                "reset",
-                "handoff"
-              ],
-              "description": "'start' (default) marks the step as current in-progress. 'complete' pushes the current step to history and clears the active step. 'reset' clears the entire flow history for this agent. 'handoff' switches ownership to another agent while preserving history (provide `agent`, optional `step`/`skill`)."
-            },
-            "agent": {
-              "type": "string",
-              "description": "Target agent display name for `action: handoff` (e.g. 'Phil, AL Developer')."
-            },
-            "skill": {
-              "type": "string",
-              "description": "Optional SKILL.md name being applied at this step (e.g. 'skill-sdd-create-feature-spec')."
-            }
-          }
-        }
-      },
-      {
         "name": "acdc_get_sdd_config",
         "displayName": "Get SDD Configuration",
         "modelDescription": "Returns the current Spec-Driven Development configuration for this workspace: the plans folder location, the spec folder naming format, the spec file naming format, and the git branch naming format — plus the reference of every template variable that can appear in those formats (dates, sequences, GUID, USER, HOST, env vars, `{req_name}`, `{slug}`, `{type}`, ...). ALWAYS call this tool BEFORE creating a spec folder, a spec file, or a git branch, so you honour the workspace conventions instead of hardcoding `.github/plans/` or naming shapes.",
@@ -1178,12 +1136,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "acdc.resetAgentFlow",
-        "title": "Reset Agent Flow",
-        "category": "AC/DC",
-        "icon": "$(clear-all)"
-      },
-      {
         "command": "acdc.setAgentPlaceholder",
         "title": "Set Agent Placeholder…",
         "category": "AC/DC"
@@ -1225,13 +1177,6 @@
           "name": "Agents",
           "icon": "$(hubot)",
           "contextualTitle": "AC⚡DC"
-        },
-        {
-          "type": "webview",
-          "id": "acdc.agentFlow",
-          "name": "Agent Flow",
-          "icon": "$(pulse)",
-          "contextualTitle": "AC⚡DC"
         }
       ]
     },
@@ -1240,11 +1185,6 @@
         {
           "command": "acdc.reloadAgents",
           "when": "view == acdc.agents",
-          "group": "navigation"
-        },
-        {
-          "command": "acdc.resetAgentFlow",
-          "when": "view == acdc.agentFlow",
           "group": "navigation"
         }
       ]
@@ -1335,12 +1275,6 @@
               "type": "string",
               "description": "Display name of the agent or tool this placeholder resolves to."
             }
-          },
-          "acdc.agents.enableHooksOverlay": {
-            "type": "boolean",
-            "default": true,
-            "order": 2,
-            "markdownDescription": "Enable optional Agent Hooks overlay ingestion for the Agent Flow sidebar. When enabled, AC⚡DC reads lifecycle events from `%TEMP%/acdc-agent-flow-hooks.jsonl` (or `/tmp/...`) so session and subagent boundaries can be tracked deterministically in addition to normal agent self-reporting."
           }
         }
       },
@@ -1519,7 +1453,6 @@
     "sync:sources": "pwsh -File automation/scripts/Sync-ExternalSources.ps1 -Clean",
     "normalize:agents": "pwsh -File automation/scripts/Normalize-AgentTools.ps1",
     "normalize:em-dash": "pwsh -File automation/scripts/Normalize-EmDash.ps1",
-    "inject:flow-reporting": "pwsh -File automation/scripts/Inject-FlowReporting.ps1",
     "inject:avatar-greeting": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1",
     "inject:avatar-greeting:source": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1 -AssetsRoot .github/agents",
     "inject:avatar-greeting:overlay": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1 -AssetsRoot automation/overlays/aldc-community/agents",
@@ -1532,7 +1465,7 @@
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
     "rename:personas": "pwsh -File automation/scripts/Rename-AgentsToPersonas.ps1",
-    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:em-dash && npm run rename:personas && npm run inject:flow-reporting && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
+    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:em-dash && npm run rename:personas && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
     "pipeline:mcp": "npm run sync:mcp-sources",
     "changelog:update": "pwsh -File automation/scripts/Update-Changelog.ps1",
     "release:cut": "pwsh -File automation/scripts/Cut-Release.ps1"

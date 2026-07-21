@@ -26,10 +26,8 @@ Legacy single-line `<!-- avatar-greeting -->` blocks (from before the marker
 convention) are also stripped so upgrades don't leave two variants side by
 side.
 
-Placement: immediately BEFORE the AC-DC-FLOW-REPORTING block (if present)
-so the greeting instruction is the model's very first substantive directive
-after identity. If no flow-reporting block is present, the greeting block
-is placed directly after the YAML frontmatter.
+Placement: immediately after the YAML frontmatter so the greeting
+instruction is the model's very first substantive directive after identity.
 
 .PARAMETER AssetsRoot
 Path to the generated assets root that contains agents. Defaults to
@@ -57,8 +55,6 @@ $ErrorActionPreference = "Stop"
 
 $BeginMarker = "<!-- BEGIN:AC-DC-AVATAR-GREETING -->"
 $EndMarker = "<!-- END:AC-DC-AVATAR-GREETING -->"
-$FlowBeginMarker = "<!-- BEGIN:AC-DC-FLOW-REPORTING -->"
-$FlowEndMarker = "<!-- END:AC-DC-FLOW-REPORTING -->"
 
 function Get-GreetingBlock {
     <#
@@ -90,11 +86,11 @@ function Get-GreetingBlock {
     return @"
 $BeginMarker
 > **STEP 0 — GREETING (first reply of a new conversation only).**
-> Emit **exactly one** of the following lines as the **very first line** of your visible reply, before any other output (before flow-reporting, before any thinking, before any text). Pick one uniformly at random — do **not** always pick the first, and do not favour any particular one. Emit it **verbatim**: do not modify, reword, translate, expand, or wrap it.
+> Emit **exactly one** of the following lines as the **very first line** of your visible reply, before any other output (before any thinking, before any text). Pick one uniformly at random — do **not** always pick the first, and do not favour any particular one. Emit it **verbatim**: do not modify, reword, translate, expand, or wrap it.
 >
 $variants
 >
-> On follow-up turns of the same conversation: do NOT emit a greeting; go straight to flow-reporting and the user's request.
+> On follow-up turns of the same conversation: do NOT emit a greeting; go straight to the user's request.
 $EndMarker
 "@
 }
@@ -129,35 +125,23 @@ function Update-AgentFile {
     # plus its trailing blockquote paragraph (one contiguous block of `>`
     # prefixed lines) so upgrades don't leave two variants side by side. Anchor
     # at column 0 (no `\s*` prefix) so we do not eat preceding blank lines that
-    # separate the block from the frontmatter or the flow-reporting block.
+    # separate the block from the frontmatter.
     $legacyPattern = "(?m)^<!-- avatar-greeting -->\r?\n(?:>[^\r\n]*\r?\n?)+(?:\r?\n)?"
     $stripped = [regex]::Replace($stripped, $legacyPattern, "")
 
     $newBlock = Get-GreetingBlock -AgentEntry $AgentEntry
 
-    # Preferred placement: immediately BEFORE the AC-DC-FLOW-REPORTING block if
-    # present, so the greeting instruction is the model's very first
-    # substantive directive after identity and outranks the flow-reporting
-    # "do this FIRST" wording that would otherwise dominate attention.
-    # Fallback: place it right after the YAML frontmatter.
-    $flowBlockPattern = "(?s)(" + [regex]::Escape($FlowBeginMarker) + ".*?" + [regex]::Escape($FlowEndMarker) + ")"
-    $flowMatch = [regex]::Match($stripped, $flowBlockPattern)
-    if ($flowMatch.Success) {
-        $before = $stripped.Substring(0, $flowMatch.Index).TrimEnd("`r", "`n")
-        $after = $stripped.Substring($flowMatch.Index)
-        $newContent = $before + "`n`n" + $newBlock + "`n`n" + $after
+    # Placement: right after the YAML frontmatter so the greeting
+    # instruction is the model's very first substantive directive after identity.
+    $frontmatterPattern = "(?s)^(---\r?\n.*?\r?\n---)(\r?\n)"
+    $fmMatch = [regex]::Match($stripped, $frontmatterPattern)
+    if (-not $fmMatch.Success) {
+        $newContent = "$newBlock`n`n" + $stripped.TrimStart()
     }
     else {
-        $frontmatterPattern = "(?s)^(---\r?\n.*?\r?\n---)(\r?\n)"
-        $fmMatch = [regex]::Match($stripped, $frontmatterPattern)
-        if (-not $fmMatch.Success) {
-            $newContent = "$newBlock`n`n" + $stripped.TrimStart()
-        }
-        else {
-            $frontmatter = $fmMatch.Groups[1].Value
-            $rest = $stripped.Substring($fmMatch.Index + $fmMatch.Length).TrimStart("`r", "`n")
-            $newContent = "$frontmatter`n`n$newBlock`n`n$rest"
-        }
+        $frontmatter = $fmMatch.Groups[1].Value
+        $rest = $stripped.Substring($fmMatch.Index + $fmMatch.Length).TrimStart("`r", "`n")
+        $newContent = "$frontmatter`n`n$newBlock`n`n$rest"
     }
 
     $newContent = $newContent.TrimEnd() + "`n"
