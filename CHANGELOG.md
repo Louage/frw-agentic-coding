@@ -4,6 +4,20 @@
 
 ### Added
 
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+_None yet._
+
+## [1.2.9] - 2026-07-21
+
+### Added
+
 - feat: add MIT License to the project (`fcb7b89`)
 - feat: update keywords and categories in package.json for better discoverability (`1fb6296`)
 - feat: Enhance version determination logic in release workflow for hybrid version selection (`860a1b1`)
