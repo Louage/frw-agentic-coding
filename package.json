@@ -2,7 +2,7 @@
   "name": "acdc",
   "displayName": "Agentic Coding⚡Direct Coding",
   "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "publisher": "theframework",
   "license": "MIT",
   "icon": "images/icon.png",
