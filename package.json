@@ -1177,6 +1177,13 @@
           "name": "Agents",
           "icon": "$(hubot)",
           "contextualTitle": "AC⚡DC"
+        },
+        {
+          "id": "acdc.agentSettings",
+          "name": "Agent Settings",
+          "icon": "$(settings-gear)",
+          "contextualTitle": "AC⚡DC",
+          "type": "webview"
         }
       ]
     },
@@ -1257,8 +1264,8 @@
       },
       {
         "id": "acdc.agents",
-        "title": "Agent Placeholders",
-        "order": 3,
+        "title": "Agent Placeholders (Legacy)",
+        "order": 4,
         "properties": {
           "acdc.agents.placeholders": {
             "type": "object",
@@ -1279,9 +1286,74 @@
         }
       },
       {
+        "id": "acdc.agentSettings",
+        "title": "Agent Settings",
+        "order": 3,
+        "properties": {
+          "acdc.agents.settings": {
+            "type": "object",
+            "default": {},
+            "order": 1,
+            "markdownDescription": "Per-agent overrides stored in user settings and edited from the AC⚡DC sidebar. Each entry key is an agent id or placeholder key. Use the sidebar for easier editing; raw JSON edits are supported here for power users.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "description": "Preferred language model name for the agent. The sidebar can populate this from the available Copilot models."
+                },
+                "argumentHint": {
+                  "type": "string",
+                  "description": "Argument hint shown when the agent is invoked."
+                },
+                "bcReviewSpecialist": {
+                  "type": "string",
+                  "description": "Override for the review specialist agent used by the workflow view."
+                },
+                "disabledTools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Tool ids disabled for this agent. The sidebar can toggle full namespaces and individual tools."
+                },
+                "handoffs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "agent": {
+                        "type": "string"
+                      },
+                      "prompt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "agent"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Custom handoff definitions for this agent."
+                },
+                "placeholderTarget": {
+                  "type": "string",
+                  "description": "When the key is a placeholder name, this is the concrete agent it resolves to."
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      {
         "id": "acdc.sdd",
         "title": "Spec-Driven Development (SDD) Paths",
-        "order": 4,
+        "order": 5,
         "properties": {
           "acdc.plansRoot": {
             "type": "string",

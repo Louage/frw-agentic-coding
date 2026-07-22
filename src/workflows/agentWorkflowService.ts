@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { getAvailableMcpServerIds, checkToolAvailability, VSCODE_BUILTIN_PREFIXES } from "../tools/mcpDiscoveryService";
 import { lookupKnownTool, type KnownToolSuggestion } from "../tools/knownToolsCatalog";
 import { PlaceholderResolver } from "../placeholderResolver";
+import { getSettingsMap } from "../agentSettingsService";
 
 export interface AgentWorkflowHandoff {
   label: string;
@@ -32,6 +33,8 @@ export interface AgentWorkflowViewModel {
     displayName: string;
     stableId?: string;
   };
+  model?: string;
+  argumentHint?: string;
   bcReviewSpecialist?: string;
   requiredTools?: AgentWorkflowTool[];
   requiredMcpServers?: AgentWorkflowTool[];
@@ -56,6 +59,8 @@ interface ParsedAgent {
   fileId: string;
   name: string;
   userInvocable: boolean;
+  model?: string;
+  argumentHint?: string;
   handoffs: ParsedHandoff[];
   bcReviewSpecialist?: string;
   tools?: string[];    // normalized server IDs for availability reporting
@@ -72,6 +77,20 @@ export async function listUserInvocableAgents(
   const agents = await loadAgents(extensionUri);
   return agents
     .filter((a) => a.userInvocable)
+    .map((a) => ({ displayName: a.name, stableId: a.fileId }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+/**
+ * Returns every agent (including subagents that are not user-invocable, such
+ * as the AL Code Review Subagent). Useful when validating placeholder targets,
+ * since placeholders like `${reviewAgent}` legitimately point at subagents.
+ */
+export async function listAllAgents(
+  extensionUri: vscode.Uri
+): Promise<Array<{ displayName: string; stableId: string }>> {
+  const agents = await loadAgents(extensionUri);
+  return agents
     .map((a) => ({ displayName: a.name, stableId: a.fileId }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
@@ -145,6 +164,8 @@ export async function getAgentWorkflowViewModel(
       displayName: selected.name,
       stableId: selected.fileId,
     },
+    model: selected.model,
+    argumentHint: selected.argumentHint,
     bcReviewSpecialist: selected.bcReviewSpecialist,
     requiredTools,
     requiredMcpServers,
@@ -192,6 +213,7 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
   const files = await findAgentFiles(root);
   const metadata = await loadAgentMetadata(extensionUri);
   const resolver = new PlaceholderResolver();
+  const settingsMap = getSettingsMap();
 
   const parsed: ParsedAgent[] = [];
   for (const file of files) {
@@ -212,6 +234,14 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
       agentName: resolver.resolve(h.agentName),
     }));
     const { normalized: tools, raw: rawTools } = readTools(fm);
+    const settings = settingsMap[fileId] ?? {};
+    const effectiveTools = tools;
+    const effectiveHandoffs: ParsedHandoff[] = settings.handoffs
+      ? settings.handoffs.map((handoff) => ({
+          label: resolver.resolve(handoff.label),
+          agentName: resolver.resolve(handoff.agent),
+        }))
+      : handoffs;
 
     // Extension-only metadata comes from the manifest, not from .agent.md frontmatter.
     const ext = metadata[fileId] ?? {};
@@ -220,9 +250,11 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
       fileId,
       name,
       userInvocable,
-      handoffs,
-      bcReviewSpecialist: ext.bcReviewSpecialist,
-      tools,
+      model: settings.model ?? readScalar(fm, "model") ?? undefined,
+      argumentHint: settings.argumentHint ?? readScalar(fm, "argument-hint") ?? undefined,
+      handoffs: effectiveHandoffs,
+      bcReviewSpecialist: settings.bcReviewSpecialist ?? ext.bcReviewSpecialist,
+      tools: effectiveTools,
       rawTools,
     });
   }

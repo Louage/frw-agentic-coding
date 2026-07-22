@@ -124,6 +124,8 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
+| `acdc.agents.settings` | `{}` | Per-agent overrides (model, argument hint, review specialist, disabled tools, and handoffs — each handoff can carry its own prompt). Edited from the **Agent Settings** sidebar; raw JSON is supported for power users |
+| `acdc.agents.placeholders` | *(see panel)* | Maps `${placeholder}` tokens used in agent prose/prompts/skills to concrete agent display names |
 | `acdc.bcquality.customLayers` | `[]` | Ordered list of customer/partner BCQuality forks to import (see below) |
 | `acdc.bcquality.syncOnStartup` | `false` | Re-sync all enabled custom layers when VS Code starts (no-op when SHA is unchanged) |
 | `acdc.bcquality.registerInstructionsLocation` | `true` | Register the custom-layer instructions folder with `chat.instructionsFilesLocations` so Copilot Chat auto-discovers the rules |
@@ -131,6 +133,15 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 > Updates are delivered automatically through the VS Code Marketplace — no manual configuration needed.
 
 ---
+
+## Agent Settings panel
+
+Select an agent in the **Agents** sidebar to open the **Agent Settings** panel, where you can override — per agent — the language **model**, the **argument hint**, the **review specialist**, the disabled **tools**, and the **handoffs**. Each handoff row includes an optional **Handoff Prompt** that is sent when that handoff is taken.
+
+Edits are staged locally and are **not** applied automatically. The **Apply** button enables only once you change a setting; clicking it writes the overrides and **reloads the window** so chat picks them up. The panel warns you before the reload. Overrides are stored in `acdc.agents.settings` and are scoped per agent, so an override configured on one agent never leaks into another.
+
+---
+
 
 ## Source & Weekly Sync
 

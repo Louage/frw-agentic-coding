@@ -1,6 +1,25 @@
 # Changelog
 
 
+## [Unreleased]
+
+### Added
+
+- feat(agent-settings): add a per-handoff **Handoff Prompt** field to the Agent Settings panel, persisted in the `handoffs[].prompt` override.
+- feat(agent-settings): show only the friendly model name in the Model selector (the model id is kept as the option value) and cleanly display a configured model that is no longer offered by the current Copilot subscription.
+
+### Fixed
+
+- fix(agent-settings): correct the regex escaping in the webview inline script so `(copilot)` model suffixes are stripped fully instead of leaving an empty `( )` artifact.
+- fix(agent-settings): resolve the empty Agent Settings panel caused by an unbalanced brace in the inline webview script.
+- fix(agent-settings): validate agent placeholders against **all** agents (including subagents), removing the false-positive warning for `${reviewAgent}` → `AL Code Review Subagent`.
+- fix(build): type language-model results as `LanguageModelChat[]` (matching `vscode.lm.selectChatModels`) so `tsc` passes and F5 debugging is unblocked.
+
+### Changed
+
+- refactor(agent-settings): replace autosave with a manual **Apply** button that enables only when a setting changes and warns that applying reloads the window.
+
+
 ## [2.0.0] - 2026-07-21
 
 ### Added

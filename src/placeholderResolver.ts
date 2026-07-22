@@ -1,21 +1,16 @@
 import * as vscode from "vscode";
+import {
+  AGENT_SETTINGS_CONFIG_KEY,
+  DEFAULT_PLACEHOLDERS,
+  LEGACY_PLACEHOLDERS_CONFIG_KEY,
+  findUnknownPlaceholders,
+  resolvePlaceholders,
+} from "./agentPlaceholderUtils";
 
-const PLACEHOLDER_RE = /\$\{([^}]+)\}/g;
+export { DEFAULT_PLACEHOLDERS };
 
-/** VS Code configuration key for the user-defined placeholder map. */
-const CONFIG_KEY = "acdc.agents.placeholders";
-
-/**
- * Default placeholder → agent name mappings bundled with the extension.
- * Developers can override any key via the `acdc.agents.placeholders` setting.
- */
-export const DEFAULT_PLACEHOLDERS: Readonly<Record<string, string>> = {
-  reviewAgent: "AL Code Review Subagent",
-  architectAgent: "Angus, AL Architect",
-  developerAgent: "Phil, AL Developer",
-  conductorAgent: "Malcolm, AL Conductor",
-  auditorAgent: "Bon, AL Auditor",
-};
+const PLACEHOLDER_SETTINGS_KEY = AGENT_SETTINGS_CONFIG_KEY;
+const LEGACY_KEY = LEGACY_PLACEHOLDERS_CONFIG_KEY;
 
 /**
  * Resolves `${placeholderName}` tokens in text using values from the
@@ -33,8 +28,17 @@ export class PlaceholderResolver {
    */
   getMap(): Record<string, string> {
     const config = vscode.workspace.getConfiguration();
-    const userMap = config.get<Record<string, string>>(CONFIG_KEY) ?? {};
-    return { ...DEFAULT_PLACEHOLDERS, ...userMap };
+    const userMap = config.get<Record<string, { placeholderTarget?: string }>>(PLACEHOLDER_SETTINGS_KEY) ?? {};
+    const legacyMap = config.get<Record<string, string>>(LEGACY_KEY) ?? {};
+    const merged: Record<string, string> = { ...DEFAULT_PLACEHOLDERS, ...legacyMap };
+
+    for (const [key, value] of Object.entries(userMap)) {
+      if (value.placeholderTarget) {
+        merged[key] = value.placeholderTarget;
+      }
+    }
+
+    return merged;
   }
 
   /**
@@ -43,7 +47,7 @@ export class PlaceholderResolver {
    */
   resolve(text: string): string {
     const map = this.getMap();
-    return text.replace(PLACEHOLDER_RE, (_match, key: string) => map[key] ?? _match);
+    return resolvePlaceholders(text, map);
   }
 
   /**
@@ -53,16 +57,7 @@ export class PlaceholderResolver {
    */
   findUnknown(text: string): string[] {
     const map = this.getMap();
-    const unknown: string[] = [];
-    const re = new RegExp(PLACEHOLDER_RE.source, "g");
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      const key = m[1];
-      if (!(key in map) && !unknown.includes(key)) {
-        unknown.push(key);
-      }
-    }
-    return unknown;
+    return findUnknownPlaceholders(text, map);
   }
 
   /**
