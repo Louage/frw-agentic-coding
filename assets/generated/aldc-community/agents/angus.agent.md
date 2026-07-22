@@ -2,15 +2,18 @@
 name: "Angus, AL Architect"
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development.'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput, al-symbols-mcp/*, upstash/context7/*, microsoft-learn/*]
-model: Claude Sonnet 4.6 (copilot)
+model: 'Kimi K2.7 Code'
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
 handoffs:
-  - label: Implement with TDD
-    agent: Malcolm, AL Conductor
-    prompt: Implement the approved architecture using TDD orchestration
-  - label: Quick Implementation
-    agent: Phil, AL Developer
-    prompt: Implement simple feature directly (LOW complexity)
+  - label: 'Implement with TDD'
+    agent: 'Malcolm, AL Conductor'
+    prompt: 'Implement the approved architecture using TDD orchestration'
+  - label: 'Quick Implementation'
+    agent: 'Phil, AL Developer'
+    prompt: 'Implement simple feature directly (LOW complexity)'
+  - label: 'SDD (Start Spec Drive Development)'
+    agent: 'Ink, AL Lean SDD'
+    prompt: 'Implement the approved architecture using SDD orchestration'
 ---
 
 <!-- BEGIN:AC-DC-AVATAR-GREETING -->

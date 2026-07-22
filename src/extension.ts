@@ -6,6 +6,7 @@ import { RenderSddPathTool } from "./tools/renderSddPathTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
 import {
   getAgentWorkflowViewModel,
+  listAllAgents,
   listUserInvocableAgents,
   type AgentWorkflowViewModel,
 } from "./workflows/agentWorkflowService";
@@ -16,6 +17,7 @@ import {
 } from "./alBaseCode";
 import { AlBaseCodePanel } from "./views/alBaseCodePanel";
 import { BcqualityCustomLayersPanel } from "./views/bcqualityCustomLayersPanel";
+import { AgentSettingsViewProvider } from "./views/agentSettingsView";
 import { PlaceholderResolver, DEFAULT_PLACEHOLDERS } from "./placeholderResolver";
 import {
   syncCustomLayers,
@@ -31,11 +33,21 @@ import {
   GetBcqualityCustomSkillTool,
   ListBcqualityCustomSkillsTool,
 } from "./tools/bcqualityCustomSkillsTool";
+import { savePlaceholderTarget } from "./agentSettingsService";
+import { applyAgentContributionOverrides } from "./agentContributionOverrides";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
   const output = vscode.window.createOutputChannel("AC⚡DC");
   context.subscriptions.push(output);
+  const agentSettingsProvider = new AgentSettingsViewProvider(context);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      AgentSettingsViewProvider.viewType,
+      agentSettingsProvider,
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
 
   // 1. Skill (executable tool): registered so agent mode can invoke it.
   //    Skills (SKILL.md) and rules (*.instructions.md) are contributed
@@ -73,7 +85,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Validate placeholder values on startup and on configuration change.
   const resolver = new PlaceholderResolver();
   const validatePlaceholders = async (): Promise<void> => {
-    const agents = await listUserInvocableAgents(context.extensionUri);
+    const agents = await listAllAgents(context.extensionUri);
     const knownNames = agents.map((a) => a.displayName);
     const invalid = resolver.validateAgainstKnown(knownNames);
     if (invalid.length > 0) {
@@ -100,9 +112,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const agentsProvider = new AssetTreeProvider(context.extensionUri, "agent");
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("acdc.agents", agentsProvider),
-    vscode.commands.registerCommand("acdc.reloadAgents", () =>
-      agentsProvider.refresh()
-    ),
+    vscode.commands.registerCommand("acdc.reloadAgents", () => {
+      agentsProvider.refresh();
+      void agentSettingsProvider.refresh();
+    }),
     // Clicking an agent activates it: switches the chat participant, auto-
     // enables its declared tools, and warns about missing ones.
     vscode.commands.registerCommand(
@@ -123,6 +136,7 @@ export function activate(context: vscode.ExtensionContext): void {
           context,
           output
         );
+        void agentSettingsProvider.selectAgent(displayName, stableId);
       }
     ),
   );
@@ -131,6 +145,60 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("acdc.setAgentPlaceholder", async () => {
       await setAgentPlaceholderCommand(context.extensionUri, resolver);
+    })
+  );
+
+  // 3e. Command: materialize per-user agent contribution overrides from
+  //     Agent Settings, then offer a window reload so Chat re-reads metadata.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.applyAgentSettingsToChat", async (options?: {
+      autoReload?: boolean;
+      promptReload?: boolean;
+      silentNoChanges?: boolean;
+    }) => {
+      const autoReload = options?.autoReload ?? false;
+      const promptReload = options?.promptReload ?? true;
+      const silentNoChanges = options?.silentNoChanges ?? false;
+
+      const result = await applyAgentContributionOverrides(context, output);
+      output.appendLine(
+        `[agent-overrides] generated=${result.generatedFiles}, ` +
+          `changed=${result.changedContributionFiles}, ` +
+          `restored=${result.restoredContributionFiles}, ` +
+          `skipped=${result.skippedContributionFiles}`
+      );
+
+      const hasWork =
+        result.generatedFiles > 0 ||
+        result.changedContributionFiles > 0 ||
+        result.restoredContributionFiles > 0;
+
+      if (!hasWork) {
+        if (!silentNoChanges) {
+          vscode.window.showInformationMessage(
+            "Agent settings are already reflected in contribution files."
+          );
+        }
+        return;
+      }
+
+      if (autoReload) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+        return;
+      }
+
+      if (!promptReload) {
+        return;
+      }
+
+      const action = await vscode.window.showInformationMessage(
+        "Agent contribution overrides applied. Reload the window so Chat re-reads agent metadata?",
+        "Reload window"
+      );
+
+      if (action === "Reload window") {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+      }
     })
   );
 
@@ -297,13 +365,7 @@ async function setAgentPlaceholderCommand(
   }
 
   // Merge into the existing user-level map and write back.
-  const config = vscode.workspace.getConfiguration();
-  const userMap = config.get<Record<string, string>>("acdc.agents.placeholders") ?? {};
-  await config.update(
-    "acdc.agents.placeholders",
-    { ...userMap, [keyPick.label]: valuePick.label },
-    vscode.ConfigurationTarget.Global
-  );
+  await savePlaceholderTarget(keyPick.label, valuePick.label);
   void vscode.window.showInformationMessage(
     `\${${keyPick.label}} now resolves to "${valuePick.label}".`
   );
@@ -480,6 +542,13 @@ async function activateAgent(
     stableId,
     context
   );
+
+  // The per-agent model override is applied deterministically through the
+  // agent contribution frontmatter + window reload (see
+  // applyAgentContributionOverrides). We deliberately do NOT probe chat
+  // model commands here: several host commands cycle the active model
+  // instead of setting it, which caused the model to change on every
+  // agent (re)selection.
 
   if (output) {
     const ext = workflow.requiredTools ?? [];
