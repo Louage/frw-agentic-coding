@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.1.1] - 2026-07-22
+
+### Added
+
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- Update instructions for user on marketplace (`ab1c21f`)
+
+
 ## [2.1.0] - 2026-07-22
 
 ### Added
