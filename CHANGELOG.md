@@ -1,12 +1,13 @@
 # Changelog
 
 
-## [Unreleased]
+## [2.1.0] - 2026-07-22
 
 ### Added
 
 - feat(agent-settings): add a per-handoff **Handoff Prompt** field to the Agent Settings panel, persisted in the `handoffs[].prompt` override.
 - feat(agent-settings): show only the friendly model name in the Model selector (the model id is kept as the option value) and cleanly display a configured model that is no longer offered by the current Copilot subscription.
+- feat(agent-settings): per-handoff prompts, manual Apply button, and cleaner model selector (`9a25135`)
 
 ### Fixed
 
@@ -18,7 +19,6 @@
 ### Changed
 
 - refactor(agent-settings): replace autosave with a manual **Apply** button that enables only when a setting changes and warns that applying reloads the window.
-
 
 ## [2.0.0] - 2026-07-21
 
