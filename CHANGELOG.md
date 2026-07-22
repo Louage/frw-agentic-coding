@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.1.2] - 2026-07-22
+
+### Added
+
+_None yet._
+
+### Fixed
+
+- fix: update application icon (`c9cc049`)
+
+### Changed
+
+_None yet._
+
+
 ## [2.1.1] - 2026-07-22
 
 ### Added
