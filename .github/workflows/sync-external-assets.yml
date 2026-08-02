@@ -114,6 +114,7 @@ jobs:
             - updated generated contribution manifest
             - synchronized package contributions
           branch: chore/sync-external-ai-assets
+          branch-suffix: timestamp
           delete-branch: true
           force-push: true
           labels: |
