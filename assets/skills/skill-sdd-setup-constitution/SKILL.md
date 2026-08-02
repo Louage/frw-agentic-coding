@@ -1,13 +1,13 @@
 ---
 name: skill-sdd-setup-constitution
-description: "Lean SDD — one-time project setup for spec-kit-aligned AL development. Triggers on: setup constitution, speckit.constitution, funct-design, tech-design, roadmap, AGENTS.md, lean SDD init, initialize lean-SDD project, .specify, spec-kit setup."
+description: "Lean SDD, one-time project setup for spec-kit-aligned AL development. Triggers on: setup constitution, speckit.constitution, funct-design, tech-design, roadmap, AGENTS.md, lean SDD init, initialize lean-SDD project, .specify, spec-kit setup."
 ---
 
-# Skill: Lean SDD — Setup Constitution
+# Skill: Lean SDD, Setup Constitution
 
 ## Purpose
 
-Bootstrap a lean Spec-Driven Development (SDD) skeleton in an AL/BC project workspace. This is a **one-time** operation per project. It creates the `.specify/` control directory, the `specs/` root documents, and the `AGENTS.md` that points at the bundled `microsoft-bcquality-assets` instructions — without downloading any external content.
+Bootstrap a lean Spec-Driven Development (SDD) skeleton in an AL/BC project workspace. This is a **one-time** operation per project. It creates the `.specify/` control directory, the `specs/` root documents, and the `AGENTS.md` that points at the bundled `microsoft-bcquality-assets` instructions, without downloading any external content.
 
 ## When to Load
 
@@ -43,16 +43,16 @@ One-time Constitution → Feature Loop (repeat per requirement)
 | BCQuality audit | Via AGENTS.md instructions | Full citation chain + CI |
 | Token cost | Low | Higher |
 
-## Step 1 — Read Context
+## Step 1, Read Context
 
 ```
-Read .specify/memory/constitution.md  (if exists — update rather than overwrite)
+Read .specify/memory/constitution.md  (if exists, update rather than overwrite)
 Read app.json  (get publisher, name, id range)
 ```
 
 If `.specify/` already exists, ask the user whether to update or skip.
 
-## Step 2 — Create Folder Structure
+## Step 2, Create Folder Structure
 
 Create these folders and files (only if they do not exist):
 
@@ -92,23 +92,23 @@ Create these folders and files (only if they do not exist):
 
 ## Core Principles
 
-1. **Extension-only** — Never modify base-application objects. Use tableextensions, pageextensions, and event subscribers.
-2. **Standard-BC-first** — Prefer standard BC functionality before custom code. Check if a base-app event, report, or page already does it.
-3. **Least privilege** — Generate only the minimum permission set. Field-level DataClassification on every custom field.
-4. **XLIFF for all user strings** — No hardcoded user-visible strings; every caption, error, and label goes through AL Labels.
-5. **Test coverage** — Every feature loop ends with at least one Given/When/Then test codeunit.
+1. **Extension-only**, Never modify base-application objects. Use tableextensions, pageextensions, and event subscribers.
+2. **Standard-BC-first**, Prefer standard BC functionality before custom code. Check if a base-app event, report, or page already does it.
+3. **Least privilege**, Generate only the minimum permission set. Field-level DataClassification on every custom field.
+4. **XLIFF for all user strings**, No hardcoded user-visible strings; every caption, error, and label goes through AL Labels.
+5. **Test coverage**, Every feature loop ends with at least one Given/When/Then test codeunit.
 
 ## Quality Layer
 
 This project uses the **bundled `microsoft-bcquality-assets` instructions** from the ALDC extension. Agents MUST apply these before writing any AL object:
 
-- `al-guidelines` — Core extension principles
-- `al-code-style` — 2-space indent, PascalCase, feature-based folders
-- `al-naming-conventions` — ≤26-char names, `<ObjectName>.<ObjectType>.al`
-- `al-performance` — SetLoadFields, no DB calls in loops
-- `al-error-handling` — TryFunction, mandatory Label, telemetry on request
-- `al-events` — Never modify base objects; subscribers `local`
-- `al-testing` — Given/When/Then structure, Library Assert
+- `al-guidelines`, Core extension principles
+- `al-code-style`, 2-space indent, PascalCase, feature-based folders
+- `al-naming-conventions`, ≤26-char names, `<ObjectName>.<ObjectType>.al`
+- `al-performance`, SetLoadFields, no DB calls in loops
+- `al-error-handling`, TryFunction, mandatory Label, telemetry on request
+- `al-events`, Never modify base objects; subscribers `local`
+- `al-testing`, Given/When/Then structure, Library Assert
 
 ## Feature Loop
 
@@ -247,7 +247,7 @@ Specs live in `specs/SDD/YYYY-MM-DD-<slug>/`.
 |------|---------|
 | 🔲 | Not started |
 | 🔄 | In progress |
-| ✅ | Done — all tasks.md items checked |
+| ✅ | Done, all tasks.md items checked |
 | ⏸️ | On hold |
 
 ## Versioning
@@ -262,11 +262,11 @@ Specs live in `specs/SDD/YYYY-MM-DD-<slug>/`.
 Append to or create `AGENTS.md` (or `.github/copilot-instructions.md`):
 
 ```markdown
-## Lean SDD — Project Rules
+## Lean SDD, Project Rules
 
 This project uses the lean Spec-Driven Development flow.
 
-### Quality Layer (Bundled — no download required)
+### Quality Layer (Bundled, no download required)
 
 All agents MUST apply the bundled `microsoft-bcquality-assets` instructions from the ALDC extension before writing AL. These auto-apply to `.al` files via `applyTo` globs.
 
@@ -282,9 +282,9 @@ For each requirement in `specs/SDD/roadmap.md`:
 ### Spec Folder Convention
 
 `specs/SDD/YYYY-MM-DD-<generic-description>/`
-- `spec.md` — what + why (requirements)
-- `plan.md` — how (implementation steps)
-- `tasks.md` — acceptance checklist (each item maps to a test or verifiable outcome)
+- `spec.md`, what + why (requirements)
+- `plan.md`, how (implementation steps)
+- `tasks.md`, acceptance checklist (each item maps to a test or verifiable outcome)
 ```
 
 ## Skills Evidencing

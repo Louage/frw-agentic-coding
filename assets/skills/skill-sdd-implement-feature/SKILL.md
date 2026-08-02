@@ -1,9 +1,9 @@
 ---
 name: skill-sdd-implement-feature
-description: "Lean SDD — implement AL objects from a spec folder. Triggers on: speckit.implement, implement feature, implement spec, lean SDD implement, implement from spec.md, implement plan.md."
+description: "Lean SDD, implement AL objects from a spec folder. Triggers on: speckit.implement, implement feature, implement spec, lean SDD implement, implement from spec.md, implement plan.md."
 ---
 
-# Skill: Lean SDD — Implement Feature
+# Skill: Lean SDD, Implement Feature
 
 ## Purpose
 
@@ -18,12 +18,12 @@ Load when:
 
 ## Prerequisites
 
-1. `specs/SDD/YYYY-MM-DD-<slug>/spec.md` — requirements
-2. `specs/SDD/YYYY-MM-DD-<slug>/plan.md` — implementation order
-3. `specs/SDD/YYYY-MM-DD-<slug>/tasks.md` — acceptance checklist
-4. `.specify/memory/constitution.md` — naming conventions and prefix
+1. `specs/SDD/YYYY-MM-DD-<slug>/spec.md`, requirements
+2. `specs/SDD/YYYY-MM-DD-<slug>/plan.md`, implementation order
+3. `specs/SDD/YYYY-MM-DD-<slug>/tasks.md`, acceptance checklist
+4. `.specify/memory/constitution.md`, naming conventions and prefix
 
-## Step 1 — Read Spec Folder
+## Step 1, Read Spec Folder
 
 ```
 Read specs/<slug>/spec.md     → requirements, AC, data model
@@ -34,7 +34,7 @@ Read .specify/memory/constitution.md  → prefix, id range
 
 > `<slug>` is the dated subfolder under `specs/SDD/`, e.g. `specs/SDD/2026-07-08-fleet-registration/`.
 
-## Step 2 — Verify Symbols Before Writing
+## Step 2, Verify Symbols Before Writing
 
 For every base-app object referenced in `spec.md`:
 
@@ -42,9 +42,9 @@ For every base-app object referenced in `spec.md`:
 2. Run `bclsp_hover` on the publisher codeunit + event name to confirm the exact event signature.
 3. Record verification result in `spec.md` event table (`Verified? ✅`).
 
-If a symbol cannot be confirmed, move it to the spec's Open Questions — do **not** write code against an unverified symbol.
+If a symbol cannot be confirmed, move it to the spec's Open Questions, do **not** write code against an unverified symbol.
 
-## Step 3 — Implement Phase by Phase
+## Step 3, Implement Phase by Phase
 
 Work through `plan.md` phases in order. After each phase:
 - Mark completed tasks in `tasks.md`
@@ -58,7 +58,7 @@ These are enforced by the auto-applied instructions; this is a reminder, not a c
 - **Folders**: `src/{FeatureName}/` for app objects, `test/{FeatureName}/` for test codeunits
 - **DataClassification**: Required on every custom table field
 - **No hardcoded strings**: Use `Label` variables for all user-visible text
-- **Extension-only**: `tableextension`, `pageextension`, `eventsubscriber` — never modify base objects
+- **Extension-only**: `tableextension`, `pageextension`, `eventsubscriber`, never modify base objects
 - **Event subscribers**: `local procedure`, no `Commit` inside, exact base-app signature
 - **Performance**: `SetLoadFields` before `Find*`, no `CalcFields` in loops, set-based writes
 
@@ -110,7 +110,7 @@ begin
 end;
 ```
 
-## Step 4 — Write Tests (RED → GREEN)
+## Step 4, Write Tests (RED → GREEN)
 
 After each implementation phase, create or extend the test codeunit with Given/When/Then tests that match the acceptance criteria in `tasks.md`.
 
@@ -134,7 +134,7 @@ end;
 
 After tests compile and pass, mark the corresponding AC row in `tasks.md` as done.
 
-## Step 5 — Run Diagnostics
+## Step 5, Run Diagnostics
 
 ```
 al_get_diagnostics   → 0 errors required before marking phase complete
@@ -142,13 +142,13 @@ al_get_diagnostics   → 0 errors required before marking phase complete
 
 If errors exist, fix them before moving to the next phase.
 
-## Step 6 — Update `tasks.md`
+## Step 6, Update `tasks.md`
 
 After each completed phase, check off the implementation tasks:
 
 ```markdown
-- [x] T1: data-layer task — ✅ {ObjectName} (ID: {id})
-- [x] T2: business-logic task — ✅ {CUName}.{ProcName}
+- [x] T1: data-layer task, ✅ {ObjectName} (ID: {id})
+- [x] T2: business-logic task, ✅ {CUName}.{ProcName}
 ```
 
 Update `specs/roadmap.md` status to `🔄 In progress` (or leave if already set).
