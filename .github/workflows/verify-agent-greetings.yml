@@ -43,7 +43,7 @@ jobs:
           $diff = git status --porcelain
           if ($diff) {
             Write-Host "::error::Agent greetings are out of sync with assets/greetings.json."
-            Write-Host "Run 'npm run regenerate:agents' locally and commit the result."
+            Write-Host "Run 'npm run rename:personas && npm run regenerate:agents' locally and commit the result."
             Write-Host ""
             Write-Host "Drifted files:"
             git status --short

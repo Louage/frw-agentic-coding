@@ -199,13 +199,31 @@ function Rewrite-AgentReferences {
     $out = $Text
 
     # 1. Filename references FIRST (they contain the slug and would otherwise
-    # get munged by the slug pass).
+    # get munged by the slug pass). Use boundary-aware regex to avoid
+    # repeatedly rewriting inside already-prefixed names such as
+    # `acdc-al-planning-subagent.agent.md`.
     foreach ($p in $Personas) {
-        $out = $out.Replace("$($p.Slug).agent.md", "$($p.NewSlug).agent.md")
+        $pattern = "(?<![A-Za-z0-9-])$([regex]::Escape("$($p.Slug).agent.md"))"
+        $out = [regex]::Replace($out, $pattern, "$($p.NewSlug).agent.md", 'IgnoreCase')
     }
     foreach ($s in $Subagents) {
-        $out = $out.Replace("$($s.Slug).agent.md", "$($s.NewSlug).agent.md")
+        $pattern = "(?<![A-Za-z0-9-])$([regex]::Escape("$($s.Slug).agent.md"))"
+        $out = [regex]::Replace($out, $pattern, "$($s.NewSlug).agent.md", 'IgnoreCase')
     }
+
+    # Repair accidental repeated subagent prefixes from older runs.
+    $out = [regex]::Replace(
+        $out,
+        '(?<![A-Za-z0-9-])(?:acdc-){2,}(al-(?:implement|planning|review)-subagent\.agent\.md)',
+        'acdc-$1',
+        'IgnoreCase'
+    )
+    $out = [regex]::Replace(
+        $out,
+        '@(?:acdc-){2,}(al-(?:implement|planning|review)-subagent)(?![-\w])',
+        '@acdc-$1',
+        'IgnoreCase'
+    )
 
     # 2. @-mention slug references (@al-conductor, @dredd, ...).
     #    Use word-boundary regex so `@al-conductor` matches but `@al-conductor-x`
@@ -234,11 +252,11 @@ function Rewrite-AgentReferences {
     # 5. Bare old display names (no @). Two personas have OldDisplay as a
     #    substring of NewDisplay (`AL Agent Builder` inside `Chief, AL Agent
     #    Builder`, `AL Lean SDD` inside `Ink, AL Lean SDD`), so a naive
-    #    substitution would recurse on repeat runs. Use a negative lookbehind
-    #    that skips the match when the persona prefix (`Chief, ` / `Ink, `)
-    #    already precedes the token — that makes the rewrite idempotent.
+    #    substitution would recurse on repeat runs. Use negative lookbehinds
+    #    that skip the match when a persona prefix already precedes the token
+    #    and when the token is part of greeting prose like "your AL Lean SDD".
     foreach ($p in $Personas) {
-        $lookbehind = "(?<!$([regex]::Escape($p.Persona + ', ')))"
+        $lookbehind = "(?<!$([regex]::Escape($p.Persona + ', ')))(?<!your )"
         $pattern = $lookbehind + [regex]::Escape($p.OldDisplay) + "(?![\w])"
         $out = [regex]::Replace($out, $pattern, $p.NewDisplay)
     }
