@@ -101,6 +101,8 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
+        env:
+          HUSKY: 0
         with:
           commit-message: "chore(assets): sync external AI assets"
           title: "chore(assets): sync external AI assets"
