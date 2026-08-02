@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.1.3] - 2026-08-02
+
+### Added
+
+_None yet._
+
+### Fixed
+
+- fix: update Inject Agent Flow reporting protocol to Inject avatar greetings (`a03ffc1`)
+
+### Changed
+
+_None yet._
+
+
 ## [2.1.2] - 2026-07-22
 
 ### Added
