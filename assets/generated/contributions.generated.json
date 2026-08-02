@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T10:56:28.5777837+00:00",
+  "generatedAt": "2026-08-02T13:13:34.6453793+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-agent-toolkit/SKILL.md"
@@ -932,37 +932,37 @@
   ],
   "chatAgents": [
     {
-      "path": "./assets/generated/aldc-community/agents/al-agent-builder.agent.md"
+      "path": "./assets/generated/aldc-community/agents/acdc-al-implement-subagent.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-architect.agent.md"
+      "path": "./assets/generated/aldc-community/agents/acdc-al-planning-subagent.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-conductor.agent.md"
+      "path": "./assets/generated/aldc-community/agents/acdc-al-review-subagent.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-developer.agent.md"
+      "path": "./assets/generated/aldc-community/agents/angus.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-implement-subagent.agent.md"
+      "path": "./assets/generated/aldc-community/agents/bon.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-planning-subagent.agent.md"
+      "path": "./assets/generated/aldc-community/agents/brian.agent.md"
     },
     {
-      "path": "./assets/generated/aldc-community/agents/al-presales.agent.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/agents/al-review-subagent.agent.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/agents/al-triage.agent.md"
-    },
-    {
-      "path": "./assets/generated/aldc-community/agents/dredd.agent.md"
+      "path": "./assets/generated/aldc-community/agents/chief.agent.md"
     },
     {
       "path": "./assets/generated/aldc-community/agents/ink.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/malcolm.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/phil.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/wrench.agent.md"
     }
   ]
 }
