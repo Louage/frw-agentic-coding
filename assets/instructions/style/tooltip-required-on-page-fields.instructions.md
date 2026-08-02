@@ -15,9 +15,11 @@ CodeCop AA0218 requires a non-empty `ToolTip` property on every field control on
 
 Acceptable exceptions: table fields inside `Upgrade`, `Migration`, `HybridBC14`, `HybridSL`, and `HybridGP` codeunits and tables are allowed to omit the tooltip — those types are not surfaced to users.
 
+AA0218 is a compiler analyzer, but its severity is configured per app in the ruleset and is frequently downgraded to `info`/`None` or disabled entirely. PR review therefore cannot assume the compiler will surface the gap: it is the last line of defence for a missing tooltip and should flag it independently. The one case review must *not* flag is a bound field that inherits a `ToolTip` from its source table field — see `bound-page-field-inherits-source-field-tooltip`.
+
 ## Best Practice
 
-Every field control on a regular page carries `ToolTip = 'Specifies …';` (or a clear alternative phrasing). Compose the text in the form "what this value shows" rather than "what the user does with it".
+Every field control on a regular page carries `ToolTip = 'Specifies …';` (or a clear alternative phrasing). Compose the text in the form "what this value shows" rather than "what the user does with it". In review, raise a `medium`-severity finding for a field that has neither an inline nor an inherited tooltip, independently of whether AA0218 is active in the app's ruleset.
 
 See sample: `tooltip-required-on-page-fields.good.al`.
 

@@ -1,9 +1,9 @@
 ---
 name: skill-sdd-run-al-tests
-description: "Lean SDD — run AL tests and validate acceptance criteria in tasks.md. Triggers on: speckit.analyze, speckit.checklist, run tests, validate acceptance criteria, run AL tests lean SDD, check tasks.md."
+description: "Lean SDD, run AL tests and validate acceptance criteria in tasks.md. Triggers on: speckit.analyze, speckit.checklist, run tests, validate acceptance criteria, run AL tests lean SDD, check tasks.md."
 ---
 
-# Skill: Lean SDD — Run AL Tests
+# Skill: Lean SDD, Run AL Tests
 
 ## Purpose
 
@@ -18,11 +18,11 @@ Load when:
 
 ## Prerequisites
 
-1. `specs/SDD/YYYY-MM-DD-<slug>/tasks.md` — AC checklist to validate
+1. `specs/SDD/YYYY-MM-DD-<slug>/tasks.md`, AC checklist to validate
 2. Test codeunit exists in `test/{FeatureName}/` for the spec
 3. `al_get_diagnostics` returns 0 errors (run `implement-feature` first if not)
 
-## Step 1 — Read Context
+## Step 1, Read Context
 
 ```
 Read specs/<slug>/tasks.md   → acceptance criteria and test procedure names
@@ -31,18 +31,18 @@ Read specs/<slug>/spec.md    → requirement IDs and AC descriptions
 
 > `<slug>` is the dated subfolder under `specs/SDD/`, e.g. `specs/SDD/2026-07-08-fleet-registration/`.
 
-## Step 2 — Build Test Execution Map
+## Step 2, Build Test Execution Map
 
 From `tasks.md`, extract the AC rows:
 
 ```
-AC1: {criterion} — test: {TestProcedureName}
-AC2: {criterion} — test: {TestProcedureName}
+AC1: {criterion}, test: {TestProcedureName}
+AC2: {criterion}, test: {TestProcedureName}
 ```
 
 If any AC row has no mapped test procedure, flag it as **missing coverage** before running.
 
-## Step 3 — Run Diagnostics First
+## Step 3, Run Diagnostics First
 
 ```
 al_get_diagnostics
@@ -50,35 +50,35 @@ al_get_diagnostics
 
 If there are compile errors, stop and ask the user to fix them. Do not run tests against broken code.
 
-## Step 4 — Report Results
+## Step 4, Report Results
 
 For each AC row in `tasks.md`, determine status:
 
 | Status | Meaning |
 |--------|---------|
 | ✅ Pass | Test ran and passed |
-| ❌ Fail | Test ran and failed — include error message |
-| ⚠️ Missing | No test exists for this AC — flag as gap |
+| ❌ Fail | Test ran and failed, include error message |
+| ⚠️ Missing | No test exists for this AC, flag as gap |
 | ⏭️ Skipped | Test is marked `[Ignore]` |
 
-## Step 5 — Analyse Failures
+## Step 5, Analyse Failures
 
 For each ❌ failure:
 
 1. Identify the failing assertion and line
 2. Compare expected vs actual values
 3. Root-cause: business logic bug? Setup missing? Event not fired?
-4. Propose a minimal fix — do not refactor beyond the failing assertion
+4. Propose a minimal fix, do not refactor beyond the failing assertion
 
 Use `bclsp_goToDefinition` and `bclsp_findReferences` to navigate the call stack without re-reading the entire file.
 
-## Step 6 — Update `tasks.md`
+## Step 6, Update `tasks.md`
 
 After all tests pass, check off the AC rows:
 
 ```markdown
-- [x] AC1: {criterion} — ✅ validated by `{TestProcedureName}`
-- [x] AC2: {criterion} — ✅ validated by `{TestProcedureName}`
+- [x] AC1: {criterion}, ✅ validated by `{TestProcedureName}`
+- [x] AC2: {criterion}, ✅ validated by `{TestProcedureName}`
 ```
 
 Check the Quality Checklist items:
@@ -92,12 +92,12 @@ Check the Quality Checklist items:
 - [x] BCQuality instructions honored (auto-applied via extension)
 ```
 
-## Step 7 — Report Summary
+## Step 7, Report Summary
 
 Emit a concise summary:
 
 ```
-## Test Results — specs/SDD/<slug>
+## Test Results, specs/SDD/<slug>
 
 | AC | Criterion | Test | Result |
 |----|-----------|------|--------|
@@ -127,7 +127,7 @@ If any failures remain, list them with proposed fixes and ask the user to confir
 
 ### Hardcoded string comparison failure
 **Symptom**: `Assert.AreEqual` fails on text that looks identical.
-**Fix**: Never compare user-facing strings directly — compare record IDs or enum values instead. Per constitution rules: no hardcoded strings.
+**Fix**: Never compare user-facing strings directly, compare record IDs or enum values instead. Per constitution rules: no hardcoded strings.
 
 ## Skills Evidencing
 
