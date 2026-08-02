@@ -35,10 +35,8 @@ jobs:
         run: |
           ./automation/scripts/Normalize-AgentTools.ps1
 
-      - name: Inject avatar greetings
-        shell: pwsh
-        run: |
-          ./automation/scripts/Inject-AvatarGreeting.ps1
+      - name: Regenerate agent greetings
+        run: npm run regenerate:agents
 
       - name: Validate agent handoff integrity
         shell: pwsh

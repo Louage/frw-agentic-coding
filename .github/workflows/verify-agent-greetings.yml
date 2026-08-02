@@ -1,15 +1,6 @@
 name: Verify Agent Greetings
 
 on:
-  pull_request:
-    paths:
-      - "assets/greetings.json"
-      - ".github/agents/**/*.agent.md"
-      - "assets/generated/aldc-community/agents/**/*.agent.md"
-      - "automation/overlays/aldc-community/agents/**/*.agent.md"
-      - "automation/scripts/Inject-AvatarGreeting.ps1"
-      - "automation/scripts/Normalize-EmDash.ps1"
-      - ".github/workflows/verify-agent-greetings.yml"
   push:
     branches: [main]
     paths:
