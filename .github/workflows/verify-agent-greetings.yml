@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Reapply AC/DC agent personas
+        run: npm run rename:personas
+
       - name: Regenerate agent greetings
         run: npm run regenerate:agents
 

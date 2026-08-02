@@ -35,6 +35,9 @@ jobs:
         run: |
           ./automation/scripts/Normalize-AgentTools.ps1
 
+      - name: Reapply AC/DC agent personas
+        run: npm run rename:personas
+
       - name: Regenerate agent greetings
         run: npm run regenerate:agents
 
