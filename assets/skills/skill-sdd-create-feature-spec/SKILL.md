@@ -1,16 +1,16 @@
 ---
 name: skill-sdd-create-feature-spec
-description: "Lean SDD — create spec, plan, and tasks for a single AL/BC requirement. Triggers on: speckit.specify, speckit.plan, speckit.tasks, create feature spec, write spec, new requirement spec, spec folder, lean SDD specify."
+description: "Lean SDD, create spec, plan, and tasks for a single AL/BC requirement. Triggers on: speckit.specify, speckit.plan, speckit.tasks, create feature spec, write spec, new requirement spec, spec folder, lean SDD specify."
 ---
 
-# Skill: Lean SDD — Create Feature Spec
+# Skill: Lean SDD, Create Feature Spec
 
 ## Purpose
 
 Create the three spec-kit artifacts for a single BC/AL requirement in one step:
-- `spec.md` — what the requirement is and why (requirements + acceptance criteria)
-- `plan.md` — how to implement it (ordered AL object changes)
-- `tasks.md` — acceptance checklist (each item verifiable by a test or manual step)
+- `spec.md`, what the requirement is and why (requirements + acceptance criteria)
+- `plan.md`, how to implement it (ordered AL object changes)
+- `tasks.md`, acceptance checklist (each item verifiable by a test or manual step)
 
 All files go into a **dated subfolder** under `specs/SDD/`:
 `specs/SDD/YYYY-MM-DD-<generic-description>/`
@@ -27,7 +27,7 @@ Load when:
 1. `.specify/memory/constitution.md` exists (run `setup-constitution` if not)
 2. `specs/SDD/funct-design.md` + `specs/SDD/tech-design.md` exist and are populated
 
-## Step 1 — Read Context (Token-Light)
+## Step 1, Read Context (Token-Light)
 
 ```
 Read .specify/memory/constitution.md   → prefix, id range, BC version
@@ -40,16 +40,16 @@ Then read any existing spec folders to avoid reusing object IDs or slugs.
 
 **Standard-BC-first check**: before proposing new objects, confirm via `al_symbolsearch` or `bclsp_documentSymbols` that no base-app object already satisfies the requirement.
 
-## Step 2 — Determine Folder Name
+## Step 2, Determine Folder Name
 
 Slug format: `{YYYY-MM-DD}-{3-5-word-lowercase-hyphen-description}`
 Example: `2026-07-08-fleet-registration`
 
 Ask the user to confirm the slug before creating files.
 
-## Step 3 — Create `spec.md`
+## Step 3, Create `spec.md`
 
-Use the template below. Fill every section — leave `{placeholder}` only for content the user must supply.
+Use the template below. Fill every section, leave `{placeholder}` only for content the user must supply.
 
 ```markdown
 # Spec: {requirement-title}
@@ -103,7 +103,7 @@ Use the template below. Fill every section — leave `{placeholder}` only for co
 - {item}
 ```
 
-## Step 4 — Create `plan.md`
+## Step 4, Create `plan.md`
 
 ```markdown
 # Plan: {requirement-title}
@@ -113,23 +113,23 @@ Use the template below. Fill every section — leave `{placeholder}` only for co
 
 ## Implementation Order
 
-### Phase 1 — Data Layer
+### Phase 1, Data Layer
 1. [ ] Create / extend table `{Name}` (ID: {id})
-   - Field `{FieldName}` : {Type} — DataClassification: {class}
+   - Field `{FieldName}` : {Type}, DataClassification: {class}
 2. [ ] Create permission set entry
 
-### Phase 2 — Business Logic
+### Phase 2, Business Logic
 3. [ ] Create codeunit `{Name}` (ID: {id})
-   - Procedure `{Name}(...)` — {description}
+   - Procedure `{Name}(...)`, {description}
 4. [ ] Subscribe to `{Publisher}.{EventName}` in `{SubscriberCodeunit}`
 
-### Phase 3 — UI
+### Phase 3, UI
 5. [ ] Extend page `{BasePage}` with field `{FieldName}` in FastTab `{FastTab}`
 
-### Phase 4 — Tests
+### Phase 4, Tests
 6. [ ] Create test codeunit `{Name} Tests` (ID: {id})
-   - Test `{Scenario_AC1}` — validates AC1
-   - Test `{Scenario_AC2}` — validates AC2
+   - Test `{Scenario_AC1}`, validates AC1
+   - Test `{Scenario_AC2}`, validates AC2
 
 ## File Map
 
@@ -145,7 +145,7 @@ Use the template below. Fill every section — leave `{placeholder}` only for co
 - Extension: `{AppName}` v{version}
 ```
 
-## Step 5 — Create `tasks.md`
+## Step 5, Create `tasks.md`
 
 ```markdown
 # Tasks: {requirement-title}
@@ -162,8 +162,8 @@ Use the template below. Fill every section — leave `{placeholder}` only for co
 
 ## Acceptance Criteria Validation
 
-- [ ] AC1: {criterion} — validated by test `{TestProcedureName}`
-- [ ] AC2: {criterion} — validated by test `{TestProcedureName}`
+- [ ] AC1: {criterion}, validated by test `{TestProcedureName}`
+- [ ] AC2: {criterion}, validated by test `{TestProcedureName}`
 
 ## Quality Checklist
 
@@ -180,7 +180,7 @@ Use the template below. Fill every section — leave `{placeholder}` only for co
 - [ ] PR description references this spec folder
 ```
 
-## Step 6 — Update `specs/roadmap.md`
+## Step 6, Update `specs/roadmap.md`
 
 Change the feature row from `🔲 Not started` to `🔄 In progress` and fill in the spec folder path.
 

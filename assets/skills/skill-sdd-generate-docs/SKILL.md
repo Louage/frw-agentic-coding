@@ -1,18 +1,18 @@
 ---
 name: skill-sdd-generate-docs
-description: "Lean SDD — generate documentation artifacts for a completed AL feature. Triggers on: speckit.docs, generate docs, lean SDD docs, update changelog, write documentation, document feature."
+description: "Lean SDD, generate documentation artifacts for a completed AL feature. Triggers on: speckit.docs, generate docs, lean SDD docs, update changelog, write documentation, document feature."
 ---
 
-# Skill: Lean SDD — Generate Docs
+# Skill: Lean SDD, Generate Docs
 
 ## Purpose
 
 Generate lightweight documentation artifacts for an AL feature after all AC rows in `tasks.md` are validated. Output targets:
-1. **Inline AL code** — XML doc comments on public procedures (`/// <summary>`)
-2. **CHANGELOG.md** — one entry in Keep-a-Changelog format
-3. **`tasks.md`** — mark the docs task as done
+1. **Inline AL code**, XML doc comments on public procedures (`/// <summary>`)
+2. **CHANGELOG.md**, one entry in Keep-a-Changelog format
+3. **`tasks.md`**, mark the docs task as done
 
-This step is intentionally **lean** — document only what a future developer or reviewer needs to understand the intent; do not add noise comments on trivial or self-explanatory code.
+This step is intentionally **lean**, document only what a future developer or reviewer needs to understand the intent; do not add noise comments on trivial or self-explanatory code.
 
 ## When to Load
 
@@ -23,11 +23,11 @@ Load when:
 
 ## Prerequisites
 
-1. `specs/<slug>/tasks.md` — all AC rows ✅
-2. `specs/<slug>/spec.md` — for summary and purpose language
+1. `specs/<slug>/tasks.md`, all AC rows ✅
+2. `specs/<slug>/spec.md`, for summary and purpose language
 3. AL source files for the feature are in `app/src/{FeatureName}/`
 
-## Step 1 — Read Context
+## Step 1, Read Context
 
 ```
 Read specs/<slug>/spec.md    → feature title, summary, AC list
@@ -37,7 +37,7 @@ Read app/src/{FeatureName}/  → list AL files to document
 
 > `<slug>` is the dated subfolder under `specs/SDD/`, e.g. `specs/SDD/2026-07-08-fleet-registration/`.
 
-## Step 2 — Add XML Doc Comments to Public Procedures
+## Step 2, Add XML Doc Comments to Public Procedures
 
 For every `procedure` that is **public** (no `local` keyword) in the feature's codeunit(s):
 
@@ -51,11 +51,11 @@ procedure {ProcedureName}({ParamName}: {Type}): {ReturnType}
 ```
 
 Rules:
-- Skip `local` procedures — they are implementation details
+- Skip `local` procedures, they are implementation details
 - Skip trivial getters/setters where the name is fully self-explanatory
 - Keep summaries to one sentence; use plain BC terminology
 
-## Step 3 — Update CHANGELOG.md
+## Step 3, Update CHANGELOG.md
 
 If `CHANGELOG.md` does not exist, create it with the [Keep a Changelog](https://keepachangelog.com) format.
 
@@ -65,7 +65,7 @@ Prepend the feature entry under `## [Unreleased]`:
 ## [Unreleased]
 
 ### Added
-- **{feature-title}** — {one-sentence summary} ([spec](<specs/<slug>/spec.md>))
+- **{feature-title}**, {one-sentence summary} ([spec](<specs/<slug>/spec.md>))
 
 ### Changed
 - {only if an existing behavior was altered}
@@ -74,7 +74,7 @@ Prepend the feature entry under `## [Unreleased]`:
 - {only if a bug was fixed as part of this feature}
 ```
 
-## Step 4 — Update `tasks.md` Documentation Row
+## Step 4, Update `tasks.md` Documentation Row
 
 ```markdown
 - [x] Docs: XML comments on public procedures ✅
