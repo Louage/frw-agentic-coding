@@ -1,6 +1,24 @@
 # Changelog
 
 
+## [2.1.4] - 2026-08-02
+
+### Added
+
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- chore(assets): sync external AI assets (#44) (`8648079`)
+- refactor: update workflows to streamline agent greetings regeneration and remove unnecessary pull request triggers (`fd3b29a`)
+- chore(assets): update pull request creation to include environment variable (`6aa33e5`)
+- chore: add timestamp suffix to branch for generated contributions (`0b55aab`)
+
+
 ## [2.1.3] - 2026-08-02
 
 ### Added
