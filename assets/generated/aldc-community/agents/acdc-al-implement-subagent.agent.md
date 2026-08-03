@@ -3,9 +3,19 @@ name: AL Implementation Subagent
 description: 'TDD Implementation Subagent, Creates AL objects following strict RED→GREEN→REFACTOR cycle. Only invokable by al-conductor via runSubagent.'
 user-invocable: false
 disable-model-invocation: true
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, execute/runInTerminal, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, al-symbols-mcp/*, microsoft-learn/*, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, execute/runInTerminal, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, al-symbols-mcp/*, microsoft-learn/*, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
 model: Claude Sonnet 4.6 (copilot)
 ---
+
+<!-- BEGIN:AC-DC-SDD-PATHS -->
+> **SDD PATHS, resolve from settings; never hardcode.** Before you create, read, or reference any spec-driven artifact (spec, architecture, plan, test-plan, delivery) **or** a git branch, resolve the concrete location from the workspace/user configuration instead of assuming `.github/plans/…`, `{req_name}`, or `feature/{slug}`:
+> 1. Call **`acdc_get_sdd_config`** (`#acdcSddConfig`) to read the effective `plansRoot`, `specFolderFormat`, `specFileFormat`, and `branchFormat`.
+> 2. Call **`acdc_render_sdd_path`** (`#acdcRenderSddPath`) with `req_name` (and `type` for a file) to get the exact folder, file, and branch. Use the rendered values verbatim.
+>
+> If those tools are unavailable in this session, ask the user to confirm the configured `acdc.plansRoot` and naming formats before proceeding.
+>
+> **Guard before modifying an AL file:** verify the required plan folder, spec file, and feature branch (as rendered above) already exist. If any is missing, **stop and propose creating it first**, state the exact rendered path/branch and ask the user to confirm, before continuing with the AL change.
+<!-- END:AC-DC-SDD-PATHS -->
 
 # AL Implementation Subagent, TDD-Only Implementation
 

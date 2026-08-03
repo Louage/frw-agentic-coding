@@ -42,7 +42,11 @@ $CoreTools = @(
     "search/listDirectory",
     "search/textSearch",
     "search/usages",
-    "todo"
+    "todo",
+    # AC⚡DC SDD path resolver tools — let agents resolve the workspace/user
+    # configured plansRoot + spec/branch naming instead of hardcoding paths.
+    "acdc_get_sdd_config",
+    "acdc_render_sdd_path"
 )
 
 # Tools that are deprecated, renamed, or environment-specific and must be removed

@@ -11,6 +11,17 @@ handoffs:
     agent: Malcolm, AL Conductor
     prompt: Research complete - return structured findings for plan creation
 ---
+
+<!-- BEGIN:AC-DC-SDD-PATHS -->
+> **SDD PATHS, resolve from settings; never hardcode.** Before you create, read, or reference any spec-driven artifact (spec, architecture, plan, test-plan, delivery) **or** a git branch, resolve the concrete location from the workspace/user configuration instead of assuming `.github/plans/…`, `{req_name}`, or `feature/{slug}`:
+> 1. Call **`acdc_get_sdd_config`** (`#acdcSddConfig`) to read the effective `plansRoot`, `specFolderFormat`, `specFileFormat`, and `branchFormat`.
+> 2. Call **`acdc_render_sdd_path`** (`#acdcRenderSddPath`) with `req_name` (and `type` for a file) to get the exact folder, file, and branch. Use the rendered values verbatim.
+>
+> If those tools are unavailable in this session, ask the user to confirm the configured `acdc.plansRoot` and naming formats before proceeding.
+>
+> **Guard before modifying an AL file:** verify the required plan folder, spec file, and feature branch (as rendered above) already exist. If any is missing, **stop and propose creating it first**, state the exact rendered path/branch and ask the user to confirm, before continuing with the AL change.
+<!-- END:AC-DC-SDD-PATHS -->
+
 # AL Planning Subagent - AL-Aware Context Gathering
 
 <research_workflow>
