@@ -1,6 +1,24 @@
 # Changelog
 
 
+## [2.2.0] - 2026-08-03
+
+### Added
+
+- Add Phil and Wrench personas for AL Development and Triage (`93e5b61`)
+- feat: add step to reapply AC/DC agent personas in sync and verify workflows (`70e7a94`)
+
+### Fixed
+
+- fix: update agent file paths for consistency across configuration and documentation (`09f2ddb`)
+
+### Changed
+
+- chore(assets): sync external AI assets (#47) (`3cd608a`)
+- chore(assets): sync external AI assets (#46) (`0d0f72a`)
+- chore(assets): sync external AI assets (#45) (`096703c`)
+
+
 ## [2.1.4] - 2026-08-02
 
 ### Added
