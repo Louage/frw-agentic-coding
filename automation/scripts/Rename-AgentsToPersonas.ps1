@@ -340,6 +340,38 @@ foreach ($root in $agentRoots) {
 }
 Write-Host "Rewrote content in $contentUpdates agent file(s)." -ForegroundColor Green
 
+# --- Stage 2b: enforce frontmatter `name:` from the filename -----------------
+# Deterministic guard. Stage 2 (a) maps a file to its persona by matching the
+# old display *string*; the weekly sync has intermittently left one file (wrench)
+# on its upstream name when that content match didn't fire. The filename is the
+# source of truth after Stage 1, so force `name:` from it — immune to upstream
+# wording drift and fully idempotent.
+$expectedNameByFile = @{}
+foreach ($p in $Personas)  { $expectedNameByFile["$($p.NewSlug).agent.md"] = $p.NewDisplay }
+foreach ($s in $Subagents) { $expectedNameByFile["$($s.NewSlug).agent.md"] = $s.Display }
+
+$nameEnforced = 0
+$firstNameRegex = [regex]'(?m)^name:[ \t]*(.*?)[ \t]*$'
+foreach ($root in $agentRoots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    foreach ($file in Get-ChildItem -LiteralPath $root -Filter "*.agent.md" -File) {
+        $expected = $expectedNameByFile[$file.Name]
+        if (-not $expected) { continue }
+        $content = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
+        if ($null -eq $content) { continue }
+        $match = $firstNameRegex.Match($content)
+        if (-not $match.Success) { continue }
+        # Only rewrite when the *value* is wrong — leave correct files (and their
+        # existing quote style) untouched to avoid churn.
+        $current = ($match.Groups[1].Value).Trim("`"'")
+        if ($current -eq $expected) { continue }
+        $updated = $firstNameRegex.Replace($content, "name: `"$expected`"", 1)
+        Set-Content -LiteralPath $file.FullName -Value $updated -Encoding UTF8 -NoNewline
+        $nameEnforced++
+    }
+}
+Write-Host "Enforced frontmatter name on $nameEnforced agent file(s)." -ForegroundColor Green
+
 # --- Stage 3: rewrite index.md in each agents/ folder ------------------------
 
 $indexUpdates = 0
