@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.2.1] - 2026-08-03
+
+### Added
+
+_None yet._
+
+### Fixed
+
+- fix: update agent name for clarity and consistency (`74a2030`)
+
+### Changed
+
+_None yet._
+
+
 ## [2.2.0] - 2026-08-03
 
 ### Added
