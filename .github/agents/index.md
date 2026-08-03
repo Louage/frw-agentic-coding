@@ -19,9 +19,9 @@ description: "Index of ALDC role-based agent specialists for AL development in B
 
 | Agent | Purpose | Invoked By |
 |-------|---------|------------|
-| [AL Planning Subagent](acdc-acdc-al-planning-subagent.agent.md) | AL-aware research & context gathering | @Malcolm, AL Conductor |
-| [AL Implementation Subagent](acdc-acdc-al-implement-subagent.agent.md) | TDD implementation (RED→GREEN→REFACTOR) | @Malcolm, AL Conductor |
-| [AL Code Review Subagent](acdc-acdc-al-review-subagent.agent.md) | Code review and quality gates | @Malcolm, AL Conductor |
+| [AL Planning Subagent](acdc-al-planning-subagent.agent.md) | AL-aware research & context gathering | @Malcolm, AL Conductor |
+| [AL Implementation Subagent](acdc-al-implement-subagent.agent.md) | TDD implementation (RED→GREEN→REFACTOR) | @Malcolm, AL Conductor |
+| [AL Code Review Subagent](acdc-al-review-subagent.agent.md) | Code review and quality gates | @Malcolm, AL Conductor |
 
 ## Agent Selection Guide
 
