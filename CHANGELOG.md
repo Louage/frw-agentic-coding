@@ -1,17 +1,21 @@
 # Changelog
 
 
-## [Unreleased]
+## [2.2.2] - 2026-08-03
 
 ### Added
 
 - **Agents now respect your Spec-Driven Development path settings.** Every agent is reminded to resolve the configured plans root and spec-folder / spec-file / branch naming (`acdc.plansRoot`, `acdc.specFolderFormat`, `acdc.specFileFormat`, `acdc.branchFormat`) via the `Get SDD Configuration` and `Render SDD Path` tools before creating or reading any spec, architecture, plan, test-plan, or git branch — instead of assuming `.github/plans/…` or `feature/{slug}`.
 - **Safer AL edits.** Before modifying an AL file, agents now verify the required plan folder, spec file, and feature branch exist, and propose creating them first if any are missing.
+- Add script to inject SDD Paths directive into agent files (`4ddd46d`)
+
+### Fixed
+
+- fix: enforce frontmatter `name:` in agent files based on filenames (`cb68021`)
 
 ### Changed
 
 - The SDD-path guidance and the two SDD tools are injected into every agent automatically and refreshed on each weekly external sync, so agents stay aligned with your workspace/user configuration.
-
 
 ## [2.2.1] - 2026-08-03
 
