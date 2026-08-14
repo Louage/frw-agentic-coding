@@ -47,6 +47,12 @@ function validateContributionPaths(pkg) {
 
       if (!itemPath.startsWith(REQUIRED_PREFIX)) {
         violations.push(`${key}[${index}] path '${itemPath}' must start with '${REQUIRED_PREFIX}'`);
+        continue;
+      }
+
+      const resolved = path.resolve(itemPath);
+      if (!fs.existsSync(resolved)) {
+        violations.push(`${key}[${index}] path '${itemPath}' does not resolve to an existing file`);
       }
     }
   }

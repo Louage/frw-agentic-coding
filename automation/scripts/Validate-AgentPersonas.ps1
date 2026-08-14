@@ -50,6 +50,14 @@ $ForbiddenSlugs = @(
     "al-implement-subagent", "al-planning-subagent", "al-review-subagent"
 )
 
+# Upstream display-name fragments that MUST have been rewritten to a persona.
+# Their survival means a display-name reference (e.g. a body H1) was missed,
+# typically due to em-dash/comma separator drift.
+$ForbiddenDisplayFragments = @(
+    "Reactive Diagnosis Specialist",
+    "AL Independent Auditor"
+)
+
 if (-not (Test-Path -LiteralPath $AgentsDir)) {
     throw "Agents directory not found: $AgentsDir"
 }
@@ -80,6 +88,16 @@ foreach ($key in $personaKeys) {
     $content = Get-Content -LiteralPath $agentFile -Raw -Encoding UTF8
     if ($content -notmatch [regex]::Escape($GreetingMarker)) {
         $violations += "Avatar-greeting block missing in $key.agent.md (greeting injection did not run)"
+    }
+}
+
+# --- Invariant 3: no upstream display-name fragment survived -----------------
+foreach ($agentFile in Get-ChildItem -LiteralPath $AgentsDir -Filter "*.agent.md" -File) {
+    $content = Get-Content -LiteralPath $agentFile.FullName -Raw -Encoding UTF8
+    foreach ($fragment in $ForbiddenDisplayFragments) {
+        if ($content -match [regex]::Escape($fragment)) {
+            $violations += "Upstream display name survived rename in $($agentFile.Name): '$fragment' (display-name rewrite missed, check separator drift)"
+        }
     }
 }
 

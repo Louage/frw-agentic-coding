@@ -123,7 +123,11 @@ $Personas = @(
     @{
         Slug          = 'al-triage'
         NewSlug       = 'wrench'
-        OldDisplay    = 'AL Triage, Reactive Diagnosis Specialist'
+        # Upstream separates with an em-dash ('AL Triage — Reactive Diagnosis
+        # Specialist'); match that exact form so the quoted `name:` (Stage 2a)
+        # and the body H1 (bare-display pass) are both rewritten before
+        # Normalize-EmDash collapses the em-dash to a comma.
+        OldDisplay    = 'AL Triage — Reactive Diagnosis Specialist'
         NewDisplay    = 'Wrench, AL Triage'
         Persona       = 'Wrench'
         NewRole       = 'AL Triage'
@@ -151,6 +155,9 @@ $Subagents = @(
 $DisplayAliases = @(
     @{ Old = 'Dredd — AL Independent Auditor'; NewDisplay = 'Bon, AL Auditor' },
     @{ Old = 'Dredd - AL Independent Auditor'; NewDisplay = 'Bon, AL Auditor' },
+    # Comma variant of the Wrench display (what Normalize-EmDash would produce) —
+    # defensive backstop should the em-dash ever be collapsed before the rename.
+    @{ Old = 'AL Triage, Reactive Diagnosis Specialist'; NewDisplay = 'Wrench, AL Triage' },
     @{ Old = 'AL Triage Specialist';           NewDisplay = 'Wrench, AL Triage' },
     @{ Old = 'AL Independent Auditor';         NewDisplay = 'Bon, AL Auditor' },
     @{ Old = 'AL Lean SDD agent';              NewDisplay = 'Ink, AL Lean SDD' }
