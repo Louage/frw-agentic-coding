@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.2.3] - 2026-08-14
+
+### Added
+
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- Weekly sync PR strips AC/DC personas + avatar greetings (git mv fails on untracked synced files) Fixes #50 (`87797d5`)
+
+
 ## [2.2.2] - 2026-08-03
 
 ### Added
