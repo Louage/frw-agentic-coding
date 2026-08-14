@@ -1570,6 +1570,7 @@
     "sync:mcp-sources": "pwsh -File automation/scripts/Sync-McpKnowledgeSources.ps1 -Clean",
     "validate:mcp-schemas": "pwsh -File automation/scripts/Validate-McpSourcesSchemas.ps1",
     "validate:contribution-paths": "node automation/scripts/Validate-ContributionPaths.mjs",
+    "validate:agent-personas": "pwsh -File automation/scripts/Validate-AgentPersonas.ps1",
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
     "rename:personas": "pwsh -File automation/scripts/Rename-AgentsToPersonas.ps1",

@@ -280,6 +280,9 @@ $agentRoots = @(
     (Get-RepoPath "assets/generated/aldc-community/agents")
 )
 
+# Filesystem move (not `git mv`): after a clean sync the source files are
+# untracked, and `git mv` fatals on untracked sources. create-pull-request
+# stages the whole working tree, so a plain Move-Item is sufficient here.
 $renameCount = 0
 foreach ($root in $agentRoots) {
     if (-not (Test-Path -LiteralPath $root)) { continue }
@@ -287,7 +290,7 @@ foreach ($root in $agentRoots) {
         $old = Join-Path $root "$($p.Slug).agent.md"
         $new = Join-Path $root "$($p.NewSlug).agent.md"
         if ((Test-Path -LiteralPath $old) -and -not (Test-Path -LiteralPath $new)) {
-            git -C $RepoRoot mv -- $old $new | Out-Null
+            Move-Item -LiteralPath $old -Destination $new -Force
             $renameCount++
         }
     }
@@ -295,7 +298,7 @@ foreach ($root in $agentRoots) {
         $old = Join-Path $root "$($s.Slug).agent.md"
         $new = Join-Path $root "$($s.NewSlug).agent.md"
         if ((Test-Path -LiteralPath $old) -and -not (Test-Path -LiteralPath $new)) {
-            git -C $RepoRoot mv -- $old $new | Out-Null
+            Move-Item -LiteralPath $old -Destination $new -Force
             $renameCount++
         }
     }
