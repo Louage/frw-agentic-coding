@@ -41,6 +41,11 @@ jobs:
       - name: Regenerate agent greetings
         run: npm run regenerate:agents
 
+      - name: Validate agent personas and greetings reapplied
+        shell: pwsh
+        run: |
+          ./automation/scripts/Validate-AgentPersonas.ps1
+
       - name: Validate agent handoff integrity
         shell: pwsh
         run: |
