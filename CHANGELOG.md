@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.2.4] - 2026-08-14
+
+### Added
+
+_None yet._
+
+### Fixed
+
+- fix: update display names and validation for agent personas (`724ad00`)
+
+### Changed
+
+- chore(assets): sync external AI assets (#53) (`92186d5`)
+
+
 ## [2.2.3] - 2026-08-14
 
 ### Added
