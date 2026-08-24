@@ -1020,7 +1020,7 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/primary-key-get-in-loop-is-transaction-cached.instructions.md"
       },
       {
-        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/setcurrentkey-aligns-key-with-filters.instructions.md"
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/setcurrentkey-sets-sort-order-not-index-hint.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/singleton-setup-tables-need-no-access-optimization.instructions.md"
