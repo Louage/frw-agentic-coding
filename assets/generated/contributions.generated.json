@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-14T09:46:26.0587176+00:00",
+  "generatedAt": "2026-08-24T05:19:06.1286819+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-pages/SKILL.md"
@@ -769,7 +769,7 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/primary-key-get-in-loop-is-transaction-cached.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/setcurrentkey-aligns-key-with-filters.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/setcurrentkey-sets-sort-order-not-index-hint.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/singleton-setup-tables-need-no-access-optimization.instructions.md"

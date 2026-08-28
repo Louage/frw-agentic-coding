@@ -11,7 +11,7 @@ Source: microsoft/knowledge/privacy/data-classification-required-on-pii-fields.m
 
 ## Description
 
-`DataClassification` is the AL property that tells the platform what kind of data a table field stores so that telemetry, GDPR data-subject requests, and the platform's audit surfaces can treat it correctly. It is required on any field that holds personal, customer, or organization data. When the property is omitted, AL applies `ToBeClassified` — a placeholder meaning "not yet reviewed", not a safe default. Leaving a field that actually holds PII (an email address, a customer name, an employee code) as `ToBeClassified`, or setting it to `SystemMetadata` ("no user or customer data") to silence the requirement, are both under-classifications and privacy bugs, even though the code still compiles.
+`DataClassification` tells the platform what kind of data a table field stores so that telemetry, GDPR data-subject requests, and the platform's audit surfaces can treat it correctly. A field declared inside a table object can set its own value or inherit a valid table-level value; a `tableextension` has no table-level value to inherit, so every Normal field it adds must set its own. When neither scope supplies a valid classification, the field remains `ToBeClassified` — a placeholder meaning "not yet reviewed", not a safe default. Leaving a field that actually holds PII (an email address, a customer name, an employee code) as `ToBeClassified`, or classifying it as `SystemMetadata` ("no user or customer data"), are both under-classifications and privacy bugs, even though the code still compiles.
 
 ## Best Practice
 
