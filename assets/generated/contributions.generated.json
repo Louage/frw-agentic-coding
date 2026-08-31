@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T05:19:06.1286819+00:00",
+  "generatedAt": "2026-08-31T05:18:23.8148363+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-pages/SKILL.md"
@@ -541,6 +541,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/table-relation-extensions-are-additive-and-top-down.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/transferfields-skip-type-mismatch-can-drop-data.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/use-no-series-codeunit-not-noseriesmanagement.instructions.md"
     },
     {
@@ -682,6 +685,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/avoid-commit-inside-loops.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/avoid-currpage-update-in-onaftergetrecord.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/avoid-get-inside-loop-on-large-table.instructions.md"
     },
     {
@@ -697,10 +703,16 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/avoid-user-prompts-inside-transactions.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/batch-number-series-instead-of-getnextno-per-row.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/calcfields-in-both-getrecord-triggers-is-not-redundant.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/calcsums-instead-of-calcfields-in-loop.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/changecompany-in-loop-drops-caches.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/choose-maintainsiftindex-by-read-write-ratio.instructions.md"
@@ -710,6 +722,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/codeunit-run-requires-prior-commit-inside-transaction.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/dataaccessintent-readonly-on-analytical-objects.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/do-not-locktable-in-read-only-procedure.instructions.md"
@@ -730,7 +745,16 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/guard-event-subscribers-before-db-call.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/guiallowed-guard-on-pages-used-as-odata.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/hidden-flowfields-still-calculate-before-bc26-opt-in.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/httpclient-inside-write-transaction-holds-locks.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/isempty-before-findset-is-extra-round-trip.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/load-common-fields-before-branching-on-case.instructions.md"
@@ -745,7 +769,13 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/onaftergetcurrrecord-is-not-per-row.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/oncompanyopen-subscribers-must-not-do-io.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/order-case-branches-by-frequency.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/page-background-tasks-for-expensive-cues.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/page-effective-filter-may-live-outside-the-diff.instructions.md"
@@ -757,6 +787,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/pass-false-to-insert-when-trigger-not-needed.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/pass-var-record-to-preserve-partial-load-enumerator.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/prefer-dictionary-over-temporary-table-for-lookups.instructions.md"
     },
     {
@@ -766,13 +799,25 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/prefer-readisolation-over-locktable-for-reads.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/prefer-related-table-over-extension-on-hot-ledgers.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/primary-key-get-in-loop-is-transaction-cached.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/query-results-bypass-primary-key-cache.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/reset-clears-partial-record-selection.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/setcurrentkey-sets-sort-order-not-index-hint.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/singleton-setup-tables-need-no-access-optimization.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/skip-setloadfields-on-write-and-transferfields.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/temporary-tables-have-no-database-cost.instructions.md"
@@ -782,6 +827,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/understand-implicit-transaction-boundary.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-dedicated-lookup-pages-not-full-lists.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-deleteall-for-filtered-bulk-deletion.instructions.md"
@@ -803,6 +851,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-tryfunction-for-error-catching-not-rollback.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/validate-on-partial-record-forces-jit.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/telemetry/choose-telemetry-scope-by-audience.instructions.md"
