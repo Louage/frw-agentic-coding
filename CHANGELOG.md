@@ -1,7 +1,7 @@
 # Changelog
 
 
-## [Unreleased]
+## [2.3.0] - 2026-09-02
 
 ### Added
 
@@ -9,6 +9,7 @@
 - **`acdc.alBaseCode.sourcesRoot`** — the clone root for this machine, declared `"scope": "machine"` so VS Code only accepts it in User settings. A developer-specific path can no longer be written into a shared workspace file, while `repository` / `branch` / `enabled` stay per-workspace — project A can sit on `be-28` while project B uses `nl-25`. Empty falls back to `%LOCALAPPDATA%\acdc-sources`.
 - **Guided upgrade for existing workspaces.** On activation the extension detects leftovers from the old layout (a per-entry `folder`, a legacy `file:` mount, a stale `git.ignoredRepositories` entry) and offers to repair them, with a link straight to the relevant setting. Also available as **AC/DC: Migrate AL Base Code Settings to Portable Layout**. The migration seeds `sourcesRoot` from the folder the workspace already used, so clones already on disk keep working without re-downloading.
 - `%VAR%` placeholders (`%LOCALAPPDATA%`, `%USERPROFILE%`, …) are expanded in the AL source `folder` value.
+- feat: Migrate to portable AL Base Code layout (#58) (`f521979`)
 
 ### Fixed
 
@@ -22,7 +23,7 @@
 
 - `acdc.alBaseCode.repositories[].folder` is deprecated for git-backed sources — leave it empty and use `acdc.alBaseCode.sourcesRoot`. It is still required (and still supported) for a manual source with no repository.
 - Workspace-mode help text now notes the trade-off: ripgrep text search only runs on `file:` paths and therefore does not reach the mounted sources. Quick Open, file reads and agent access are unaffected.
-
+- chore(assets): sync external AI assets (#56) (`7041873`)
 
 ## [2.2.4] - 2026-08-14
 
