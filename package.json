@@ -1178,6 +1178,11 @@
         "category": "AC/DC"
       },
       {
+        "command": "acdc.migrateAlBaseCodeSettings",
+        "title": "Migrate AL Base Code Settings to Portable Layout",
+        "category": "AC/DC"
+      },
+      {
         "command": "acdc.reloadAgents",
         "title": "Reload Agent List",
         "category": "AC/DC",
@@ -1275,7 +1280,7 @@
                 },
                 "folder": {
                   "type": "string",
-                  "description": "Local folder the repository is cloned into, or the folder of a manual source. Leave empty (with a repository set) to use the portable per-user default under %LOCALAPPDATA%\\acdc-sources\\<repo>."
+                  "description": "Deprecated for git-backed sources: leave empty and use the machine-scoped acdc.alBaseCode.sourcesRoot instead, so no machine-specific path is committed to the workspace file. Still required for a manual source (no repository) that you maintain yourself. Supports %VAR% placeholders such as %LOCALAPPDATA%."
                 },
                 "enabled": {
                   "type": "boolean",
@@ -1288,10 +1293,17 @@
               ]
             }
           },
+          "acdc.alBaseCode.sourcesRoot": {
+            "type": "string",
+            "default": "",
+            "scope": "machine",
+            "order": 2,
+            "markdownDescription": "Base folder on **this machine** where AL/ISV sources are cloned. Each source resolves to `<sourcesRoot>/<repo>/<branch>`, so several projects can share one clone cache while each keeps its own branch/localization.\n\nLeave empty to use `%LOCALAPPDATA%\\acdc-sources`. Supports `%VAR%` placeholders (e.g. `%USERPROFILE%`).\n\nThis setting is **machine-scoped**: VS Code only allows it in User settings, so a machine-specific path can never end up in a shared `.code-workspace` file."
+          },
           "acdc.alBaseCode.syncOnStartup": {
             "type": "boolean",
             "default": false,
-            "order": 2,
+            "order": 3,
             "markdownDescription": "When enabled, keeps the AL source folders up to date on startup: missing folders are cloned (after you approve), and existing folders are pulled to the latest commit of their branch (read-only, never pushed)."
           },
           "acdc.alBaseCode.accessMode": {
@@ -1301,11 +1313,11 @@
               "mcp"
             ],
             "enumDescriptions": [
-              "Mount cloned AL sources as read-only workspace folders (visible in the Explorer).",
+              "Mount cloned AL sources as read-only workspace folders under the portable acdc-alsrc: scheme (visible in the Explorer).",
               "Expose cloned AL sources through a filesystem MCP server registered in the workspace's .vscode/mcp.json (available to AI agents; no Explorer clutter)."
             ],
             "default": "workspace",
-            "order": 3,
+            "order": 4,
             "markdownDescription": "How enabled AL source folders are exposed. `workspace` adds them as read-only workspace folders. `mcp` registers an aggregate filesystem MCP server (`acdc-al-sources`) in the workspace's `.vscode/mcp.json`. Only one mode per workspace — switching triggers a confirm dialog and performs the migration immediately.\n\n**Why workspace scope and not user-profile scope?** VS Code has no stable API exposing the currently active profile to an extension, so the user-profile `mcp.json` cannot be targeted reliably from within an extension. Workspace `.vscode/mcp.json` is unambiguous and always loaded."
           }
         }
