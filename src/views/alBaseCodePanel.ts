@@ -3,6 +3,7 @@ import {
   type AccessMode,
   type AlSourceEntry,
   effectiveFolder,
+  expandEnvVars,
   getAccessMode,
   getEntries,
   getMcpTargetPath,
@@ -78,7 +79,7 @@ export class AlBaseCodePanel {
           errors.push(`Row ${row}: Branch requires a repository.`);
         }
         if (baseFolder) {
-          const validation = validateFolder(baseFolder, { forClone: false });
+          const validation = validateFolder(expandEnvVars(baseFolder), { forClone: false });
           if (!validation.ok) {
             errors.push(`Row ${row}: ${validation.reason}`);
           }
@@ -90,7 +91,7 @@ export class AlBaseCodePanel {
         errors.push(`Row ${row}: Branch is required when repository is set.`);
       }
       if (!baseFolder) {
-        errors.push(`Row ${row}: Base folder is required when repository is set.`);
+        // Inherits the machine-scoped acdc.alBaseCode.sourcesRoot.
         return;
       }
 
@@ -159,9 +160,9 @@ export class AlBaseCodePanel {
         const url = msg.url ?? "";
         const branch = msg.branch ?? "";
         const defaultUri = msg.folder
-          ? vscode.Uri.file(msg.folder)
+          ? vscode.Uri.file(expandEnvVars(msg.folder))
           : url
-            ? vscode.Uri.file(suggestDefaultFolder(url, branch))
+            ? vscode.Uri.file(expandEnvVars(suggestDefaultFolder(url, branch)))
             : undefined;
         const picked = await vscode.window.showOpenDialog({
           canSelectFolders: true,
@@ -181,7 +182,7 @@ export class AlBaseCodePanel {
                   enabled: true,
                 })
               )
-            : validateFolder(folder, { forClone: false });
+            : validateFolder(expandEnvVars(folder), { forClone: false });
           void this.panel.webview.postMessage({
             type: "folderPicked",
             index,
@@ -207,7 +208,7 @@ export class AlBaseCodePanel {
                 enabled: true,
               })
             )
-          : validateFolder(folder, { forClone: false });
+          : validateFolder(expandEnvVars(folder), { forClone: false });
         void this.panel.webview.postMessage({
           type: "folderValidated",
           index,
@@ -556,12 +557,12 @@ export class AlBaseCodePanel {
         if (hint) {
           hint.textContent = accessMode === "mcp"
             ? "Enabled sources are exposed via this workspace's .vscode/mcp.json (server: acdc-al-sources) — no workspace mounts. User-profile mcp.json is intentionally not used: VS Code has no stable API for extensions to identify the active profile."
-            : "Enabled sources are added as read-only workspace folders (prefix [AL Src]).";
+            : "Enabled sources are added as read-only workspace folders (prefix [AL Src]) under the portable acdc-alsrc: scheme, so the workspace file stays free of machine-specific paths.";
         }
         if (cost) {
           cost.textContent = accessMode === "mcp"
             ? "Token cost: MCP filesystem searches by filename only — agents typically need to read whole files, which usually costs MORE tokens than workspace mode. Prefer this mode when you value a clean Explorer over search efficiency."
-            : "Token cost: workspace mode lets agents use grep/semantic search over sliced reads — usually the CHEAPER option for heavy AL search workloads.";
+            : "Note: ripgrep text search only runs on file: paths, so workspace-wide text search does not reach these mounts. Quick Open, file reads and agent access work normally.";
         }
         if (reveal) {
           reveal.style.display = accessMode === "mcp" ? "" : "none";
@@ -610,14 +611,9 @@ export class AlBaseCodePanel {
       }
 
       function ensureBaseFolder(idx) {
-        if ((entries[idx].repository || "").trim() && !(entries[idx].folder || "").trim()) {
-          vscode.postMessage({
-            type: "suggestFolder",
-            index: idx,
-            url: entries[idx].repository,
-            branch: entries[idx].branch,
-          });
-        }
+        // Git-backed sources inherit the machine-scoped sourcesRoot; never
+        // auto-fill a machine path into the workspace settings.
+        void idx;
       }
 
       function requestBranches(idx, immediate) {
@@ -655,9 +651,6 @@ export class AlBaseCodePanel {
             return "Branch requires a repository.";
           }
           return folderErrors[idx] || "";
-        }
-        if (!baseFolder) {
-          return "Base folder is required when repository is set.";
         }
         if (!branch) {
           return "Branch is required when repository is set.";
@@ -713,7 +706,7 @@ export class AlBaseCodePanel {
             '</td>' +
             '<td class="base-cell">' +
               '<div class="folder-cell">' +
-                '<input type="text" data-field="folder" data-index="' + i + '" value="' + h(e.folder || "") + '" placeholder="' + (manual ? 'folder you maintain yourself' : '(required base folder)') + '" />' +
+                '<input type="text" data-field="folder" data-index="' + i + '" value="' + h(e.folder || "") + '" placeholder="' + (manual ? 'folder you maintain yourself' : '(inherits sourcesRoot)') + '" />' +
                 '<button class="secondary" data-browse="' + i + '">…</button>' +
               '</div>' +
               '<div class="error" data-folder-error="' + i + '"></div>' +
@@ -767,7 +760,7 @@ export class AlBaseCodePanel {
         if (folderInput) {
           folderInput.placeholder = manual
             ? 'folder you maintain yourself'
-            : '(required base folder)';
+            : '(inherits sourcesRoot)';
         }
         setDerivedFolders(idx);
         updateActionState();
@@ -802,11 +795,6 @@ export class AlBaseCodePanel {
         }
 
         if (field === "folder") {
-          const repository = (entries[idx].repository || "").trim();
-          if (repository && !(entries[idx].folder || "").trim()) {
-            ensureBaseFolder(idx);
-            return;
-          }
           postValidateFolder(idx);
         }
 

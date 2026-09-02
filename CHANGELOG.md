@@ -1,6 +1,29 @@
 # Changelog
 
 
+## [Unreleased]
+
+### Added
+
+- **Portable AL source mounts.** Enabled AL Base Code / ISV sources are now mounted through a new read-only `acdc-alsrc:` virtual filesystem instead of a raw `file:` path. The `.code-workspace` records a machine-independent URI (`acdc-alsrc:/MSDyn365BC.Sandbox.Code.History/be-28`) rather than `../../../AppData/Local/...`, so a committed workspace file resolves correctly for every developer. VS Code supports no variable substitution in `folders[].path`, so a virtual scheme is the only way to persist a portable mount.
+- **`acdc.alBaseCode.sourcesRoot`** — the clone root for this machine, declared `"scope": "machine"` so VS Code only accepts it in User settings. A developer-specific path can no longer be written into a shared workspace file, while `repository` / `branch` / `enabled` stay per-workspace — project A can sit on `be-28` while project B uses `nl-25`. Empty falls back to `%LOCALAPPDATA%\acdc-sources`.
+- **Guided upgrade for existing workspaces.** On activation the extension detects leftovers from the old layout (a per-entry `folder`, a legacy `file:` mount, a stale `git.ignoredRepositories` entry) and offers to repair them, with a link straight to the relevant setting. Also available as **AC/DC: Migrate AL Base Code Settings to Portable Layout**. The migration seeds `sourcesRoot` from the folder the workspace already used, so clones already on disk keep working without re-downloading.
+- `%VAR%` placeholders (`%LOCALAPPDATA%`, `%USERPROFILE%`, …) are expanded in the AL source `folder` value.
+
+### Fixed
+
+- **AL source sync failed with `! [rejected] … (non-fast-forward)`.** The fetch refspec was built without a leading `+`, so a shallow `--depth 1` fetch was rejected whenever the new truncated tip was not a fast-forward of the previous one — which is essentially every update, and also whenever upstream rewrites a branch (as `MSDyn365BC.Sandbox.Code.History` does).
+- **Saving AL Base Code settings could silently do nothing.** Writes were always targeted at `Workspace` scope, so when the value actually lived in a higher-precedence folder-level `.vscode/settings.json` the update was shadowed and the old value kept winning on read. Settings are now written back to the scope they are actually defined in.
+- `git.ignoredRepositories` is no longer written at all: the built-in Git extension only scans `file:` folders, so the new virtual mounts never reach Source Control. Existing entries added by earlier versions are cleaned up.
+- `"folder": ""` is no longer persisted into workspace settings; the key is omitted when empty.
+- **`${reviewAgent}` was reported as an unknown agent.** `loadAgents()` filtered out every non-user-invocable agent before `listAllAgents()` could see it, so the `AL Code Review Subagent` never validated. This also left handoffs targeting the review subagent without a resolved id and hid its inbound route in the workflow diagram.
+
+### Changed
+
+- `acdc.alBaseCode.repositories[].folder` is deprecated for git-backed sources — leave it empty and use `acdc.alBaseCode.sourcesRoot`. It is still required (and still supported) for a manual source with no repository.
+- Workspace-mode help text now notes the trade-off: ripgrep text search only runs on `file:` paths and therefore does not reach the mounted sources. Quick Open, file reads and agent access are unaffected.
+
+
 ## [2.2.4] - 2026-08-14
 
 ### Added

@@ -28,8 +28,17 @@ releases of this extension. Used by the in-editor update check.
 
 Read-only AL source repositories (Business Central base app and ISV products such as
 Continia or Tasklet) mounted into the workspace so agents can search and read real AL
-code. Mounted source folders are added to `git.ignoredRepositories` so they don't
-clutter the Source Control view.
+code. Sources are mounted under the portable `acdc-alsrc:` scheme, so the
+`.code-workspace` records a machine-independent URI (for example
+`acdc-alsrc:/MSDyn365BC.Sandbox.Code.History/be-28`) instead of a path containing your
+user name — the same workspace file works for every developer, and each project keeps
+its own branch/localization. Because the built-in Git extension only scans `file:`
+folders, these mounts never clutter the Source Control view and need no
+`git.ignoredRepositories` entry.
+
+> Trade-off: workspace-wide **text search** (ripgrep) only runs on `file:` paths, so it
+> does not reach the mounted source. Opening files, Quick Open, and agent reads work
+> normally.
 
 **Recommended**: use the **▶ Open the AL Base Code / ISV Code table editor** link in
 the setting description instead of editing JSON — it provides a table with a live
@@ -41,10 +50,29 @@ Each entry:
   (e.g. an ISV file download).
 - `branch` — branch to check out (e.g. a localisation/version branch). Ignored for
   manual folders.
-- `folder` — local folder the repository is cloned into. Leave empty (with a
-  repository set) to use the portable per-user default under
-  `%LOCALAPPDATA%\acdc-sources\<repo>`.
+- `folder` — **deprecated for git-backed sources**: leave empty and let the entry
+  inherit `acdc.alBaseCode.sourcesRoot`, so no machine-specific path is committed.
+  Still required for a **manual** source (no repository) you maintain yourself.
 - `enabled` — whether this source is cloned/pulled and mounted.
+
+### `acdc.alBaseCode.sourcesRoot`
+
+Base folder on **this machine** where sources are cloned. Each source resolves to
+`<sourcesRoot>/<repo>/<branch>`, so several projects share one clone cache while each
+keeps its own branch/localisation (project A on `be-28`, project B on `nl-25`).
+
+Leave empty to use `%LOCALAPPDATA%\acdc-sources`. Supports `%VAR%` placeholders.
+
+This setting is **machine-scoped** (`"scope": "machine"`), which means VS Code only
+allows it in User settings — a developer-specific path can never be written into a
+shared `.code-workspace`.
+
+> **Upgrading from an older version?** If a workspace still contains machine-specific
+> paths (a per-entry `folder`, a `file:` workspace mount, or a `git.ignoredRepositories`
+> entry), AC⚡DC notifies you on activation and offers to repair it. You can also run
+> **AC/DC: Migrate AL Base Code Settings to Portable Layout** from the Command Palette.
+> The migration seeds `sourcesRoot` from your existing folder, so clones already on disk
+> keep working.
 
 ### `acdc.alBaseCode.syncOnStartup`
 

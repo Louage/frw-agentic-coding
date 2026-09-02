@@ -13,8 +13,12 @@ import {
 import {
   syncAlBaseCode,
   syncOnStartup,
-  syncGitIgnoredRepositories,
 } from "./alBaseCode";
+import { AlSourceFileSystemProvider } from "./alSourceFileSystemProvider";
+import {
+  promptForLegacyMigration,
+  runMigration,
+} from "./alBaseCodeMigration";
 import { AlBaseCodePanel } from "./views/alBaseCodePanel";
 import { BcqualityCustomLayersPanel } from "./views/bcqualityCustomLayersPanel";
 import { AgentSettingsViewProvider } from "./views/agentSettingsView";
@@ -235,6 +239,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // 4. AL Base Code
+  // Registered before any mount is applied: the workspace file may already
+  // contain acdc-alsrc: folders from a previous session.
+  AlSourceFileSystemProvider.register(context);
   context.subscriptions.push(
     vscode.commands.registerCommand("acdc.manageAlBaseCode", () =>
       AlBaseCodePanel.show(output)
@@ -253,7 +260,10 @@ export function activate(context: vscode.ExtensionContext): void {
           `AL Base Code synced: ${cloned} cloned, ${pulled} updated.`
         );
       }
-    })
+    }),
+    vscode.commands.registerCommand("acdc.migrateAlBaseCodeSettings", () =>
+      runMigration(context, output)
+    )
   );
 
   // 6. BCQuality custom layers (customer/partner forks — see aldc.yaml
@@ -308,8 +318,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 5. Startup checks.
   void syncOnStartup(output);
-  // Keep already-mounted AL source folders out of the Source Control view.
-  void syncGitIgnoredRepositories();
+  void promptForLegacyMigration(context, output);
 }
 
 export function deactivate(): void {

@@ -20,6 +20,7 @@ export interface AlSourceEntry {
 
 const CONFIG_SECTION = "acdc";
 const REPOS_KEY = "alBaseCode.repositories";
+const SOURCES_ROOT_KEY = "alBaseCode.sourcesRoot";
 const SYNC_ON_STARTUP_KEY = "alBaseCode.syncOnStartup";
 const ACCESS_MODE_KEY = "alBaseCode.accessMode";
 const MOUNT_PREFIX = "[AL Src] ";
@@ -38,18 +39,41 @@ export type AccessMode = "workspace" | "mcp";
 // ---------------------------------------------------------------------------
 
 export function getEntries(): AlSourceEntry[] {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, primaryResource());
   const raw = config.get<AlSourceEntry[]>(REPOS_KEY, []);
   return raw.map(normalizeEntry);
 }
 
-export async function saveEntries(entries: AlSourceEntry[]): Promise<void> {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
-  await config.update(
-    REPOS_KEY,
-    entries.map((entry) => normalizeAndResolveEntry(entry)),
-    vscode.ConfigurationTarget.Workspace
+/**
+ * Entries exactly as stored, before normalization fills in defaults. Lets
+ * callers tell an absent key from an empty one — `getEntries()` renders both
+ * as `""`.
+ */
+export function getRawEntries(): Partial<AlSourceEntry>[] {
+  return (
+    vscode.workspace
+      .getConfiguration(CONFIG_SECTION, primaryResource())
+      .get<Partial<AlSourceEntry>[]>(REPOS_KEY, []) ?? []
   );
+}
+
+export async function saveEntries(entries: AlSourceEntry[]): Promise<void> {
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, primaryResource());
+  const target = resolveConfigTarget(config, REPOS_KEY);
+  await config.update(REPOS_KEY, entries.map(toPersistedEntry), target);
+}
+
+/**
+ * Drops `folder` when empty rather than writing `"folder": ""` into a file
+ * teams commit — an empty value only means "inherit `sourcesRoot`".
+ */
+function toPersistedEntry(entry: Partial<AlSourceEntry>): Partial<AlSourceEntry> {
+  const normalized = normalizeAndResolveEntry(entry);
+  if (normalized.folder) {
+    return normalized;
+  }
+  const { folder: _omitted, ...rest } = normalized;
+  return rest;
 }
 
 export function isSyncOnStartupEnabled(): boolean {
@@ -58,17 +82,68 @@ export function isSyncOnStartupEnabled(): boolean {
     .get<boolean>(SYNC_ON_STARTUP_KEY, false);
 }
 
+/**
+ * Machine-scoped clone root. Declared `"scope": "machine"` so VS Code refuses
+ * to store it in a shared `.code-workspace`, which is what keeps developer-
+ * specific paths out of committed settings. Empty means "use the default".
+ */
+export function getSourcesRootSetting(): string {
+  return (
+    vscode.workspace
+      .getConfiguration(CONFIG_SECTION)
+      .get<string>(SOURCES_ROOT_KEY, "") ?? ""
+  ).trim();
+}
+
+export async function setSourcesRootSetting(value: string): Promise<void> {
+  await vscode.workspace
+    .getConfiguration(CONFIG_SECTION)
+    .update(SOURCES_ROOT_KEY, value, vscode.ConfigurationTarget.Global);
+}
+
 export function getAccessMode(): AccessMode {
   const raw = vscode.workspace
-    .getConfiguration(CONFIG_SECTION)
+    .getConfiguration(CONFIG_SECTION, primaryResource())
     .get<string>(ACCESS_MODE_KEY, "workspace");
   return raw === "mcp" ? "mcp" : "workspace";
 }
 
 export async function setAccessMode(mode: AccessMode): Promise<void> {
-  await vscode.workspace
-    .getConfiguration(CONFIG_SECTION)
-    .update(ACCESS_MODE_KEY, mode, vscode.ConfigurationTarget.Workspace);
+  const config = vscode.workspace.getConfiguration(CONFIG_SECTION, primaryResource());
+  const target = resolveConfigTarget(config, ACCESS_MODE_KEY);
+  await config.update(ACCESS_MODE_KEY, mode, target);
+}
+
+/** First workspace folder, used to read/write folder-scoped settings correctly. */
+function primaryResource(): vscode.Uri | undefined {
+  return vscode.workspace.workspaceFolders?.[0]?.uri;
+}
+
+/**
+ * Picks the write target matching where a setting is *currently* defined
+ * (Workspace Folder > Workspace > Global). Without this, saving always at
+ * Workspace scope silently no-ops when the value actually lives in a
+ * higher-precedence `.vscode/settings.json` (Workspace Folder) — the write
+ * succeeds but the shadowed old value keeps winning on read.
+ * Falls back to Workspace (or Global with no folder open) when unset anywhere.
+ */
+function resolveConfigTarget(
+  config: vscode.WorkspaceConfiguration,
+  key: string
+): vscode.ConfigurationTarget {
+  const inspected = config.inspect(key);
+  if (inspected?.workspaceFolderValue !== undefined) {
+    return vscode.ConfigurationTarget.WorkspaceFolder;
+  }
+  if (inspected?.workspaceValue !== undefined) {
+    return vscode.ConfigurationTarget.Workspace;
+  }
+  if (inspected?.globalValue !== undefined) {
+    return vscode.ConfigurationTarget.Global;
+  }
+  return (vscode.workspace.workspaceFolders?.length ?? 0) > 0
+    ? vscode.ConfigurationTarget.Workspace
+    : vscode.ConfigurationTarget.Global;
 }
 
 function normalizeEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
@@ -80,27 +155,30 @@ function normalizeEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
   };
 }
 
+/**
+ * Git-backed entries deliberately persist an EMPTY folder: the base comes from
+ * the machine-scoped `sourcesRoot`, so nothing machine-specific is written to
+ * the (possibly committed) workspace settings.
+ */
 function normalizeAndResolveEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
-  const normalized = normalizeEntry(entry);
-  if (normalized.repository && !normalized.folder) {
-    normalized.folder = suggestDefaultFolder(
-      normalized.repository,
-      normalized.branch
-    );
-  }
-  return normalized;
+  return normalizeEntry(entry);
 }
 
 // ---------------------------------------------------------------------------
 // Folder helpers
 // ---------------------------------------------------------------------------
 
-/** Base directory for cloned sources: %LOCALAPPDATA%\acdc-sources (cross-platform fallback). */
-export function getSourcesBaseDir(): string {
+/** Built-in clone root, ignoring the `sourcesRoot` setting. */
+export function getDefaultSourcesBaseDir(): string {
   const localAppData =
     process.env.LOCALAPPDATA ??
     path.join(os.homedir(), "AppData", "Local");
   return path.join(localAppData, SOURCES_SUBDIR);
+}
+
+/** Base directory for cloned sources: the configured root, else the default. */
+export function getSourcesBaseDir(): string {
+  return expandEnvVars(getSourcesRootSetting()) || getDefaultSourcesBaseDir();
 }
 
 /** Derives a repo folder name from a git URL (last path segment, without .git). */
@@ -110,7 +188,11 @@ export function repoNameFromUrl(url: string): string {
   return segment || "al-source";
 }
 
-/** Proposes a default base folder under %LOCALAPPDATA%\acdc-sources. */
+/**
+ * Proposes a default base folder. Repo-backed sources should leave `folder`
+ * empty and inherit the machine-scoped root, so the suggestion is only a
+ * display hint now — it is no longer written into workspace settings.
+ */
 export function suggestDefaultFolder(url: string, branch = ""): string {
   void url;
   void branch;
@@ -136,22 +218,94 @@ export function branchFolderDisplayName(branch: string): string {
 }
 
 /**
- * The folder an entry actually resolves to. When `folder` is left empty in
- * settings, we compute a per-user default under %LOCALAPPDATA% at runtime — this
- * keeps committed workspace settings portable across developers (each machine
- * expands to its own local path instead of a hard-coded, username-specific one).
+ * Expands Windows-style `%VAR%` placeholders (e.g. `%LOCALAPPDATA%`,
+ * `%USERPROFILE%`) so a `folder` value committed to shared workspace settings
+ * resolves per-developer instead of embedding one machine's literal path.
+ * Unknown/unset variables are left untouched.
+ */
+export function expandEnvVars(value: string): string {
+  return value.replace(/%([A-Za-z_][A-Za-z0-9_]*)%/g, (raw, name: string) => {
+    return process.env[name] ?? raw;
+  });
+}
+
+/**
+ * The folder an entry actually resolves to.
+ *
+ * For git-backed sources the base comes from the machine-scoped
+ * `sourcesRoot` (an explicit per-entry `folder` is still honoured for backward
+ * compatibility). Manual sources have no repository, so their folder is the
+ * value the developer maintains themselves.
  */
 export function effectiveFolder(entry: AlSourceEntry): string {
-  const explicit = entry.folder.trim();
+  const explicit = expandEnvVars(entry.folder.trim());
   if (!entry.repository.trim()) {
     return explicit;
   }
-  const baseFolder = explicit || suggestDefaultFolder(entry.repository, entry.branch);
+  const baseFolder = explicit || getSourcesBaseDir();
   const repoFolder = repoFolderName(entry.repository);
   const branchFolder = branchFolderName(entry.branch);
   return branchFolder
     ? path.join(baseFolder, repoFolder, branchFolder)
     : path.join(baseFolder, repoFolder);
+}
+
+// ---------------------------------------------------------------------------
+// Portable virtual URIs (acdc-alsrc:)
+// ---------------------------------------------------------------------------
+
+/** Scheme of the read-only virtual mount served by AlSourceFileSystemProvider. */
+export const AL_SOURCE_SCHEME = "acdc-alsrc";
+
+/**
+ * Stable, machine-independent identity for an entry, used as the virtual URI
+ * path. Derived from repo + branch (or the folder name for manual sources) so
+ * the same `.code-workspace` resolves correctly on every developer's machine.
+ */
+export function virtualPathFor(entry: AlSourceEntry): string {
+  if (!entry.repository.trim()) {
+    const name = path.basename(entry.folder.trim());
+    return name ? `/${name}` : "";
+  }
+  const repoFolder = repoFolderName(entry.repository);
+  const branchFolder = branchFolderName(entry.branch);
+  return branchFolder ? `/${repoFolder}/${branchFolder}` : `/${repoFolder}`;
+}
+
+export function virtualUriFor(entry: AlSourceEntry): vscode.Uri | undefined {
+  const virtualPath = virtualPathFor(entry);
+  if (!virtualPath) {
+    return undefined;
+  }
+  return vscode.Uri.from({ scheme: AL_SOURCE_SCHEME, path: virtualPath });
+}
+
+/**
+ * Reverses `virtualUriFor`: finds the configured entry whose identity matches
+ * the URI's leading segments and returns its real folder plus the remaining
+ * path. Returns undefined when no entry matches (e.g. a mount left in the
+ * workspace file after the source was removed from settings).
+ */
+export function resolveVirtualUri(
+  uri: vscode.Uri
+): { root: string; relativePath: string } | undefined {
+  const requested = uri.path.replace(/\/+$/, "") || "/";
+  for (const entry of getEntries()) {
+    const base = virtualPathFor(entry);
+    if (!base) {
+      continue;
+    }
+    if (requested !== base && !requested.startsWith(base + "/")) {
+      continue;
+    }
+    const root = effectiveFolder(entry);
+    if (!root) {
+      continue;
+    }
+    const rest = requested.slice(base.length).replace(/^\/+/, "");
+    return { root, relativePath: rest };
+  }
+  return undefined;
 }
 
 /**
@@ -387,8 +541,10 @@ export async function ensureClonedOrPulled(
           } else {
             const branch = await currentBranch(folder);
             if (branch) {
+              // Leading '+' forces the ref update even when the new shallow tip
+              // isn't a fast-forward of the old one (or upstream rewrote history).
               await runGit(
-                `fetch --depth 1 origin "${branch}:refs/remotes/origin/${branch}"`,
+                `fetch --depth 1 origin "+${branch}:refs/remotes/origin/${branch}"`,
                 folder
               );
               await runGit(`reset --hard "origin/${branch}"`, folder);
@@ -430,8 +586,10 @@ async function currentBranch(folder: string): Promise<string | undefined> {
  * works. Discards local changes (these folders are read-only mirrors). Never pushes.
  */
 async function checkoutBranch(folder: string, branch: string): Promise<void> {
+  // Leading '+' forces the ref update even when the new shallow tip isn't a
+  // fast-forward of the old one (or upstream rewrote/rebased the branch).
   await runGit(
-    `fetch --depth 1 origin "${branch}:refs/remotes/origin/${branch}"`,
+    `fetch --depth 1 origin "+${branch}:refs/remotes/origin/${branch}"`,
     folder
   );
   await runGit(`checkout -f -B "${branch}" "origin/${branch}"`, folder);
@@ -459,56 +617,20 @@ function entryLabel(entry: AlSourceEntry): string {
 }
 
 /**
- * Keeps `git.ignoredRepositories` in sync so mounted AL source folders don't
- * clutter the Source Control view (developers shouldn't wonder which repo they
- * are working in). Enabled source folders are added; disabled ones we manage
- * are removed; unrelated user entries are preserved.
- */
-export async function syncGitIgnoredRepositories(): Promise<void> {
-  const entries = getEntries();
-  const allOurFolders = entries.map(effectiveFolder).filter(Boolean);
-  const enabledOurFolders = entries
-    .filter((e) => e.enabled)
-    .map(effectiveFolder)
-    .filter(Boolean);
-
-  const gitConfig = vscode.workspace.getConfiguration("git");
-  const existing = gitConfig.get<string[]>("ignoredRepositories", []) ?? [];
-
-  const isOurs = (p: string) =>
-    allOurFolders.some((f) => normalizePath(f) === normalizePath(p));
-
-  const preserved = existing.filter((p) => !isOurs(p));
-  const next = [...preserved];
-  for (const folder of enabledOurFolders) {
-    if (!next.some((p) => normalizePath(p) === normalizePath(folder))) {
-      next.push(folder);
-    }
-  }
-
-  const changed =
-    next.length !== existing.length ||
-    next.some((p, i) => p !== existing[i]);
-  if (changed) {
-    await gitConfig.update(
-      "ignoredRepositories",
-      next,
-      vscode.ConfigurationTarget.Workspace
-    );
-  }
-}
-
-/**
  * Removes every ignored-repositories entry pointing at one of our managed
- * folders. Used when switching to MCP mode, where we no longer mount those
- * folders as workspace roots and therefore have no reason to hide them from SCM.
+ * folders.
+ *
+ * Nothing *adds* entries any more: mounts use the `acdc-alsrc:` scheme and the
+ * built-in Git extension only scans `file:` folders, so our sources never show
+ * up in Source Control to begin with. This exists to scrub the machine-specific
+ * absolute paths written by earlier versions out of the workspace file.
  */
 export async function clearOurGitIgnoredRepositories(): Promise<void> {
   const entries = getEntries();
   const ourFolders = entries.map(effectiveFolder).filter(Boolean);
   if (ourFolders.length === 0) { return; }
 
-  const gitConfig = vscode.workspace.getConfiguration("git");
+  const gitConfig = vscode.workspace.getConfiguration("git", primaryResource());
   const existing = gitConfig.get<string[]>("ignoredRepositories", []) ?? [];
   const isOurs = (p: string) =>
     ourFolders.some((f) => normalizePath(f) === normalizePath(p));
@@ -516,8 +638,8 @@ export async function clearOurGitIgnoredRepositories(): Promise<void> {
   if (preserved.length !== existing.length) {
     await gitConfig.update(
       "ignoredRepositories",
-      preserved,
-      vscode.ConfigurationTarget.Workspace
+      preserved.length > 0 ? preserved : undefined,
+      resolveConfigTarget(gitConfig, "ignoredRepositories")
     );
   }
 }
@@ -525,6 +647,11 @@ export async function clearOurGitIgnoredRepositories(): Promise<void> {
 /**
  * Mounts enabled+cloned folders as read-only workspace roots and unmounts
  * disabled ones that we previously added.
+ *
+ * Mounts use the portable `acdc-alsrc:` scheme rather than `file:` so the
+ * `.code-workspace` records a machine-independent URI (see
+ * AlSourceFileSystemProvider). Pre-existing `file:` mounts we own are migrated
+ * on the fly.
  */
 export function applyWorkspaceMounts(output: vscode.OutputChannel): {
   added: string[];
@@ -535,35 +662,45 @@ export function applyWorkspaceMounts(output: vscode.OutputChannel): {
   const added: string[] = [];
   const removed: string[] = [];
 
+  const mountedByUri = new Map<string, number>();
   const mountedByPath = new Map<string, number>();
-  currentFolders.forEach((f, i) =>
-    mountedByPath.set(normalizePath(f.uri.fsPath), i)
-  );
+  currentFolders.forEach((f, i) => {
+    mountedByUri.set(f.uri.toString(), i);
+    if (f.uri.scheme === "file") {
+      mountedByPath.set(normalizePath(f.uri.fsPath), i);
+    }
+  });
 
   const toAdd: { uri: vscode.Uri; name: string }[] = [];
   const toRemove: number[] = [];
 
   for (const entry of entries) {
     const folder = effectiveFolder(entry);
-    if (!folder) {
+    const uri = virtualUriFor(entry);
+    if (!folder || !uri) {
       continue;
     }
-    const key = normalizePath(folder);
-    const mountedIndex = mountedByPath.get(key);
+    const mountedIndex = mountedByUri.get(uri.toString());
+    // A folder we previously mounted as file: — replace it with the portable form.
+    const legacyIndex = mountedByPath.get(normalizePath(folder));
 
     if (entry.enabled) {
+      if (legacyIndex !== undefined) {
+        toRemove.push(legacyIndex);
+      }
       if (mountedIndex === undefined && fs.existsSync(folder)) {
-        toAdd.push({
-          uri: vscode.Uri.file(folder),
-          name: mountName(entry),
-        });
+        toAdd.push({ uri, name: mountName(entry) });
         added.push(entryLabel(entry));
       }
-    } else if (mountedIndex !== undefined) {
-      const mounted = currentFolders[mountedIndex];
-      if (mounted.name.startsWith(MOUNT_PREFIX)) {
-        toRemove.push(mountedIndex);
-        removed.push(entryLabel(entry));
+    } else {
+      for (const idx of [mountedIndex, legacyIndex]) {
+        if (idx === undefined) {
+          continue;
+        }
+        if (currentFolders[idx].name.startsWith(MOUNT_PREFIX)) {
+          toRemove.push(idx);
+          removed.push(entryLabel(entry));
+        }
       }
     }
   }
@@ -911,7 +1048,7 @@ export async function syncAlBaseCode(
   } else {
     unmountAllOurMcpMounts(output);
     applyWorkspaceMounts(output);
-    await syncGitIgnoredRepositories();
+    await clearOurGitIgnoredRepositories();
   }
   return results;
 }
@@ -987,7 +1124,8 @@ export async function syncOnStartup(
       await clearOurGitIgnoredRepositories();
     } else {
       unmountAllOurMcpMounts(output);
-      await syncGitIgnoredRepositories();
+      applyWorkspaceMounts(output);
+      await clearOurGitIgnoredRepositories();
     }
   }
 }

@@ -259,7 +259,9 @@ async function loadAgents(extensionUri: vscode.Uri): Promise<ParsedAgent[]> {
     });
   }
 
-  return parsed.filter((agent) => agent.userInvocable);
+  // Subagents are kept: callers that only want user-invocable agents filter
+  // themselves, while placeholder validation and handoff resolution need them.
+  return parsed;
 }
 
 async function findAgentFiles(root: vscode.Uri): Promise<vscode.Uri[]> {
