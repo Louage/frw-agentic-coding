@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getSettingsMap, type AgentSettingEntry } from "./agentSettingsService";
+import { getSettingsMap, resolveEffectiveTools, type AgentSettingEntry } from "./agentSettingsService";
 
 interface ContributionEntry {
   path?: string;
@@ -94,7 +94,10 @@ function hasRuntimeOverride(setting: AgentSettingEntry | undefined): boolean {
   }
   return Boolean(
     setting.model?.trim() ||
+      setting.reasoningEffort?.trim() ||
       setting.argumentHint?.trim() ||
+      (setting.disabledTools && setting.disabledTools.length > 0) ||
+      (setting.extraTools && setting.extraTools.length > 0) ||
       (setting.handoffs && setting.handoffs.length > 0)
   );
 }
@@ -138,11 +141,69 @@ function applySettingToAgentDefinition(
     availableModels
   );
   let updated = upsertScalar(frontmatter, "model", modelFrontmatterValue);
+  updated = upsertScalar(updated, "reasoning-effort", setting.reasoningEffort?.trim());
   updated = upsertScalar(updated, "argument-hint", setting.argumentHint?.trim());
+  updated = upsertTools(updated, setting);
   updated = upsertHandoffs(updated, setting.handoffs ?? [], originalHandoffPrompts);
 
   const replacement = `---\n${updated}\n---`;
   return content.replace(/^---\r?\n([\s\S]*?)\r?\n---/, replacement);
+}
+
+/**
+ * Rewrites the `tools:` flow array from the stored deltas. Declared tokens are read
+ * verbatim (wildcards such as `github/*` intact) so a round-trip never narrows a namespace.
+ */
+function upsertTools(frontmatter: string, setting: AgentSettingEntry): string {
+  const disabledTools = setting.disabledTools ?? [];
+  const extraTools = setting.extraTools ?? [];
+  if (disabledTools.length === 0 && extraTools.length === 0) {
+    return frontmatter;
+  }
+
+  const lines = frontmatter.split(/\r?\n/);
+  const index = lines.findIndex((line) => /^tools:\s*/.test(line));
+  if (index >= 0 && !/^tools:\s*\[.*\]\s*$/.test(lines[index])) {
+    // Block-style tools list: leave it alone rather than corrupting it into a flow array.
+    return frontmatter;
+  }
+
+  const declared = readDeclaredTools(frontmatter);
+  const effective = resolveEffectiveTools(declared, disabledTools, extraTools);
+
+  if (effective.length === 0) {
+    if (index >= 0) {
+      lines.splice(index, 1);
+    }
+    return lines.join("\n");
+  }
+
+  const newLine = `tools: [${effective.join(", ")}]`;
+  if (index >= 0) {
+    lines[index] = newLine;
+  } else {
+    lines.push(newLine);
+  }
+
+  return lines.join("\n");
+}
+
+function readDeclaredTools(frontmatter: string): string[] {
+  const match = /^tools:\s*(.*)$/m.exec(frontmatter);
+  if (!match) {
+    return [];
+  }
+
+  const arrayMatch = /^\[(.*)\]$/.exec(match[1].trim());
+  if (!arrayMatch) {
+    return [];
+  }
+
+  return arrayMatch[1]
+    .split(",")
+    .map((token) => token.trim().replace(/^['"]|['"]$/g, "").trim())
+    .filter((token) => token.length > 0)
+    .filter((token, index, all) => all.indexOf(token) === index);
 }
 
 function upsertScalar(frontmatter: string, key: string, value: string | undefined): string {

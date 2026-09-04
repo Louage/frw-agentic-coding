@@ -1,10 +1,25 @@
 import * as vscode from "vscode";
 import {
   getAgentSettingsViewModel,
+  getSettingsMap,
+  REASONING_EFFORT_VALUES,
   resetAgentSettingEntry,
   saveAgentSettingEntry,
   savePlaceholderRows,
+  WRITE_CAPABLE_TOOL_IDS,
 } from "../agentSettingsService";
+
+const REASONING_EFFORT_LABELS: Record<string, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  xhigh: "Extra high",
+  max: "Max",
+};
+
+interface ToolQuickPickItem extends vscode.QuickPickItem {
+  toolId?: string;
+}
 
 export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "acdc.agentSettings";
@@ -12,6 +27,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
   private view: vscode.WebviewView | undefined;
   private selectedAgentId: string | undefined;
   private selectedAgentName: string | undefined;
+  private declaredTools: string[] = [];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -52,6 +68,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
     );
     this.selectedAgentId = this.selectedAgentId ?? state.selected.fileId;
     this.selectedAgentName = this.selectedAgentName ?? state.selected.name;
+    this.declaredTools = state.selected.declaredTools;
     return {
       selectedAgentId: this.selectedAgentId,
       selectedAgentName: this.selectedAgentName,
@@ -75,10 +92,18 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         name: state.selected.name,
         description: state.selected.description ?? "",
         model: state.selected.effectiveModel ?? "",
+        reasoningEffort: state.selected.effectiveReasoningEffort ?? "",
         argumentHint: state.selected.effectiveArgumentHint ?? "",
         bcReviewSpecialist: state.selected.effectiveBcReviewSpecialist ?? "",
+        declaredTools: state.selected.declaredTools,
+        disabledTools: state.selected.disabledTools,
+        extraTools: state.selected.extraTools,
         handoffs: state.selected.effectiveHandoffs,
       },
+      reasoningEffortOptions: REASONING_EFFORT_VALUES.map((value) => ({
+        value,
+        label: REASONING_EFFORT_LABELS[value] ?? value,
+      })),
       modelHint:
         state.availableModels.length > 0
           ? "Pick from the available Copilot models or type a custom value."
@@ -96,10 +121,15 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
       agentId?: string;
       entry?: {
         model?: string;
+        reasoningEffort?: string;
         argumentHint?: string;
         bcReviewSpecialist?: string;
+        disabledTools?: string[];
+        extraTools?: string[];
         handoffs?: Array<{ label: string; agent: string; prompt?: string }>;
       };
+      disabledTools?: string[];
+      extraTools?: string[];
       rows?: Array<{ key: string; target: string }>;
     };
 
@@ -115,16 +145,27 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         await this.refresh();
         break;
 
-      case "saveAgent":
+      case "saveAgent": {
         if (!this.selectedAgentId || !msg.entry) {
           return;
         }
+        const previous = getSettingsMap()[this.selectedAgentId] ?? {};
+        const extraTools = msg.entry.extraTools ?? [];
         await saveAgentSettingEntry(this.selectedAgentId, {
           model: msg.entry.model?.trim() ?? "",
+          reasoningEffort: msg.entry.reasoningEffort?.trim() ?? "",
           argumentHint: msg.entry.argumentHint?.trim() ?? "",
           bcReviewSpecialist: msg.entry.bcReviewSpecialist?.trim() ?? "",
+          disabledTools: msg.entry.disabledTools ?? [],
+          extraTools,
           handoffs: msg.entry.handoffs ?? [],
         });
+        this.warnOnNewWriteCapableTools(previous.extraTools ?? [], extraTools);
+        break;
+      }
+
+      case "openToolsPicker":
+        await this.pickTools(msg.disabledTools ?? [], msg.extraTools ?? []);
         break;
 
       case "resetAgent":
@@ -148,6 +189,117 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         });
         break;
     }
+  }
+
+  /**
+   * Approximates the chat "Configure Tools" control with a native multi-select quick pick,
+   * because that control has no public API. The result is posted back to the webview so the
+   * panel keeps a single save path (pending state -> Apply), instead of writing settings here.
+   */
+  private async pickTools(disabledTools: string[], extraTools: string[]): Promise<void> {
+    const agentName = this.selectedAgentName ?? this.selectedAgentId ?? "this agent";
+    const declared = this.declaredTools;
+    const declaredSet = new Set(declared);
+    const disabled = new Set(disabledTools.map((toolId) => toolId.trim()).filter((toolId) => toolId.length > 0));
+    const extra = extraTools.map((toolId) => toolId.trim()).filter((toolId) => toolId.length > 0);
+    const extraSet = new Set(extra);
+
+    const registered = new Map(vscode.lm.tools.map((tool) => [tool.name, tool]));
+    const items: ToolQuickPickItem[] = [];
+
+    if (declared.length > 0) {
+      items.push({ label: "Declared by this agent", kind: vscode.QuickPickItemKind.Separator });
+      for (const toolId of declared) {
+        items.push({
+          label: toolId,
+          description: registered.get(toolId)?.description ?? "",
+          toolId,
+          picked: !disabled.has(toolId),
+        });
+      }
+    }
+
+    const available = [...registered.values()]
+      .filter((tool) => !declaredSet.has(tool.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (available.length > 0) {
+      items.push({ label: "Available tools", kind: vscode.QuickPickItemKind.Separator });
+      for (const tool of available) {
+        items.push({
+          label: tool.name,
+          description: tool.description,
+          toolId: tool.name,
+          picked: extraSet.has(tool.name),
+        });
+      }
+    }
+
+    const unavailable = extra.filter((toolId) => !declaredSet.has(toolId) && !registered.has(toolId));
+    if (unavailable.length > 0) {
+      items.push({ label: "Unavailable", kind: vscode.QuickPickItemKind.Separator });
+      for (const toolId of unavailable) {
+        items.push({
+          label: toolId,
+          description: "Not currently registered — uncheck to remove it from this agent.",
+          toolId,
+          picked: true,
+        });
+      }
+    }
+
+    const result = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      matchOnDescription: true,
+      title: `Tools for ${agentName}`,
+      placeHolder: `Select the tools ${agentName} may use`,
+    });
+
+    if (!result) {
+      return;
+    }
+
+    const selected = new Set(
+      result
+        .map((item) => item.toolId)
+        .filter((toolId): toolId is string => Boolean(toolId))
+    );
+
+    const nextDisabled = declared.filter((toolId) => !selected.has(toolId));
+    // Keep previously stored extras in place and append newly picked ones at the end.
+    const nextExtra = extra.filter((toolId) => selected.has(toolId) && !declaredSet.has(toolId));
+    for (const toolId of selected) {
+      if (!declaredSet.has(toolId) && !nextExtra.includes(toolId)) {
+        nextExtra.push(toolId);
+      }
+    }
+
+    await this.view?.webview.postMessage({
+      type: "toolsPicked",
+      disabledTools: nextDisabled,
+      extraTools: nextExtra,
+    });
+  }
+
+  /**
+   * Several shipped agents (auditor, triage) are contractually read-only. Granting them a
+   * write-capable tool breaks that contract, so warn without blocking.
+   */
+  private warnOnNewWriteCapableTools(previousExtraTools: string[], nextExtraTools: string[]): void {
+    const alreadyGranted = new Set([...previousExtraTools, ...this.declaredTools]);
+    const newlyGranted = nextExtraTools.filter(
+      (toolId) =>
+        (WRITE_CAPABLE_TOOL_IDS as readonly string[]).includes(toolId) && !alreadyGranted.has(toolId)
+    );
+
+    if (newlyGranted.length === 0) {
+      return;
+    }
+
+    const agentName = this.selectedAgentName ?? this.selectedAgentId ?? "This agent";
+    void vscode.window.showWarningMessage(
+      `${agentName} was granted write-capable tools it does not declare: ${newlyGranted.join(", ")}. ` +
+        `Read-only agents such as auditors and triage agents rely on not having these.`
+    );
   }
 
   private getHtml(_webview: vscode.Webview): string {
@@ -260,6 +412,14 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
       .pill { border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 0.76rem; color: var(--muted); }
       .empty { color: var(--muted); font-style: italic; }
       .section-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .tools-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .tools-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+      .tools-head label { margin-bottom: 0; }
+      #tools-summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      button.icon-button {
+        background: transparent; color: var(--text);
+        border: 1px solid var(--border); padding: 3px 8px; line-height: 1.2; flex: none;
+      }
     </style>
   </head>
   <body>
@@ -282,6 +442,19 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
       <div class="row">
         <label for="model-input">Model</label>
         <select id="model-input" class="picker"></select>
+      </div>
+
+      <div class="row">
+        <label for="reasoning-effort-input">Reasoning effort</label>
+        <select id="reasoning-effort-input" class="picker"></select>
+      </div>
+
+      <div class="row tools-row">
+        <div class="tools-head">
+          <label for="tools-configure">Tools</label>
+          <span id="tools-summary" class="subtle"></span>
+        </div>
+        <button id="tools-configure" type="button" class="icon-button" title="Configure tools">&#9881;</button>
       </div>
 
       <div class="stack">
@@ -309,6 +482,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
       let state = null;
       let agentSaveTimer = 0;
       let dirty = false;
+      let pendingTools = { declared: [], disabled: [], extra: [] };
 
       function updateApplyUi() {
         const applyButton = document.getElementById('apply-chat');
@@ -357,8 +531,39 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         agentSaveTimer = window.setTimeout(saveAgent, 150);
       }
 
+      function computeEffectiveTools() {
+        const disabled = new Set(pendingTools.disabled);
+        const seen = new Set();
+        const result = [];
+        pendingTools.declared.concat(pendingTools.extra).forEach((toolId) => {
+          if (!toolId || disabled.has(toolId) || seen.has(toolId)) {
+            return;
+          }
+          seen.add(toolId);
+          result.push(toolId);
+        });
+        return result;
+      }
+
+      function renderToolsSummary() {
+        const summary = document.getElementById('tools-summary');
+        if (!summary) {
+          return;
+        }
+        const total = computeEffectiveTools().length;
+        const parts = [total + (total === 1 ? ' tool' : ' tools')];
+        if (pendingTools.disabled.length > 0) {
+          parts.push(pendingTools.disabled.length + ' disabled');
+        }
+        if (pendingTools.extra.length > 0) {
+          parts.push(pendingTools.extra.length + ' added');
+        }
+        summary.textContent = parts.join(' · ');
+      }
+
       function saveAgent() {
         const modelInput = document.getElementById('model-input');
+        const reasoningEffortInput = document.getElementById('reasoning-effort-input');
         const argumentHintInput = document.getElementById('argument-hint-input');
         const reviewSpecialistInput = document.getElementById('review-specialist-input');
         const handoffList = document.getElementById('handoff-list');
@@ -375,8 +580,11 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         send('saveAgent', {
           entry: {
             model: modelInput.value.trim(),
+            reasoningEffort: reasoningEffortInput.value.trim(),
             argumentHint: argumentHintInput.value.trim(),
             bcReviewSpecialist: reviewSpecialistInput.value.trim(),
+            disabledTools: pendingTools.disabled.slice(),
+            extraTools: pendingTools.extra.slice(),
             handoffs: handoffEntries,
           },
         });
@@ -431,6 +639,30 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         modelInput.innerHTML = '<option value="">Select a Copilot model…</option>' + modelOptions + customModelOption;
         modelInput.value = matchedModel ? matchedModel.id : cleanedCurrentModel;
         modelInput.onchange = scheduleAgentSave;
+
+        const reasoningEffortInput = document.getElementById('reasoning-effort-input');
+        const effortChoices = state.reasoningEffortOptions || [];
+        const currentEffort = String(state.selected.reasoningEffort || '').trim().toLowerCase();
+        const effortOptions = effortChoices.map((option) => {
+          const selected = option.value === currentEffort ? ' selected' : '';
+          return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+        }).join('');
+        reasoningEffortInput.innerHTML = '<option value="">Inherit from agent</option>' + effortOptions;
+        reasoningEffortInput.value = effortChoices.some((option) => option.value === currentEffort) ? currentEffort : '';
+        reasoningEffortInput.onchange = scheduleAgentSave;
+
+        pendingTools = {
+          declared: (state.selected.declaredTools || []).slice(),
+          disabled: (state.selected.disabledTools || []).slice(),
+          extra: (state.selected.extraTools || []).slice(),
+        };
+        renderToolsSummary();
+        document.getElementById('tools-configure').onclick = () => {
+          send('openToolsPicker', {
+            disabledTools: pendingTools.disabled.slice(),
+            extraTools: pendingTools.extra.slice(),
+          });
+        };
 
         const specialistAgents = state.reviewAgents || state.agents;
         const specialistOptions = specialistAgents.map((agent) => {
@@ -538,9 +770,19 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
 
       window.addEventListener('message', (event) => {
         const message = event.data;
-        if (message && message.type === 'state') {
+        if (!message) {
+          return;
+        }
+        if (message.type === 'state') {
           state = message.state;
           render();
+          return;
+        }
+        if (message.type === 'toolsPicked') {
+          pendingTools.disabled = (message.disabledTools || []).slice();
+          pendingTools.extra = (message.extraTools || []).slice();
+          renderToolsSummary();
+          scheduleAgentSave();
         }
       });
 

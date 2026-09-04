@@ -1362,6 +1362,24 @@
                   "type": "string",
                   "description": "Preferred language model name for the agent. The sidebar can populate this from the available Copilot models."
                 },
+                "reasoningEffort": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ],
+                  "enumDescriptions": [
+                    "Fastest, cheapest responses. Best for mechanical edits and lookups.",
+                    "Balanced default for everyday implementation work.",
+                    "More deliberation. Suits architecture, review, and audit agents.",
+                    "Extended deliberation for hard multi-step reasoning.",
+                    "Maximum deliberation. Slowest and most expensive."
+                  ],
+                  "markdownDescription": "Writes the `reasoning-effort` key into the agent frontmatter. **Requires VS Code 1.136+** and only takes effect on the agent-host path (run **Apply to chat** and reload the window). Older hosts and unsupported values are ignored, so this stays backward compatible."
+                },
                 "argumentHint": {
                   "type": "string",
                   "description": "Argument hint shown when the agent is invoked."
@@ -1375,7 +1393,14 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "Tool ids disabled for this agent. The sidebar can toggle full namespaces and individual tools."
+                  "description": "Tool ids declared by the shipped agent that should be removed for this agent. Stored as a delta so a future agent update is not frozen to the old tool list."
+                },
+                "extraTools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Tool ids added on top of the tools the shipped agent declares. Stored as a delta; granting a write-capable tool (edit, runCommands, runInTerminal, runTasks) to a read-only agent raises a warning."
                 },
                 "handoffs": {
                   "type": "array",

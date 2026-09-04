@@ -12,11 +12,24 @@ export interface AgentHandoffSetting {
   prompt?: string;
 }
 
+/**
+ * Values accepted by the `reasoning-effort` agent frontmatter key (VS Code 1.136+).
+ * Single source of truth for the webview options, the package.json enum, and the validator.
+ */
+export const REASONING_EFFORT_VALUES = ["low", "medium", "high", "xhigh", "max"] as const;
+
+export type ReasoningEffort = (typeof REASONING_EFFORT_VALUES)[number];
+
+/** Tools that let an agent mutate the workspace or the machine. */
+export const WRITE_CAPABLE_TOOL_IDS = ["edit", "runCommands", "runInTerminal", "runTasks"] as const;
+
 export interface AgentSettingEntry {
   model?: string;
+  reasoningEffort?: string;
   argumentHint?: string;
   bcReviewSpecialist?: string;
   disabledTools?: string[];
+  extraTools?: string[];
   handoffs?: AgentHandoffSetting[];
   placeholderTarget?: string;
 }
@@ -26,21 +39,26 @@ export interface AgentProfile {
   name: string;
   description?: string;
   model?: string;
+  reasoningEffort?: string;
   argumentHint?: string;
   bcReviewSpecialist?: string;
   userInvocable: boolean;
   tools: string[];
   rawTools: string[];
+  /** Tool tokens exactly as written in the agent frontmatter, wildcards preserved. */
+  declaredTools: string[];
   handoffs: AgentHandoffSetting[];
 }
 
 export interface EffectiveAgentProfile extends AgentProfile {
   settings: AgentSettingEntry;
   effectiveModel?: string;
+  effectiveReasoningEffort?: string;
   effectiveArgumentHint?: string;
   effectiveBcReviewSpecialist?: string;
   effectiveTools: string[];
   disabledTools: string[];
+  extraTools: string[];
   effectiveHandoffs: AgentHandoffSetting[];
 }
 
@@ -89,16 +107,20 @@ export async function getAgentSettingsViewModel(
     createEmptyAgentProfile(selectedAgentId ?? "agent");
 
   const overrides = settingsMap[selected.fileId] ?? {};
-  const effectiveTools = selected.tools;
+  const disabledTools = overrides.disabledTools ?? [];
+  const extraTools = overrides.extraTools ?? [];
+  const effectiveTools = resolveEffectiveTools(selected.declaredTools, disabledTools, extraTools);
   const effectiveHandoffs = overrides.handoffs ?? selected.handoffs;
   const effectiveProfile: EffectiveAgentProfile = {
     ...selected,
     settings: overrides,
     effectiveModel: overrides.model ?? selected.model,
+    effectiveReasoningEffort: overrides.reasoningEffort ?? selected.reasoningEffort,
     effectiveArgumentHint: overrides.argumentHint ?? selected.argumentHint,
     effectiveBcReviewSpecialist: overrides.bcReviewSpecialist ?? selected.bcReviewSpecialist,
     effectiveTools,
-    disabledTools: [],
+    disabledTools,
+    extraTools,
     effectiveHandoffs,
   };
   const placeholders = buildPlaceholderRows(settingsMap, legacyPlaceholders);
@@ -117,9 +139,34 @@ export async function getAgentSettingsViewModel(
     selected: effectiveProfile,
     selectedPlaceholder,
     availableModels,
-    toolGroups: buildToolGroups(selected.tools, []),
+    toolGroups: buildToolGroups(selected.tools, disabledTools),
     placeholders,
   };
+}
+
+/**
+ * Applies the stored deltas to the tools the agent file declares: the declared order is
+ * preserved first, then user-added tools are appended in pick order.
+ */
+export function resolveEffectiveTools(
+  declaredTools: string[],
+  disabledTools: string[],
+  extraTools: string[]
+): string[] {
+  const disabled = new Set(disabledTools.map((toolId) => toolId.trim()).filter((toolId) => toolId.length > 0));
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const toolId of [...declaredTools, ...extraTools]) {
+    const trimmed = toolId.trim();
+    if (!trimmed || disabled.has(trimmed) || seen.has(trimmed)) {
+      continue;
+    }
+    seen.add(trimmed);
+    result.push(trimmed);
+  }
+
+  return result;
 }
 
 export function getSettingsMap(): Record<string, AgentSettingEntry> {
@@ -295,7 +342,7 @@ async function loadAgents(extensionUri: vscode.Uri, includeHidden = false): Prom
       label: resolvePlaceholderText(handoff.label),
       prompt: resolvePlaceholderText(handoff.prompt ?? ""),
     }));
-    const { normalized: tools, raw: rawTools } = readTools(fm);
+    const { normalized: tools, raw: rawTools, verbatim: declaredTools } = readTools(fm);
     const ext = metadata[fileId] ?? {};
     const settings = settingsMap[fileId] ?? {};
 
@@ -304,11 +351,13 @@ async function loadAgents(extensionUri: vscode.Uri, includeHidden = false): Prom
       name,
       description: readScalar(fm, "description") ?? undefined,
       model: settings.model ?? readScalar(fm, "model") ?? undefined,
+      reasoningEffort: settings.reasoningEffort ?? readScalar(fm, "reasoning-effort") ?? undefined,
       argumentHint: settings.argumentHint ?? readScalar(fm, "argument-hint") ?? undefined,
       bcReviewSpecialist: settings.bcReviewSpecialist ?? ext.bcReviewSpecialist,
       userInvocable,
       tools,
       rawTools,
+      declaredTools,
       handoffs: settings.handoffs ?? handoffs,
     });
   }
@@ -424,15 +473,15 @@ function readHandoffs(frontmatter: string): AgentHandoffSetting[] {
   return handoffs;
 }
 
-function readTools(frontmatter: string): { normalized: string[]; raw: string[] } {
+function readTools(frontmatter: string): { normalized: string[]; raw: string[]; verbatim: string[] } {
   const toolsScalar = readScalar(frontmatter, "tools");
   if (!toolsScalar) {
-    return { normalized: [], raw: [] };
+    return { normalized: [], raw: [], verbatim: [] };
   }
 
   const arrayMatch = /^\[(.+)\]$/.exec(toolsScalar.trim());
   if (!arrayMatch) {
-    return { normalized: [], raw: [] };
+    return { normalized: [], raw: [], verbatim: [] };
   }
 
   const content = arrayMatch[1];
@@ -448,7 +497,13 @@ function readTools(frontmatter: string): { normalized: string[]; raw: string[] }
     .filter((t) => t.length > 0)
     .filter((value, index, all) => all.indexOf(value) === index);
 
-  return { normalized, raw };
+  // Keeps `github/*` intact so a round-trip through the settings UI cannot rewrite it as `github`.
+  const verbatim = tools
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0)
+    .filter((value, index, all) => all.indexOf(value) === index);
+
+  return { normalized, raw, verbatim };
 }
 
 function buildToolGroups(toolIds: string[], disabledTools: string[]): ToolGroupViewModel[] {
@@ -536,6 +591,10 @@ function normalizeSettingEntry(entry: AgentSettingEntry | undefined): AgentSetti
   if (entry.model?.trim()) {
     normalized.model = entry.model.trim();
   }
+  const reasoningEffort = entry.reasoningEffort?.trim().toLowerCase();
+  if (reasoningEffort && (REASONING_EFFORT_VALUES as readonly string[]).includes(reasoningEffort)) {
+    normalized.reasoningEffort = reasoningEffort;
+  }
   if (entry.argumentHint?.trim()) {
     normalized.argumentHint = entry.argumentHint.trim();
   }
@@ -551,6 +610,14 @@ function normalizeSettingEntry(entry: AgentSettingEntry | undefined): AgentSetti
     .filter((toolId, index, all) => all.indexOf(toolId) === index);
   if (disabledTools.length > 0) {
     normalized.disabledTools = disabledTools;
+  }
+  const extraTools = (entry.extraTools ?? [])
+    .map((toolId) => toolId.trim())
+    .filter((toolId) => toolId.length > 0)
+    .filter((toolId) => !disabledTools.includes(toolId))
+    .filter((toolId, index, all) => all.indexOf(toolId) === index);
+  if (extraTools.length > 0) {
+    normalized.extraTools = extraTools;
   }
   const handoffs = (entry.handoffs ?? [])
     .map((handoff) => ({
@@ -607,6 +674,7 @@ function createEmptyAgentProfile(fileId: string): AgentProfile {
     userInvocable: true,
     tools: [],
     rawTools: [],
+    declaredTools: [],
     handoffs: [],
   };
 }
