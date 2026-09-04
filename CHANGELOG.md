@@ -1,6 +1,22 @@
 # Changelog
 
 
+## [Unreleased]
+
+### Added
+
+- **Agent Settings — Reasoning effort**: per-agent `reasoning-effort` override (`low`/`medium`/`high`/`xhigh`/`max`), adjustable from the sidebar like Model. Requires VS Code 1.136+ and applies on the agent-host path. (`c6700e3`)
+- **Agent Settings — Tools**: a `Tools` row with a gear icon that opens a multi-select picker for enabling and disabling an agent's tools. Stored as deltas (`disabledTools` + `extraTools`) so tool changes in future releases are not frozen by an existing override. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning. (`c6700e3`)
+
+### Fixed
+
+- Rewriting an agent's `tools:` array no longer narrows MCP wildcards — `github/*` was being written back as `github`, silently reducing a whole namespace to a single tool. (`c6700e3`)
+
+### Changed
+
+_None yet._
+
+
 ## [2.3.0] - 2026-09-02
 
 ### Added
