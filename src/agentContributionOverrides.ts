@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import * as vscode from "vscode";
 import { getSettingsMap, resolveEffectiveTools, type AgentSettingEntry } from "./agentSettingsService";
 
@@ -18,7 +19,23 @@ export interface ApplyAgentContributionOverridesResult {
   changedContributionFiles: number;
   restoredContributionFiles: number;
   skippedContributionFiles: number;
+  rebaselinedFiles: number;
 }
+
+/**
+ * Per-file sidecar recording every content we have written into the installed
+ * contribution file. It is the only proof that the file on disk is still "ours";
+ * without it a backup taken once would be trusted forever, and an extension
+ * update would be silently reverted to a stale snapshot.
+ */
+interface AgentOverrideState {
+  /** sha256 of the pristine content stored in originals/<relPath>. Absent on pre-existing installs. */
+  baselineSha?: string;
+  /** sha256 of every content we wrote, most recent first, capped at MAX_WRITTEN_SHAS. */
+  writtenShas: string[];
+}
+
+const MAX_WRITTEN_SHAS = 5;
 
 export async function applyAgentContributionOverrides(
   context: vscode.ExtensionContext,
@@ -30,19 +47,23 @@ export async function applyAgentContributionOverrides(
 
   const backupRoot = vscode.Uri.joinPath(context.globalStorageUri, "agent-overrides", "originals");
   const generatedRoot = vscode.Uri.joinPath(context.globalStorageUri, "agent-overrides", "generated");
+  const stateRoot = vscode.Uri.joinPath(context.globalStorageUri, "agent-overrides", "state");
   await vscode.workspace.fs.createDirectory(backupRoot);
   await vscode.workspace.fs.createDirectory(generatedRoot);
+  await vscode.workspace.fs.createDirectory(stateRoot);
 
   let generatedFiles = 0;
   let changedContributionFiles = 0;
   let restoredContributionFiles = 0;
   let skippedContributionFiles = 0;
+  let rebaselinedFiles = 0;
 
   for (const relPath of contributionPaths) {
     const normalizedRelPath = normalizeRelativePath(relPath);
     const contributionUri = vscode.Uri.joinPath(context.extensionUri, normalizedRelPath);
     const backupUri = vscode.Uri.joinPath(backupRoot, normalizedRelPath);
     const generatedUri = vscode.Uri.joinPath(generatedRoot, normalizedRelPath);
+    const stateUri = vscode.Uri.joinPath(stateRoot, `${normalizedRelPath}.json`);
 
     const contributionContent = await tryReadText(contributionUri);
     if (contributionContent === undefined) {
@@ -55,10 +76,23 @@ export async function applyAgentContributionOverrides(
     const setting = settings[fileId];
     const hasOverride = hasRuntimeOverride(setting);
 
-    const originalContent = await ensureOriginalBackup(backupUri, contributionContent);
+    const baseline = await resolveBaseline({
+      relPath: normalizedRelPath,
+      installedContent: contributionContent,
+      backupUri,
+      generatedUri,
+      stateUri,
+      output,
+    });
+    let state = baseline.state;
+    const originalContent = baseline.originalContent;
+    if (baseline.rebaselined) {
+      rebaselinedFiles += 1;
+    }
 
     if (!hasOverride) {
       if (contributionContent !== originalContent) {
+        state = await recordWrittenContent(stateUri, state, originalContent);
         await writeText(contributionUri, originalContent);
         restoredContributionFiles += 1;
       }
@@ -71,6 +105,10 @@ export async function applyAgentContributionOverrides(
       setting!,
       availableModels
     );
+    // Record before writing: a recorded-but-unwritten sha simply never matches,
+    // whereas a written-but-unrecorded sha would look like a foreign edit and
+    // bake the override in as the new pristine baseline.
+    state = await recordWrittenContent(stateUri, state, overriddenContent);
     await writeText(generatedUri, overriddenContent);
     generatedFiles += 1;
 
@@ -85,7 +123,159 @@ export async function applyAgentContributionOverrides(
     changedContributionFiles,
     restoredContributionFiles,
     skippedContributionFiles,
+    rebaselinedFiles,
   };
+}
+
+interface BaselineInput {
+  relPath: string;
+  installedContent: string;
+  backupUri: vscode.Uri;
+  generatedUri: vscode.Uri;
+  stateUri: vscode.Uri;
+  output?: vscode.OutputChannel;
+}
+
+interface BaselineResult {
+  originalContent: string;
+  state: AgentOverrideState;
+  rebaselined: boolean;
+}
+
+/**
+ * Decides whether the stored backup is still a valid pristine original.
+ *
+ * The installed file is "ours" only when its content is something we previously
+ * wrote. Anything else (extension update, git checkout, manual edit) means the
+ * file changed underneath us and IS the new pristine content, so the backup has
+ * to be re-taken — otherwise a restore would silently revert the shipped file to
+ * an arbitrarily old snapshot.
+ *
+ * Proving the installed file is ours is not enough: the backup itself must also
+ * still be the content we stored, otherwise an altered backup would be restored
+ * over a pristine installed file.
+ */
+async function resolveBaseline(input: BaselineInput): Promise<BaselineResult> {
+  const { relPath, installedContent, backupUri, generatedUri, stateUri, output } = input;
+  const installedSha = sha256(installedContent);
+  const backupContent = await tryReadText(backupUri);
+  let state = await readState(stateUri);
+  let stateNeedsPersist = false;
+
+  if (state === undefined) {
+    // Migration for installs predating the sidecar: the previously generated
+    // override output is the only legacy ownership signal available.
+    const generatedContent = await tryReadText(generatedUri);
+    const legacyOwned = generatedContent !== undefined && generatedContent === installedContent;
+    state = {
+      // Adopt the backup we are about to trust as the verifiable baseline, so this
+      // install stops being unverifiable from now on.
+      baselineSha: backupContent === undefined ? undefined : sha256(backupContent),
+      writtenShas: legacyOwned ? [installedSha] : [],
+    };
+    stateNeedsPersist = true;
+
+    const ambiguous =
+      backupContent !== undefined &&
+      !legacyOwned &&
+      generatedContent !== undefined &&
+      installedContent !== backupContent;
+    if (ambiguous) {
+      output?.appendLine(
+        `[agent-overrides] Cannot prove ownership of ${relPath}; treating the installed file ` +
+          `as the new original and discarding the stored backup.`
+      );
+    }
+  }
+
+  // `baselineSha === undefined` means the backup predates this check, so it cannot
+  // be verified and is assumed trusted rather than force-re-baselining every install.
+  const backupTrusted =
+    backupContent !== undefined &&
+    (state.baselineSha === undefined || sha256(backupContent) === state.baselineSha);
+
+  const isOurs =
+    (backupContent !== undefined && installedSha === sha256(backupContent)) ||
+    state.writtenShas.includes(installedSha);
+
+  if (backupContent !== undefined && !backupTrusted) {
+    output?.appendLine(
+      `[agent-overrides] Stored original for ${relPath} failed its integrity check ` +
+        `(content no longer matches the recorded baseline); re-taking it from the installed file.`
+    );
+  }
+
+  if (backupContent === undefined || !backupTrusted || !isOurs) {
+    const rebaselinedState: AgentOverrideState = {
+      baselineSha: installedSha,
+      writtenShas: [installedSha],
+    };
+    await writeText(backupUri, installedContent);
+    await writeState(stateUri, rebaselinedState);
+    await tryDelete(generatedUri);
+    return { originalContent: installedContent, state: rebaselinedState, rebaselined: true };
+  }
+
+  if (stateNeedsPersist) {
+    await writeState(stateUri, state);
+  }
+
+  return { originalContent: backupContent, state, rebaselined: false };
+}
+
+async function recordWrittenContent(
+  stateUri: vscode.Uri,
+  state: AgentOverrideState,
+  content: string
+): Promise<AgentOverrideState> {
+  const sha = sha256(content);
+  const writtenShas = [sha, ...state.writtenShas.filter((value) => value !== sha)].slice(
+    0,
+    MAX_WRITTEN_SHAS
+  );
+  const next: AgentOverrideState = { baselineSha: state.baselineSha, writtenShas };
+  await writeState(stateUri, next);
+  return next;
+}
+
+async function readState(stateUri: vscode.Uri): Promise<AgentOverrideState | undefined> {
+  const raw = await tryReadText(stateUri);
+  if (raw === undefined) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<AgentOverrideState>;
+    const writtenShas = Array.isArray(parsed.writtenShas)
+      ? parsed.writtenShas.filter((value): value is string => typeof value === "string")
+      : [];
+    const baselineSha = typeof parsed.baselineSha === "string" ? parsed.baselineSha : undefined;
+    return { baselineSha, writtenShas };
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeState(stateUri: vscode.Uri, state: AgentOverrideState): Promise<void> {
+  await writeText(stateUri, JSON.stringify(state, null, 2));
+}
+
+function sha256(content: string): string {
+  return createHash("sha256").update(content, "utf8").digest("hex");
+}
+
+/**
+ * Deletes the whole `agent-overrides` globalStorage tree so every contribution
+ * file re-baselines from whatever is currently installed on the next apply.
+ */
+export async function resetAgentOverrideBaselines(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  const root = vscode.Uri.joinPath(context.globalStorageUri, "agent-overrides");
+  try {
+    await vscode.workspace.fs.delete(root, { recursive: true, useTrash: false });
+  } catch {
+    // Nothing stored yet.
+  }
 }
 
 function hasRuntimeOverride(setting: AgentSettingEntry | undefined): boolean {
@@ -112,16 +302,6 @@ async function loadContributedAgentPaths(extensionUri: vscode.Uri): Promise<stri
     .filter((value): value is string => Boolean(value));
 
   return [...new Set(paths)];
-}
-
-async function ensureOriginalBackup(backupUri: vscode.Uri, currentContent: string): Promise<string> {
-  const backupContent = await tryReadText(backupUri);
-  if (backupContent !== undefined) {
-    return backupContent;
-  }
-
-  await writeText(backupUri, currentContent);
-  return currentContent;
 }
 
 function applySettingToAgentDefinition(

@@ -38,7 +38,7 @@ import {
   ListBcqualityCustomSkillsTool,
 } from "./tools/bcqualityCustomSkillsTool";
 import { savePlaceholderTarget } from "./agentSettingsService";
-import { applyAgentContributionOverrides } from "./agentContributionOverrides";
+import { applyAgentContributionOverrides, resetAgentOverrideBaselines } from "./agentContributionOverrides";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -169,9 +169,12 @@ export function activate(context: vscode.ExtensionContext): void {
         `[agent-overrides] generated=${result.generatedFiles}, ` +
           `changed=${result.changedContributionFiles}, ` +
           `restored=${result.restoredContributionFiles}, ` +
+          `rebaselined=${result.rebaselinedFiles}, ` +
           `skipped=${result.skippedContributionFiles}`
       );
 
+      // `rebaselinedFiles` is deliberately excluded: refreshing a stale baseline
+      // changes nothing the user can see and must not trigger a reload prompt.
       const hasWork =
         result.generatedFiles > 0 ||
         result.changedContributionFiles > 0 ||
@@ -203,6 +206,34 @@ export function activate(context: vscode.ExtensionContext): void {
       if (action === "Reload window") {
         await vscode.commands.executeCommand("workbench.action.reloadWindow");
       }
+    })
+  );
+
+  // 3f. Command: drop the stored agent-override baselines so the currently
+  //     installed contribution files become the new pristine originals.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.resetAgentOverrideBaselines", async () => {
+      const confirm = await vscode.window.showWarningMessage(
+        "Reset agent override baselines?",
+        {
+          modal: true,
+          detail:
+            "Deletes the stored agent-override backups in extension globalStorage. " +
+            "The agent files currently installed on disk become the new baseline, so if " +
+            "overrides are applied right now they will be baked in as the originals. " +
+            "Reset your agent settings (or reload the window) first if the installed " +
+            "files are currently overridden.",
+        },
+        "Reset baselines"
+      );
+      if (confirm !== "Reset baselines") {
+        return;
+      }
+      await resetAgentOverrideBaselines(context);
+      output.appendLine("[agent-overrides] Baselines reset; globalStorage state cleared.");
+      vscode.window.showInformationMessage(
+        "Agent override baselines reset. They will be re-taken from the installed agent files on the next apply."
+      );
     })
   );
 

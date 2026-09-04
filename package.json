@@ -1194,6 +1194,16 @@
         "category": "AC/DC"
       },
       {
+        "command": "acdc.applyAgentSettingsToChat",
+        "title": "Apply Agent Settings to Chat",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.resetAgentOverrideBaselines",
+        "title": "Reset Agent Override Baselines",
+        "category": "AC/DC"
+      },
+      {
         "command": "acdc.pickSddPlansRoot",
         "title": "Pick SDD Plans Root Folder…",
         "category": "AC/DC"
