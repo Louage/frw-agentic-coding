@@ -7,9 +7,12 @@
 
 - **Agent Settings — Reasoning effort**: per-agent `reasoning-effort` override (`low`/`medium`/`high`/`xhigh`/`max`), adjustable from the sidebar like Model. Requires VS Code 1.136+ and applies on the agent-host path. (`c6700e3`)
 - **Agent Settings — Tools**: a `Tools` row with a gear icon that opens a multi-select picker for enabling and disabling an agent's tools. Stored as deltas (`disabledTools` + `extraTools`) so tool changes in future releases are not frozen by an existing override. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning. (`c6700e3`)
+- **AC/DC: Reset Agent Override Baselines** command — discards the stored agent-override backups so the installed agent files become the new baseline. (`c3f7900`)
+- **AC/DC: Apply Agent Settings to Chat** is now available from the Command Palette. It was registered but never declared, so with no pending changes the disabled `Apply` button left no way to trigger an apply. (`c3f7900`)
 
 ### Fixed
 
+- **Agent override backups no longer restore stale snapshots.** The stored original for each contributed `.agent.md` was written once and never invalidated, so it was trusted as pristine indefinitely — a backup taken six weeks earlier silently reverted 11 agent files, dropping `tools:` entries and an entire injected directive block. A per-file sidecar now records the backup's own hash plus the hashes of content we wrote; the backup is only trusted when it still matches its recorded hash *and* the installed file is provably ours, otherwise it is re-taken from the newly shipped file. (`c3f7900`)
 - Rewriting an agent's `tools:` array no longer narrows MCP wildcards — `github/*` was being written back as `github`, silently reducing a whole namespace to a single tool. (`c6700e3`)
 
 ### Changed
