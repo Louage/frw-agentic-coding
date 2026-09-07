@@ -1,11 +1,11 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/data-modeling/xrec-is-a-before-image-only-in-some-triggers.md
+description: Imported BCQuality rule from microsoft/knowledge/data-modeling/xrec-is-a-before-image-only-in-some-triggers.md
 ---
 
 # `xRec` is a before-image in `OnRename` and `OnDelete`, but mirrors `Rec` in `OnInsert` and `OnModify` from code
 
-Source: community/knowledge/data-modeling/xrec-is-a-before-image-only-in-some-triggers.md
+Source: microsoft/knowledge/data-modeling/xrec-is-a-before-image-only-in-some-triggers.md
 
 # `xRec` is a before-image in `OnRename` and `OnDelete`, but mirrors `Rec` in `OnInsert` and `OnModify` from code
 

@@ -1,11 +1,11 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/data-modeling/validate-table-relation-false-suppresses-rename-propagation.md
+description: Imported BCQuality rule from microsoft/knowledge/data-modeling/validate-table-relation-false-suppresses-rename-propagation.md
 ---
 
 # `ValidateTableRelation = false` suppresses rename propagation, not just input validation
 
-Source: community/knowledge/data-modeling/validate-table-relation-false-suppresses-rename-propagation.md
+Source: microsoft/knowledge/data-modeling/validate-table-relation-false-suppresses-rename-propagation.md
 
 # `ValidateTableRelation = false` suppresses rename propagation, not just input validation
 

@@ -1,11 +1,11 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/security/guard-bulk-operations-with-istemporary.md
+description: Imported BCQuality rule from microsoft/knowledge/security/guard-bulk-operations-with-istemporary.md
 ---
 
 # Guard bulk operations with IsTemporary
 
-Source: community/knowledge/security/guard-bulk-operations-with-istemporary.md
+Source: microsoft/knowledge/security/guard-bulk-operations-with-istemporary.md
 
 # Guard bulk operations with IsTemporary
 

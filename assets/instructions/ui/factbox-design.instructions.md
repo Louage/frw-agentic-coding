@@ -1,11 +1,11 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/ui/factbox-design.md
+description: Imported BCQuality rule from microsoft/knowledge/ui/factbox-design.md
 ---
 
 # Filter ListPart FactBoxes With SubPageLink To The Parent Record
 
-Source: community/knowledge/ui/factbox-design.md
+Source: microsoft/knowledge/ui/factbox-design.md
 
 # Filter ListPart FactBoxes With SubPageLink To The Parent Record
 

@@ -15,6 +15,8 @@ Source: microsoft/knowledge/error-handling/fielderror-vs-testfield.md
 ## Best Practice
 Use `TestField` when the condition is a simple presence-or-equality check on a single field — mandatory-field gates and prerequisite checks at the top of a procedure read clearly and self-document intent. Use `FieldError` inside an `OnValidate` trigger or a validation procedure where surrounding business logic has already determined the value is invalid and you want a specific, custom message. Rely on the built-in field-and-record context both methods add rather than re-stating the field name in the text.
 
+A page action's `OnAction` trigger is a different case: a page action is only invocable through its own UI control, so when the action's `Enabled` property is already bound to the same condition the trigger would otherwise `TestField`, the control cannot be clicked while the field is blank and the field can never reach the trigger empty. Adding a `TestField` there is redundant defensive code, not a missing check — flag it only when the trigger can run through a path `Enabled` does not cover (a shared procedure, an API, or a condition broader than what gates the action).
+
 See sample: `fielderror-vs-testfield.good.al`.
 
 ## Anti Pattern
