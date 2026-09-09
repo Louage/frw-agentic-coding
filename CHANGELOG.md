@@ -1,12 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [2.5.0] - 2026-09-09
 
 ### Added
 
 - **Release notes after an update.** Nothing used to tell you that a new version had landed. AC⚡DC now compares the running version against the last one it announced and shows a non-modal `AC⚡DC updated to v<x.y.z>` notification with **What's New** / **README** / **Don't show again**, opening the changelog preview on a major or minor bump. A fresh install opens the README once instead. A downgrade, an identical version or an unrecognised version number surfaces nothing, and the announcement is recorded so an update is shown at most once. Tuned by the new **`acdc.showReleaseNotesOnUpdate`** setting (`never` / `minor` / `always`, default `minor`); **Don't show again** writes `never` to User settings.
 - **`acdc.alBaseCode.repositories[].searchable`** — per-source opt-in (default `false`) that mounts an AL/ISV source as a real `file:` workspace folder so VS Code text search (ripgrep), file search and the Search view reach it. The cost is portability: the resolved absolute path lands in the workspace file. Left off, the source keeps the portable `acdc-alsrc:` URI and stays browse-only. Toggling it remounts in place — nothing is re-cloned. Exposed as a **Searchable** column in the AL Base Code / ISV Code table editor.
 - `npm test` — a VS Code-free unit test run (`node --test` over compiled output) covering the new mount-planning logic. First automated tests in the extension.
+- feat: add start-feature prompt for planning new features (`68dad8d`)
 
 ### Fixed
 
