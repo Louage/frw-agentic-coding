@@ -1,9 +1,12 @@
 .vscode/**
 .vscode-test/**
 src/**
+test/**
+out-test/**
 .gitignore
 .github/**
 **/tsconfig.json
+**/tsconfig.test.json
 **/eslint.config.mjs
 **/*.map
 **/*.ts
@@ -15,3 +18,5 @@ assets/**
 assets/instructions/**
 assets/skills/**
 tmp/**
+AGENTS.md
+PROJECT_BRIEF.md

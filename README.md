@@ -12,7 +12,7 @@ No files are copied into your workspace. Install once, works everywhere.
 
 ## Requirements
 
-- **VS Code** 1.95 or higher
+- **VS Code** 1.95 or higher (**1.136+** for the per-agent *reasoning effort* override)
 - **GitHub Copilot** (with agent mode enabled)
 - **AL Language extension** (`ms-dynamics-smb.al`), for Business Central development
 
@@ -59,9 +59,10 @@ Everything is delivered automatically through the extension, no `.github/` setup
 
 Select an agent in the **Agents** sidebar to open the **Agent Settings** panel, where you can override, per agent:
  - The language **model**
+ - The **reasoning effort**: `low`, `medium`, `high`, `xhigh` or `max`. Requires **VS Code 1.136+** and only takes effect on the agent-host path; older hosts ignore it.
  - The **argument hint**
  - The **review specialist**
- - The disabled **tools**
+ - The **tools**: a multi-select picker over the agent's declared tools. Choices are stored as *deltas* (`disabledTools` + `extraTools`) rather than a frozen list, so tools added in a future release still reach an agent you already overrode. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning.
  - The **handoffs**: Each handoff row includes an optional **Handoff Prompt** that is sent when that handoff is taken.
 
 Edits are staged locally and are **not** applied automatically.
@@ -83,6 +84,40 @@ When an agent is selected in side panel, the customizable settings are shown in 
 
 ---
 
+
+## AL Base Code / ISV Code
+
+Agents answer better when they can read the real AL source instead of recalling it. AC⚡DC clones **read-only** AL repositories, the Microsoft BC base app and any ISV product you have access to, and exposes them to the agents. Nothing is ever written back: the clones are mirrors that a sync overwrites.
+
+Run **AC/DC: Manage AL Base Code / ISV Code** to open the table editor, then **AC/DC: Sync AL Base Code / ISV Code** to clone or pull the enabled rows.
+
+### 1. One clone cache per machine
+
+Sources are cloned under `acdc.alBaseCode.sourcesRoot`, resolved as `<sourcesRoot>/<repo>/<branch>` (default: `%LOCALAPPDATA%\acdc-sources`). Several projects therefore share one cache while each keeps its own branch or localization.
+
+The setting is **machine-scoped**, VS Code only accepts it in User settings, so a developer-specific path can never land in a shared `.code-workspace` file. Only `repository`, `branch` and `enabled` are per-workspace.
+
+### 2. Two access modes
+
+`acdc.alBaseCode.accessMode` decides how the clones reach the agents. Only one mode is active per workspace; switching asks for confirmation and migrates immediately.
+
+| Mode | What happens |
+|------|--------------|
+| `workspace` *(default)* | Sources are added as read-only workspace folders (prefixed `[AL Src] `) and show up in the Explorer |
+| `mcp` | Sources are exposed through a filesystem MCP server (`acdc-al-sources`) registered in the workspace's `.vscode/mcp.json`, available to agents with no Explorer clutter |
+
+### 3. Searchable or portable
+
+In `workspace` mode each source carries a **Searchable** toggle, off by default:
+
+| Searchable | Mounted as | Trade-off |
+|------------|-----------|-----------|
+| **off** *(default)* | `acdc-alsrc:/<repo>/<branch>` | Portable, every developer resolves it locally, but **browse-only**: open and read work, text and file search do not |
+| **on** | `file:<sourcesRoot>/<repo>/<branch>` | Reachable by VS Code text search, file search and the Search view, at the cost of writing the absolute, machine-specific path into the workspace file |
+
+One line to remember: **searchable buys you `grep`, portability buys you a committable workspace file.** Turn it on for small ISV sources that are worth grepping, leave it off for the huge BC base app. Toggling remounts in place, nothing is re-cloned, and searchable folders are kept out of Source Control automatically.
+
+---
 
 ## Bring Your Own Rules, BCQuality Custom Layers
 
@@ -190,10 +225,13 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 |---------|--------------|
 | **AC/DC: Use Agent** | Pick an agent from a list, activates it in chat and enables its tools |
 | **AC/DC: Reload Agent List** | Refresh the Agents sidebar after adding custom agents |
+| **AC/DC: Apply Agent Settings to Chat** | Write the staged per-agent overrides into the agent files so chat picks them up (same as the panel's **Apply**) |
+| **AC/DC: Reset Agent Override Baselines** | Discard the stored agent-override backups, the installed agent files become the new baseline |
 | **AC/DC: Set Agent Placeholder…** | Configure which persona names are used in agent cross-references |
 | **AC/DC: Pick SDD Plans Root Folder…** | Set where spec/architecture/plan files are stored |
 | **AC/DC: Manage AL Base Code / ISV Code** | Configure mounted BC base app or ISV source repositories |
 | **AC/DC: Sync AL Base Code / ISV Code** | Clone or pull the configured BC/ISV repositories |
+| **AC/DC: Migrate AL Base Code Settings to Portable Layout** | Repair leftovers from the pre-2.3.0 layout (per-entry `folder`, legacy `file:` mount, stale `git.ignoredRepositories` entry) |
 | **AC/DC: Manage BCQuality Custom Layers** | Open the table editor for customer/partner BCQuality forks |
 | **AC/DC: Sync BCQuality Custom Layers** | Clone or refresh every enabled custom layer |
 | **AC/DC: Clear BCQuality Custom Layers (globalStorage)** | Remove every imported custom layer from extension globalStorage |
@@ -204,10 +242,13 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `acdc.alBaseCode.repositories` | *(1 disabled sample)* | Read-only AL/BC & ISV source repositories mounted so agents can read real AL code. Edited from the **AL Base Code** table editor |
+| `acdc.showReleaseNotesOnUpdate` | `minor` | When to surface the release notes after an update: `never`, `minor` (notify on every update, open the changelog for a major/minor bump) or `always`. Unless set to `never`, a fresh install opens the README once |
+| `acdc.alBaseCode.repositories` | *(1 disabled sample)* | Read-only AL/BC & ISV source repositories mounted so agents can read real AL code. Each entry carries `repository`, `branch`, `enabled` and `searchable`. Edited from the **AL Base Code** table editor |
+| `acdc.alBaseCode.repositories[].searchable` | `false` | Mount that source as a real `file:` folder so text/file search reaches it, at the cost of writing its machine-specific path into the workspace file. Off keeps the portable `acdc-alsrc:` URI, which is browse-only |
+| `acdc.alBaseCode.sourcesRoot` | *(`%LOCALAPPDATA%\acdc-sources`)* | Clone root **on this machine**; each source resolves to `<sourcesRoot>/<repo>/<branch>`. Machine-scoped, so it never lands in a shared workspace file |
 | `acdc.alBaseCode.syncOnStartup` | `false` | Clone missing and pull existing AL source folders on startup (read-only, never pushed) |
 | `acdc.alBaseCode.accessMode` | `workspace` | Expose AL sources as read-only `workspace` folders, or via an `mcp` filesystem server registered in `.vscode/mcp.json` |
-| `acdc.agents.settings` | `{}` | Per-agent overrides (model, argument hint, review specialist, disabled tools, and handoffs, each handoff can carry its own prompt). Edited from the **Agent Settings** sidebar; raw JSON is supported for power users |
+| `acdc.agents.settings` | `{}` | Per-agent overrides (model, reasoning effort, argument hint, review specialist, tool deltas, and handoffs, each handoff can carry its own prompt). Edited from the **Agent Settings** sidebar; raw JSON is supported for power users |
 | `acdc.agents.placeholders` | *(see panel)* | Maps `${placeholder}` tokens used in agent prose/prompts/skills to concrete agent display names |
 | `acdc.plansRoot` | `.github/plans` | Where spec, architecture, and plan files are stored |
 | `acdc.specFolderFormat` | `{req_name}` | Template for per-requirement folder names under `plansRoot` (supports date/time, sequence, identity, and `{req_name}` / `{slug}` variables) |
@@ -217,7 +258,7 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 | `acdc.bcquality.syncOnStartup` | `false` | Re-sync all enabled custom layers when VS Code starts (no-op when SHA is unchanged) |
 | `acdc.bcquality.registerInstructionsFileLocation` | `true` | Register the custom-layer instructions folder with `chat.instructionsFilesLocations` so Copilot Chat auto-discovers the rules |
 
-> Updates are delivered automatically through the VS Code Marketplace, no manual configuration needed.
+> Updates are delivered automatically through the VS Code Marketplace, no manual configuration needed. After an update AC⚡DC tells you what landed: a notification with **What's New** / **README** / **Don't show again**, plus the changelog preview on a major or minor bump. Tune or silence it with `acdc.showReleaseNotesOnUpdate`.
 
 ---
 

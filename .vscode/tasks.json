@@ -17,6 +17,22 @@
       }
     },
     {
+      "label": "AC/DC: Run unit tests",
+      "detail": "Compile and run the VS Code-free unit tests (node --test). Run this after implementing a feature task.",
+      "type": "npm",
+      "script": "test",
+      "problemMatcher": ["$tsc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
       "label": "AC/DC: Update Changelog from git",
       "detail": "Populate CHANGELOG.md '[Unreleased]' section from commits since the last v* tag (merges with existing entries, no duplicates).",
       "type": "shell",

@@ -39,6 +39,7 @@ import {
 } from "./tools/bcqualityCustomSkillsTool";
 import { savePlaceholderTarget } from "./agentSettingsService";
 import { applyAgentContributionOverrides, resetAgentOverrideBaselines } from "./agentContributionOverrides";
+import { showReleaseNotesOnUpdate } from "./update/releaseNotes";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -350,6 +351,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // 5. Startup checks.
   void syncOnStartup(output);
   void promptForLegacyMigration(context, output);
+  showReleaseNotesOnUpdate(context, output);
 }
 
 export function deactivate(): void {

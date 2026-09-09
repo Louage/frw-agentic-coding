@@ -28,7 +28,7 @@ releases of this extension. Used by the in-editor update check.
 
 Read-only AL source repositories (Business Central base app and ISV products such as
 Continia or Tasklet) mounted into the workspace so agents can search and read real AL
-code. Sources are mounted under the portable `acdc-alsrc:` scheme, so the
+code. By default sources are mounted under the portable `acdc-alsrc:` scheme, so the
 `.code-workspace` records a machine-independent URI (for example
 `acdc-alsrc:/MSDyn365BC.Sandbox.Code.History/be-28`) instead of a path containing your
 user name — the same workspace file works for every developer, and each project keeps
@@ -36,9 +36,16 @@ its own branch/localization. Because the built-in Git extension only scans `file
 folders, these mounts never clutter the Source Control view and need no
 `git.ignoredRepositories` entry.
 
-> Trade-off: workspace-wide **text search** (ripgrep) only runs on `file:` paths, so it
-> does not reach the mounted source. Opening files, Quick Open, and agent reads work
-> normally.
+> **Search vs portability — the `searchable` flag.** VS Code's text search (ripgrep),
+> file search and the Search view only walk `file:` roots, so a portable
+> `acdc-alsrc:` mount is **browse-only**: opening files, Quick Open and agent reads
+> work, text/file search returns nothing. Set `searchable: true` on a source to mount
+> it as a real `file:` folder that search reaches — the cost is that its absolute,
+> machine-specific path is written into the workspace file. Enable it per source:
+> worth it for a small ISV product you actually grep, not for the multi-gigabyte BC
+> base app (searching it is slow enough to hang the editor). VS Code can only make a
+> non-`file:` scheme searchable through the proposed `FileSearchProvider` /
+> `TextSearchProvider` API, which a marketplace extension cannot use — hence the flag.
 
 **Recommended**: use the **▶ Open the AL Base Code / ISV Code table editor** link in
 the setting description instead of editing JSON — it provides a table with a live
@@ -54,6 +61,12 @@ Each entry:
   inherit `acdc.alBaseCode.sourcesRoot`, so no machine-specific path is committed.
   Still required for a **manual** source (no repository) you maintain yourself.
 - `enabled` — whether this source is cloned/pulled and mounted.
+- `searchable` — default `false`. `true` mounts the source as a real `file:` folder
+  that text/file search can reach, at the cost of writing its machine-specific
+  absolute path into the workspace file (and adding a `git.ignoredRepositories`
+  entry so the read-only clone stays out of Source Control). `false` keeps the
+  portable `acdc-alsrc:` URI, browse-only. Toggling it remounts in place — nothing is
+  re-cloned.
 
 ### `acdc.alBaseCode.sourcesRoot`
 
@@ -109,10 +122,11 @@ is unambiguous, is always loaded by VS Code, and stays scoped to the project it
 belongs to.
 
 **Token-cost note.** `workspace` mode gives agents access to VS Code's grep and
-semantic search, which return small targeted snippets. `mcp` mode uses the
-filesystem server whose search matches filenames only — agents typically fall back
-to whole-file reads, which usually consumes noticeably more tokens per task.
-Prefer `mcp` when you value a clean Explorer over search efficiency.
+semantic search (grep only on sources marked `searchable`), which return small
+targeted snippets. `mcp` mode uses the filesystem server whose search matches
+filenames only — agents typically fall back to whole-file reads, which usually
+consumes noticeably more tokens per task. Prefer `mcp` when you value a clean
+Explorer over search efficiency.
 
 ---
 

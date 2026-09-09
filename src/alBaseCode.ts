@@ -4,6 +4,11 @@ import * as os from "os";
 import * as path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import {
+  planWorkspaceMounts,
+  type MountedFolder,
+  type PlannedMount,
+} from "./alSourceMountPlan";
 
 const execAsync = promisify(exec);
 
@@ -16,6 +21,12 @@ export interface AlSourceEntry {
   folder: string;
   /** Whether this source is cloned/pulled and mounted in the workspace. */
   enabled: boolean;
+  /**
+   * Mount as a real `file:` folder so VS Code text/file search can reach it.
+   * Costs portability: the resolved absolute path lands in the workspace file.
+   * Default false — keep large sources (BC base app) on the portable scheme.
+   */
+  searchable: boolean;
 }
 
 const CONFIG_SECTION = "acdc";
@@ -64,16 +75,20 @@ export async function saveEntries(entries: AlSourceEntry[]): Promise<void> {
 }
 
 /**
- * Drops `folder` when empty rather than writing `"folder": ""` into a file
- * teams commit — an empty value only means "inherit `sourcesRoot`".
+ * Drops keys that carry no information rather than writing `"folder": ""` or
+ * `"searchable": false` into a file teams commit — an empty folder only means
+ * "inherit `sourcesRoot`", and `searchable` defaults to false.
  */
 function toPersistedEntry(entry: Partial<AlSourceEntry>): Partial<AlSourceEntry> {
   const normalized = normalizeAndResolveEntry(entry);
-  if (normalized.folder) {
-    return normalized;
+  const persisted: Partial<AlSourceEntry> = { ...normalized };
+  if (!persisted.folder) {
+    delete persisted.folder;
   }
-  const { folder: _omitted, ...rest } = normalized;
-  return rest;
+  if (!persisted.searchable) {
+    delete persisted.searchable;
+  }
+  return persisted;
 }
 
 export function isSyncOnStartupEnabled(): boolean {
@@ -152,6 +167,7 @@ function normalizeEntry(entry: Partial<AlSourceEntry>): AlSourceEntry {
     branch: (entry.branch ?? "").trim(),
     folder: (entry.folder ?? "").trim(),
     enabled: Boolean(entry.enabled),
+    searchable: Boolean(entry.searchable),
   };
 }
 
@@ -617,97 +633,126 @@ function entryLabel(entry: AlSourceEntry): string {
 }
 
 /**
- * Removes every ignored-repositories entry pointing at one of our managed
- * folders.
- *
- * Nothing *adds* entries any more: mounts use the `acdc-alsrc:` scheme and the
- * built-in Git extension only scans `file:` folders, so our sources never show
- * up in Source Control to begin with. This exists to scrub the machine-specific
- * absolute paths written by earlier versions out of the workspace file.
+ * The folders that must be listed in `git.ignoredRepositories`: enabled
+ * `searchable` sources mounted in workspace mode. They are real `file:` clones,
+ * so without the entry the built-in Git extension picks them up and floods
+ * Source Control with a read-only mirror. Portable `acdc-alsrc:` mounts are
+ * never scanned and therefore need no entry.
+ */
+function gitIgnoreRequiredFolders(): string[] {
+  if (getAccessMode() !== "workspace") {
+    return [];
+  }
+  return getEntries()
+    .filter((entry) => entry.enabled && entry.searchable)
+    .map(effectiveFolder)
+    .filter(Boolean);
+}
+
+/**
+ * Reconciles `git.ignoredRepositories` with our managed folders: adds the ones
+ * a `file:` mount needs, and scrubs every other entry of ours — including the
+ * machine-specific absolute paths written by versions that always added them.
  */
 export async function clearOurGitIgnoredRepositories(): Promise<void> {
-  const entries = getEntries();
-  const ourFolders = entries.map(effectiveFolder).filter(Boolean);
-  if (ourFolders.length === 0) { return; }
+  const ourFolders = getEntries().map(effectiveFolder).filter(Boolean);
+  const required = gitIgnoreRequiredFolders();
+  if (ourFolders.length === 0 && required.length === 0) { return; }
 
   const gitConfig = vscode.workspace.getConfiguration("git", primaryResource());
   const existing = gitConfig.get<string[]>("ignoredRepositories", []) ?? [];
-  const isOurs = (p: string) =>
-    ourFolders.some((f) => normalizePath(f) === normalizePath(p));
-  const preserved = existing.filter((p) => !isOurs(p));
-  if (preserved.length !== existing.length) {
-    await gitConfig.update(
-      "ignoredRepositories",
-      preserved.length > 0 ? preserved : undefined,
-      resolveConfigTarget(gitConfig, "ignoredRepositories")
-    );
-  }
+  const matches = (list: string[], value: string) =>
+    list.some((f) => normalizePath(f) === normalizePath(value));
+
+  const preserved = existing.filter(
+    (p) => !matches(ourFolders, p) || matches(required, p)
+  );
+  const next = [
+    ...preserved,
+    ...required.filter((f) => !matches(preserved, f)),
+  ];
+
+  const unchanged =
+    next.length === existing.length &&
+    next.every((value, index) => value === existing[index]);
+  if (unchanged) { return; }
+
+  await gitConfig.update(
+    "ignoredRepositories",
+    next.length > 0 ? next : undefined,
+    resolveConfigTarget(gitConfig, "ignoredRepositories")
+  );
 }
 
 /**
  * Mounts enabled+cloned folders as read-only workspace roots and unmounts
- * disabled ones that we previously added.
+ * ones we previously added that are no longer wanted.
  *
- * Mounts use the portable `acdc-alsrc:` scheme rather than `file:` so the
- * `.code-workspace` records a machine-independent URI (see
- * AlSourceFileSystemProvider). Pre-existing `file:` mounts we own are migrated
- * on the fly.
+ * Scheme per entry: `searchable` sources mount as `file:` so VS Code's text and
+ * file search reach them; every other source mounts under the portable
+ * `acdc-alsrc:` scheme so the `.code-workspace` stays machine-independent (see
+ * AlSourceFileSystemProvider). Toggling `searchable` migrates an existing mount
+ * in either direction without touching the clone on disk.
  */
 export function applyWorkspaceMounts(output: vscode.OutputChannel): {
   added: string[];
   removed: string[];
 } {
-  const entries = getEntries();
   const currentFolders = vscode.workspace.workspaceFolders ?? [];
-  const added: string[] = [];
-  const removed: string[] = [];
+  const mounted: MountedFolder[] = currentFolders.map((f) => ({
+    uriString: f.uri.toString(),
+    scheme: f.uri.scheme,
+    fsPath: f.uri.scheme === "file" ? f.uri.fsPath : undefined,
+    name: f.name,
+  }));
 
-  const mountedByUri = new Map<string, number>();
-  const mountedByPath = new Map<string, number>();
-  currentFolders.forEach((f, i) => {
-    mountedByUri.set(f.uri.toString(), i);
-    if (f.uri.scheme === "file") {
-      mountedByPath.set(normalizePath(f.uri.fsPath), i);
-    }
-  });
+  const desired: PlannedMount[] = [];
+  const resolved = new Map<string, { uri: vscode.Uri; folder: string; label: string }>();
+  const targetKey = (mount: PlannedMount) => `${mount.scheme}\u0000${mount.key}`;
 
-  const toAdd: { uri: vscode.Uri; name: string }[] = [];
-  const toRemove: number[] = [];
-
-  for (const entry of entries) {
-    const folder = effectiveFolder(entry);
-    const uri = virtualUriFor(entry);
-    if (!folder || !uri) {
+  for (const entry of getEntries()) {
+    if (!entry.enabled) {
       continue;
     }
-    const mountedIndex = mountedByUri.get(uri.toString());
-    // A folder we previously mounted as file: — replace it with the portable form.
-    const legacyIndex = mountedByPath.get(normalizePath(folder));
-
-    if (entry.enabled) {
-      if (legacyIndex !== undefined) {
-        toRemove.push(legacyIndex);
-      }
-      if (mountedIndex === undefined && fs.existsSync(folder)) {
-        toAdd.push({ uri, name: mountName(entry) });
-        added.push(entryLabel(entry));
-      }
-    } else {
-      for (const idx of [mountedIndex, legacyIndex]) {
-        if (idx === undefined) {
-          continue;
-        }
-        if (currentFolders[idx].name.startsWith(MOUNT_PREFIX)) {
-          toRemove.push(idx);
-          removed.push(entryLabel(entry));
-        }
-      }
+    const folder = effectiveFolder(entry);
+    if (!folder) {
+      continue;
     }
+    const virtualUri = virtualUriFor(entry);
+    if (!entry.searchable && !virtualUri) {
+      continue;
+    }
+    const mount: PlannedMount = entry.searchable
+      ? { key: folder, scheme: "file", name: mountName(entry) }
+      : { key: virtualPathFor(entry), scheme: "virtual", name: mountName(entry) };
+    desired.push(mount);
+    resolved.set(targetKey(mount), {
+      uri: entry.searchable ? vscode.Uri.file(folder) : virtualUri!,
+      folder,
+      label: entryLabel(entry),
+    });
   }
 
-  toRemove.sort((a, b) => b - a);
-  for (const idx of toRemove) {
-    vscode.workspace.updateWorkspaceFolders(idx, 1);
+  const plan = planWorkspaceMounts(desired, mounted, MOUNT_PREFIX);
+
+  const added: string[] = [];
+  const removed: string[] = [];
+  const toAdd: { uri: vscode.Uri; name: string }[] = [];
+
+  for (const mount of plan.add) {
+    const target = resolved.get(targetKey(mount));
+    // A source that is configured but not cloned yet stays in `desired` (so its
+    // existing mount is never dropped) while its add is deferred until sync.
+    if (!target || !fs.existsSync(target.folder)) {
+      continue;
+    }
+    toAdd.push({ uri: target.uri, name: mount.name });
+    added.push(target.label);
+  }
+
+  for (const index of plan.removeIndices) {
+    removed.push(currentFolders[index].name.slice(MOUNT_PREFIX.length));
+    vscode.workspace.updateWorkspaceFolders(index, 1);
   }
   if (toAdd.length > 0) {
     const insertAt = vscode.workspace.workspaceFolders?.length ?? 0;

@@ -1261,6 +1261,29 @@
     },
     "configuration": [
       {
+        "id": "acdc.general",
+        "title": "General",
+        "order": 1,
+        "properties": {
+          "acdc.showReleaseNotesOnUpdate": {
+            "type": "string",
+            "enum": [
+              "never",
+              "minor",
+              "always"
+            ],
+            "enumDescriptions": [
+              "Never announce an update and never open the release notes.",
+              "Notify on every update; open the CHANGELOG preview only for a major or minor version bump.",
+              "Notify on every update and always open the CHANGELOG preview, including patch releases."
+            ],
+            "default": "minor",
+            "order": 1,
+            "markdownDescription": "What to surface after AC⚡DC has been updated. A fresh install always opens the README once. A downgrade, an identical version or an unrecognised version number never opens anything."
+          }
+        }
+      },
+      {
         "id": "acdc.alBaseCode",
         "title": "AL Base Code / ISV Code",
         "order": 2,
@@ -1296,6 +1319,11 @@
                   "type": "boolean",
                   "default": false,
                   "description": "Whether this source is cloned/pulled and mounted in the workspace."
+                },
+                "searchable": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Trade-off between search and portability. true: the source is mounted as a real file: folder, so VS Code text search (ripgrep), file search and the Search view reach it - but its absolute, machine-specific path is written into the workspace file. false (default): the source is mounted under the portable acdc-alsrc: URI, which every developer resolves locally, but it is browse-only (open/read works, text and file search do not). Enable it for small ISV sources worth grepping; leave it off for the large BC base app."
                 }
               },
               "required": [
@@ -1616,6 +1644,7 @@
     "watch": "node esbuild.js --watch",
     "package": "node esbuild.js --production",
     "lint": "eslint src",
+    "test": "tsc -p tsconfig.test.json && node --test \"out-test/test/**/*.test.js\"",
     "vsix": "vsce package --no-dependencies",
     "sync:sources": "pwsh -File automation/scripts/Sync-ExternalSources.ps1 -Clean",
     "normalize:agents": "pwsh -File automation/scripts/Normalize-AgentTools.ps1",

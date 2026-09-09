@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Release notes after an update.** Nothing used to tell you that a new version had landed. AC⚡DC now compares the running version against the last one it announced and shows a non-modal `AC⚡DC updated to v<x.y.z>` notification with **What's New** / **README** / **Don't show again**, opening the changelog preview on a major or minor bump. A fresh install opens the README once instead. A downgrade, an identical version or an unrecognised version number surfaces nothing, and the announcement is recorded so an update is shown at most once. Tuned by the new **`acdc.showReleaseNotesOnUpdate`** setting (`never` / `minor` / `always`, default `minor`); **Don't show again** writes `never` to User settings.
+- **`acdc.alBaseCode.repositories[].searchable`** — per-source opt-in (default `false`) that mounts an AL/ISV source as a real `file:` workspace folder so VS Code text search (ripgrep), file search and the Search view reach it. The cost is portability: the resolved absolute path lands in the workspace file. Left off, the source keeps the portable `acdc-alsrc:` URI and stays browse-only. Toggling it remounts in place — nothing is re-cloned. Exposed as a **Searchable** column in the AL Base Code / ISV Code table editor.
+- `npm test` — a VS Code-free unit test run (`node --test` over compiled output) covering the new mount-planning logic. First automated tests in the extension.
+
+### Fixed
+
+- **Mounted AL/ISV sources were invisible to text and file search.** Since `f521979` every source was mounted under the virtual `acdc-alsrc:` scheme, and VS Code's ripgrep search and file indexer only walk `file:` roots — so `grep_search`, `file_search` and the Search view silently returned nothing, with a misleading "excluded by search.exclude" message. Sources marked `searchable` are now mounted as `file:` again; the portable scheme remains the default for large sources such as the BC base app.
+- `git.ignoredRepositories` is reconciled instead of only scrubbed: a `searchable` source needs the entry (a real `file:` clone would otherwise show up in Source Control), a portable one must not have it, and stale entries from earlier versions are still removed.
+- The portable-layout migration no longer flags or "repairs" a `file:` mount that a `searchable` source intentionally created.
+
+### Changed
+
+- **README brought back in line with what the extension ships.** Added a dedicated AL Base Code / ISV Code section (shared clone cache and `sourcesRoot`, `workspace` vs `mcp` access mode, searchable vs portable mounts), the three commands missing from the Commands table (**Migrate AL Base Code Settings to Portable Layout**, **Apply Agent Settings to Chat**, **Reset Agent Override Baselines**), the settings missing from the Settings table (`acdc.alBaseCode.sourcesRoot`, the per-source `searchable` flag, `acdc.showReleaseNotesOnUpdate`), and corrected the Agent Settings panel section, which still described tools as a list of disabled ids and omitted reasoning effort.
+- Mount reconciliation moved into a new `vscode`-free `src/alSourceMountPlan.ts` module, which is what makes it unit-testable. `applyWorkspaceMounts` is now a thin adapter over it and only ever removes workspace folders named with the `[AL Src] ` prefix.
 
 ## [2.4.0] - 2026-09-04
 

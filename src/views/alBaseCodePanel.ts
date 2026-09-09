@@ -17,8 +17,9 @@ import {
 
 /**
  * Webview panel presenting the AL Base Code / ISV Code sources as an editable
- * table (Repository · Branch · Folder · Enabled) with a live branch picker,
- * folder defaults/browse, and a Save & Apply action that clones/pulls/mounts.
+ * table (Repository · Branch · Folder · Enabled · Searchable) with a live branch
+ * picker, folder defaults/browse, and a Save & Apply action that
+ * clones/pulls/mounts.
  */
 export class AlBaseCodePanel {
   private static current: AlBaseCodePanel | undefined;
@@ -180,6 +181,7 @@ export class AlBaseCodePanel {
                   branch,
                   folder,
                   enabled: true,
+                  searchable: false,
                 })
               )
             : validateFolder(expandEnvVars(folder), { forClone: false });
@@ -206,6 +208,7 @@ export class AlBaseCodePanel {
                 branch,
                 folder,
                 enabled: true,
+                searchable: false,
               })
             )
           : validateFolder(expandEnvVars(folder), { forClone: false });
@@ -441,8 +444,8 @@ export class AlBaseCodePanel {
       .checkbox-cell { text-align: center; width: 60px; }
       .repository-cell { width: 18%; }
       .branch-cell { width: 10%; }
-      .base-cell { width: 34%; }
-      .repo-cell { width: 16%; }
+      .base-cell { width: 30%; }
+      .repo-cell { width: 14%; }
       .derived-cell { width: 10%; }
       .checkbox-cell { width: 6%; }
       .actions-cell { white-space: nowrap; width: 6%; }
@@ -482,6 +485,9 @@ export class AlBaseCodePanel {
       Missing folders are cloned after you approve; existing folders are pulled to the latest commit (never pushed).
       Leave <b>Repository</b> empty for a <b>manual</b> source (e.g. an ISV file download): the extension only mounts the folder and never updates it — you maintain it yourself.
     </p>
+    <p class="hint">
+      <b>Searchable</b>: on → mounted as a real <code>file:</code> folder that text/file search reaches, but its machine-specific absolute path is written into the workspace file; off → portable <code>acdc-alsrc:</code> URI, browse-only (no text search). Enable it for small ISV sources; leave it off for the large BC base app.
+    </p>
     <div class="mode-bar">
       <label for="accessMode">Access mode:</label>
       <select id="accessMode">
@@ -497,9 +503,10 @@ export class AlBaseCodePanel {
       <colgroup>
         <col style="width:18%" />
         <col style="width:10%" />
-        <col style="width:34%" />
-        <col style="width:16%" />
+        <col style="width:30%" />
+        <col style="width:14%" />
         <col style="width:10%" />
+        <col style="width:6%" />
         <col style="width:6%" />
         <col style="width:6%" />
       </colgroup>
@@ -511,6 +518,7 @@ export class AlBaseCodePanel {
           <th class="repo-cell">Repo Folder</th>
           <th class="derived-cell">Branch Folder</th>
           <th class="checkbox-cell">Enabled</th>
+          <th class="checkbox-cell" title="On: real file: mount, searchable but writes a machine-specific path into the workspace file. Off: portable acdc-alsrc: mount, browse-only.">Searchable</th>
           <th class="actions-cell"></th>
         </tr>
       </thead>
@@ -557,12 +565,12 @@ export class AlBaseCodePanel {
         if (hint) {
           hint.textContent = accessMode === "mcp"
             ? "Enabled sources are exposed via this workspace's .vscode/mcp.json (server: acdc-al-sources) — no workspace mounts. User-profile mcp.json is intentionally not used: VS Code has no stable API for extensions to identify the active profile."
-            : "Enabled sources are added as read-only workspace folders (prefix [AL Src]) under the portable acdc-alsrc: scheme, so the workspace file stays free of machine-specific paths.";
+            : "Enabled sources are added as read-only workspace folders (prefix [AL Src]). Sources marked Searchable mount as file: (searchable, machine-specific path in the workspace file); the rest use the portable acdc-alsrc: scheme.";
         }
         if (cost) {
           cost.textContent = accessMode === "mcp"
             ? "Token cost: MCP filesystem searches by filename only — agents typically need to read whole files, which usually costs MORE tokens than workspace mode. Prefer this mode when you value a clean Explorer over search efficiency."
-            : "Note: ripgrep text search only runs on file: paths, so workspace-wide text search does not reach these mounts. Quick Open, file reads and agent access work normally.";
+            : "Note: only sources marked Searchable are mounted as file: paths that ripgrep text search can reach. The rest stay portable and browse-only — Quick Open, file reads and agent access work either way.";
         }
         if (reveal) {
           reveal.style.display = accessMode === "mcp" ? "" : "none";
@@ -720,6 +728,9 @@ export class AlBaseCodePanel {
             '<td class="checkbox-cell">' +
               '<input type="checkbox" data-field="enabled" data-index="' + i + '" ' + (e.enabled ? "checked" : "") + ' />' +
             '</td>' +
+            '<td class="checkbox-cell">' +
+              '<input type="checkbox" data-field="searchable" data-index="' + i + '" ' + (e.searchable ? "checked" : "") + ' title="Searchable: file: mount reachable by text search, but writes a machine-specific path into the workspace file." />' +
+            '</td>' +
             '<td class="actions-cell">' +
               '<button class="secondary" data-branches="' + i + '"' + (manual ? ' disabled' : '') + '>Refresh</button>' +
               '<button class="row-remove" data-remove="' + i + '">Remove</button>' +
@@ -735,7 +746,7 @@ export class AlBaseCodePanel {
       }
 
       function addSourceRow() {
-        entries.push({ repository: "", branch: "", folder: "", enabled: false });
+        entries.push({ repository: "", branch: "", folder: "", enabled: false, searchable: false });
         render();
         const idx = entries.length - 1;
         const repoInput = document.querySelector('input[data-field="repository"][data-index="' + idx + '"]');
@@ -772,6 +783,8 @@ export class AlBaseCodePanel {
         const idx = parseInt(t.getAttribute("data-index"), 10);
         if (field === "enabled") {
           entries[idx].enabled = t.checked;
+        } else if (field === "searchable") {
+          entries[idx].searchable = t.checked;
         } else {
           entries[idx][field] = t.value;
         }
@@ -900,7 +913,7 @@ export class AlBaseCodePanel {
       window.addEventListener("message", (ev) => {
         const m = ev.data;
         if (m.type === "state") {
-          entries = (m.entries || []).map((e) => ({ repository: e.repository || "", branch: e.branch || "", folder: e.folder || "", enabled: !!e.enabled }));
+          entries = (m.entries || []).map((e) => ({ repository: e.repository || "", branch: e.branch || "", folder: e.folder || "", enabled: !!e.enabled, searchable: !!e.searchable }));
           accessMode = m.accessMode === "mcp" ? "mcp" : "workspace";
           mcpTargetPath = typeof m.mcpTargetPath === "string" ? m.mcpTargetPath : "";
           Object.keys(folderErrors).forEach((key) => delete folderErrors[key]);

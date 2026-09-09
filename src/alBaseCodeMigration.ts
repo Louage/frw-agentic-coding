@@ -40,7 +40,11 @@ export interface ILegacyFindings {
    * resolution is unaffected — but it is noise in a committed workspace file.
    */
   staleFolderKeys: number;
-  /** Workspace roots we own that still use the `file:` scheme. */
+  /**
+   * Workspace roots we own that still use the `file:` scheme *without* an
+   * entry opting into it. A `searchable: true` source is intentionally mounted
+   * as `file:` and must never be "repaired".
+   */
   legacyMounts: vscode.WorkspaceFolder[];
   /** `git.ignoredRepositories` values pointing at one of our source folders. */
   ignoredRepositories: string[];
@@ -52,6 +56,13 @@ export function detectLegacyConfiguration(): ILegacyFindings {
   const entries = getEntries();
   const ourFolders = entries.map(effectiveFolder).filter(Boolean).map(normalize);
   const defaultRoot = normalize(getDefaultSourcesBaseDir());
+  // Folders a `searchable` entry deliberately mounts as `file:` — both the
+  // mount and its git-ignore entry are current configuration, not leftovers.
+  const searchableFolders = entries
+    .filter((e) => e.enabled && e.searchable)
+    .map(effectiveFolder)
+    .filter(Boolean)
+    .map(normalize);
 
   const gitConfig = vscode.workspace.getConfiguration("git");
   const ignored = gitConfig.get<string[]>("ignoredRepositories", []) ?? [];
@@ -69,10 +80,15 @@ export function detectLegacyConfiguration(): ILegacyFindings {
       (e) => (e.repository ?? "").trim() && e.folder !== undefined
     ).length,
     legacyMounts: (vscode.workspace.workspaceFolders ?? []).filter(
-      (f) => f.name.startsWith(MOUNT_PREFIX) && f.uri.scheme === "file"
+      (f) =>
+        f.name.startsWith(MOUNT_PREFIX) &&
+        f.uri.scheme === "file" &&
+        !searchableFolders.includes(normalize(f.uri.fsPath))
     ),
-    ignoredRepositories: ignored.filter((p) =>
-      ourFolders.includes(normalize(p))
+    ignoredRepositories: ignored.filter(
+      (p) =>
+        ourFolders.includes(normalize(p)) &&
+        !searchableFolders.includes(normalize(p))
     ),
     sourcesRootUnset: getSourcesRootSetting() === "",
   };
@@ -181,7 +197,8 @@ export async function runMigration(
   }
 
   // 4. Virtual mounts are never scanned by the Git extension, so these entries
-  //    are dead weight carrying an absolute path.
+  //    are dead weight carrying an absolute path. Entries a `searchable` mount
+  //    still needs are excluded from the findings and survive the scrub.
   if (findings.ignoredRepositories.length > 0) {
     await clearOurGitIgnoredRepositories();
     steps.push(
