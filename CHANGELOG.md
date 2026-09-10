@@ -1,10 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## [2.7.0] - 2026-09-10
 
 ### Added
 
 - **Grouped tool picker in the Agent Settings panel.** The gear next to **Tools** no longer opens a flat list of every registered tool. Tools are grouped under their owner — contributing extension, `mcp.json` server, or built-in toolset — with a chevron to expand a group and a checkbox on the group itself. Checking a group persists its **wildcard** (`ms-dynamics-smb.al/*`, or the bare toolset name such as `read`), so the agent also gets tools that owner ships later. MCP groups are matched forward from the server ids in `mcp.json`; an MCP tool from no known server is listed individually, without a wildcard parent.
+- feat(tools): qualified tool ids, grouped tool picker, AL MCP server provider (#60) (`9d54ea3`)
 
 ### Fixed
 
@@ -15,7 +16,7 @@
 ### Changed
 
 - The write-capable tool list gained the `execute` toolset. VS Code's core terminal and task tools are contributed by no extension manifest, so granting the group is the only grant the picker can observe.
-
+- chore(assets): sync external AI assets (#59) (`1b120fd`)
 
 ## [2.6.0] - 2026-09-10
 
