@@ -21,6 +21,11 @@ name: Release
 #         VS Code Marketplace.
 #    The pushed release commit is filtered out via the `[skip ci]` marker
 #    AND the `chore(release):` prefix guard on the job, so no loop.
+#    If the computed tag already exists (an earlier run tagged, released, then
+#    died in the Marketplace publish), the run switches to `republish` mode:
+#    it checks out that tag and re-packages/re-publishes it without touching
+#    the CHANGELOG or package.json. That makes a plain "Re-run jobs" enough
+#    to recover from a Marketplace outage.
 #
 #  - Push of a `v*` tag: package the current commit under that tag. No
 #    changelog mutation — the tag author is responsible for it. Useful for
@@ -167,33 +172,41 @@ jobs:
           fi
           echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
 
-      - name: Guard against duplicate tag
-        if: steps.version.outputs.mode != 'skip'
+      - name: Resolve duplicate tag
+        id: resolve
         run: |
           set -euo pipefail
-          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1 \
-             && [ "${{ steps.version.outputs.mode }}" != "tag" ]; then
-            echo "::error::Tag ${{ steps.version.outputs.tag }} already exists — aborting to avoid clobbering it."
-            exit 1
+          MODE="${{ steps.version.outputs.mode }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # An earlier run may have tagged + released and then died in the
+          # Marketplace publish. Re-running it must not abort on "tag exists":
+          # instead re-package that exact tag and retry the publish.
+          if { [ "$MODE" = "auto" ] || [ "$MODE" = "dispatch" ]; } \
+             && git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::notice::Tag $TAG already exists — switching to republish mode (no CHANGELOG/version mutation)."
+            MODE="republish"
           fi
+
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
 
       # -------------------------------------------------------------------
       # AUTO / DISPATCH path: rewrite CHANGELOG, bump package.json, commit,
-      # push commit + tag. TAG path skips this entire section.
+      # push commit + tag. TAG and REPUBLISH paths skip this entire section.
       # -------------------------------------------------------------------
       - name: Configure git identity (bot)
-        if: steps.version.outputs.mode == 'auto' || steps.version.outputs.mode == 'dispatch'
+        if: steps.resolve.outputs.mode == 'auto' || steps.resolve.outputs.mode == 'dispatch'
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
       - name: Populate [Unreleased] from git
-        if: steps.version.outputs.mode == 'auto' || steps.version.outputs.mode == 'dispatch'
+        if: steps.resolve.outputs.mode == 'auto' || steps.resolve.outputs.mode == 'dispatch'
         shell: pwsh
         run: pwsh -File automation/scripts/Update-Changelog.ps1
 
       - name: Cut release (promote CHANGELOG + bump package.json)
-        if: steps.version.outputs.mode == 'auto' || steps.version.outputs.mode == 'dispatch'
+        if: steps.resolve.outputs.mode == 'auto' || steps.resolve.outputs.mode == 'dispatch'
         shell: pwsh
         run: |
           pwsh -File automation/scripts/Cut-Release.ps1 `
@@ -203,7 +216,7 @@ jobs:
             -SkipCi
 
       - name: Push release commit + tag
-        if: steps.version.outputs.mode == 'auto' || steps.version.outputs.mode == 'dispatch'
+        if: steps.resolve.outputs.mode == 'auto' || steps.resolve.outputs.mode == 'dispatch'
         run: |
           set -euo pipefail
           git tag "${{ steps.version.outputs.tag }}"
@@ -211,38 +224,80 @@ jobs:
           git push origin "${{ steps.version.outputs.tag }}"
 
       # -------------------------------------------------------------------
+      # REPUBLISH path: the tag already exists, so build from it verbatim.
+      # -------------------------------------------------------------------
+      - name: Check out existing tag (republish)
+        if: steps.resolve.outputs.mode == 'republish'
+        run: |
+          set -euo pipefail
+          git fetch origin "refs/tags/${{ steps.version.outputs.tag }}:refs/tags/${{ steps.version.outputs.tag }}" --force
+          git checkout --force "refs/tags/${{ steps.version.outputs.tag }}"
+
+      # -------------------------------------------------------------------
       # TAG path: package the current commit under the pushed tag. The tag
       # author is responsible for CHANGELOG state.
       # -------------------------------------------------------------------
       - name: Set package.json version from tag
-        if: steps.version.outputs.mode == 'tag'
+        if: steps.resolve.outputs.mode == 'tag' || steps.resolve.outputs.mode == 'republish'
         run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       # -------------------------------------------------------------------
       # Common tail: validate + package + release + publish.
       # -------------------------------------------------------------------
       - name: Lint
-        if: steps.version.outputs.mode != 'skip'
+        if: steps.resolve.outputs.mode != 'skip'
         run: npm run lint
 
       - name: Validate generated contribution paths
-        if: steps.version.outputs.mode != 'skip'
+        if: steps.resolve.outputs.mode != 'skip'
         run: npm run validate:contribution-paths
 
       - name: Package VSIX
-        if: steps.version.outputs.mode != 'skip'
+        if: steps.resolve.outputs.mode != 'skip'
         run: npx @vscode/vsce package --no-dependencies -o acdc-${{ steps.version.outputs.tag }}.vsix
 
       - name: Create GitHub Release
-        if: steps.version.outputs.mode != 'skip'
+        if: steps.resolve.outputs.mode != 'skip'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           files: acdc-*.vsix
           generate_release_notes: true
 
+      # The gallery API regularly stalls and vsce has no built-in publish
+      # retry (microsoft/vscode-vsce#1303), so retry here. A timed-out request
+      # can still have been accepted server-side, hence the "already published"
+      # check before treating an attempt as a real failure.
       - name: Publish to VS Code Marketplace
-        if: steps.version.outputs.mode != 'skip'
-        run: npx @vscode/vsce publish --no-dependencies --packagePath acdc-${{ steps.version.outputs.tag }}.vsix
+        if: steps.resolve.outputs.mode != 'skip'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          VSIX: acdc-${{ steps.version.outputs.tag }}.vsix
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            echo "::group::vsce publish (attempt $attempt/3)"
+            set +e
+            OUT=$(npx @vscode/vsce publish --no-dependencies --packagePath "$VSIX" 2>&1)
+            CODE=$?
+            set -e
+            echo "$OUT"
+            echo "::endgroup::"
+
+            if [ "$CODE" -eq 0 ]; then
+              exit 0
+            fi
+
+            if echo "$OUT" | grep -qiE "already exists|same as the currently published version"; then
+              echo "::notice::${{ steps.version.outputs.version }} is already on the Marketplace — treating as published."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              echo "::warning::vsce publish failed (exit $CODE). Retrying in 60s..."
+              sleep 60
+            fi
+          done
+
+          echo "::error::vsce publish failed after 3 attempts."
+          exit 1
