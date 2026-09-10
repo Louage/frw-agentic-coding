@@ -1,5 +1,20 @@
 # Changelog
 
+
+## [2.5.1] - 2026-09-10
+
+### Added
+
+- Add new GIF asset for enhanced visual representation (`7c6d222`)
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+_None yet._
+
 ## [2.5.0] - 2026-09-09
 
 ### Added
