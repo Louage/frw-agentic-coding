@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.6.0] - 2026-09-10
+
+### Added
+
+- feat: enhance release workflow to support republishing existing tags (`4e6b293`)
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+_None yet._
+
+
 ## [2.5.1] - 2026-09-10
 
 ### Added
