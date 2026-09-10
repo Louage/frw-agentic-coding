@@ -1,7 +1,7 @@
 ---
 name: "Angus, AL Architect"
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development.'
-tools: [vscode/memory, vscode/runCommand, vscode/switchAgent, vscode/extensions, vscode/askQuestions, vscode/toolSearch, execute/getTerminalOutput, read/readFile, read/problems, read/skill, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, 'al-symbols-mcp/*', 'upstash/context7/*', 'microsoft-learn/*', vscode.mermaid-chat-features/renderMermaidDiagram, todo]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput]
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
 handoffs:
@@ -167,7 +167,7 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @Malcolm, AL Con
 
 ## AL-Specific Analysis Tools
 
-- **Dependency & Symbol Analysis**: `al-symbols-mcp/*` (`al_packages`, `al_search_objects`, `al_get_object_definition`) for extension dependencies and AL object relationships
+- **Dependency & Symbol Analysis**: `al_symbolsearch` / `al_symbolrelations` for extension dependencies and AL object relationships
 - **Codebase Understanding**: `codebase`, `search`, `usages` for AL object relationships
 - **Problem Detection**: `problems` for architectural issues and anti-patterns
 - **Diagrams**: `renderMermaidDiagram` for information-flow and data-model diagrams
@@ -187,7 +187,7 @@ Workflow: al-architect (DESIGN) → al-spec.create (DETAIL) → @Malcolm, AL Con
 If a requirements document is provided (requisites.md, spec.md, etc.):
 1. Read thoroughly, identify business objectives, list functional/non-functional requirements, note constraints.
 2. **Ask clarifying questions** about: business rules, user personas, performance requirements, integration points, security requirements, compliance.
-3. **Analyze existing codebase** via `#search`, `#usages`, `al-symbols-mcp/*` (`al_search_objects`, `al_get_object_definition`). Identify reusable components.
+3. **Analyze existing codebase** via `#search`, `#usages`, `al_symbolsearch`, `al_symbolrelations`. Identify reusable components.
 
 ### Step 2: Design Solution Architecture
 

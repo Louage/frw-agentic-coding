@@ -1,7 +1,7 @@
 ---
 name: "Ink, AL Lean SDD"
 description: "Lean Spec-Driven Development agent for Business Central AL. Use for low-to-medium complexity features with spec-kit-aligned workflow: constitution setup, feature spec, implementation, tests, docs, and finalise. Lower token cost than full ALDC orchestration."
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature slug or description (e.g. "fleet-registration", "implement SDD/2026-07-08-fleet-register")'
 handoffs:
@@ -126,3 +126,17 @@ If at any point during implementation you discover:
 - The feature touches 4+ object types
 
 → Pause, inform the user, and offer to hand off to `@Malcolm, AL Conductor` with the spec folder as input.
+
+<!-- acdc:al-toolchain -->
+## AL toolchain, never glob the extensions folder
+
+Before running `alc`, `altool`, or any AL build/compile command, call **`acdc_get_al_toolchain`**.
+It returns the AL extension version actually active in this window, the absolute `alc` / `altool`
+paths, and the bin layout (`bin` on AL 18.x, `bin/win32` on AL 8.1).
+
+- Do **not** glob `~/.vscode/extensions/ms-dynamics-smb.al-*`, several AL versions can be installed
+  side by side and the active one is not necessarily the newest.
+- Do **not** hardcode a versioned path into a task, script, or any committed file, it breaks on the
+  next AL update.
+- Compare the returned version with the project's `app.json` → `runtime` first. On a mismatch, say
+  so and stop, do not start a build that cannot succeed.

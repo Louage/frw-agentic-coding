@@ -3,7 +3,7 @@ name: AL Implementation Subagent
 description: 'TDD Implementation Subagent, Creates AL objects following strict RED→GREEN→REFACTOR cycle. Only invokable by al-conductor via runSubagent.'
 user-invocable: false
 disable-model-invocation: true
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, execute/runInTerminal, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, al-symbols-mcp/*, microsoft-learn/*, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, execute/runInTerminal, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_prepareCallHierarchy, sshadowsdk.al-lsp-for-agents/bclsp_incomingCalls, sshadowsdk.al-lsp-for-agents/bclsp_outgoingCalls, sshadowsdk.al-lsp-for-agents/bclsp_codeLens, sshadowsdk.al-lsp-for-agents/bclsp_codeQualityDiagnostics, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols, sshadowsdk.al-lsp-for-agents/bclsp_renameSymbol]
 model: Claude Sonnet 4.6 (copilot)
 ---
 
@@ -136,7 +136,7 @@ end;
 - You **MUST** follow the spec and architecture documents provided by the Conductor
 - You **MUST** report back: objects created, **event subscribers (exact base object + event name + signature)**, tests created, test results, build status, any issues
 - **Don't re-read a file already in context.** If you already read a spec/architecture excerpt, a source file, or a skill this invocation, reuse it, do not issue another `read_file` for the same path.
-- **Resolve base-app symbols from symbols, and if you can't, ask; don't hunt.** Resolve event signatures and base-object members via `al_symbolsearch` / `al-symbols-mcp/*` against `.alpackages/` (authoritative for symbol facts). If a symbol or event the spec names **cannot be resolved** (e.g. the event does not exist in this BC version), **stop and surface it as a blocker / end-of-phase open question** in your return to the Conductor, don't burn turns guessing it via web/mirror searches, and never invent a signature.
+- **Resolve base-app symbols from symbols, and if you can't, ask; don't hunt.** Resolve event signatures and base-object members via `al_symbolsearch` against `.alpackages/` (authoritative for symbol facts). If a symbol or event the spec names **cannot be resolved** (e.g. the event does not exist in this BC version), **stop and surface it as a blocker / end-of-phase open question** in your return to the Conductor, don't burn turns guessing it via web/mirror searches, and never invent a signature.
 
 </boundary_rules>
 
@@ -326,3 +326,17 @@ search. Omit the section if no subscribers were added this phase.)*
 - Skip TDD (tests FIRST, always)
 
 </tool_boundaries>
+
+<!-- acdc:al-toolchain -->
+## AL toolchain, never glob the extensions folder
+
+Before running `alc`, `altool`, or any AL build/compile command, call **`acdc_get_al_toolchain`**.
+It returns the AL extension version actually active in this window, the absolute `alc` / `altool`
+paths, and the bin layout (`bin` on AL 18.x, `bin/win32` on AL 8.1).
+
+- Do **not** glob `~/.vscode/extensions/ms-dynamics-smb.al-*`, several AL versions can be installed
+  side by side and the active one is not necessarily the newest.
+- Do **not** hardcode a versioned path into a task, script, or any committed file, it breaks on the
+  next AL update.
+- Compare the returned version with the project's `app.json` → `runtime` first. On a mismatch, say
+  so and stop, do not start a build that cannot succeed.

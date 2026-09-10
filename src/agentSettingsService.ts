@@ -20,8 +20,14 @@ export const REASONING_EFFORT_VALUES = ["low", "medium", "high", "xhigh", "max"]
 
 export type ReasoningEffort = (typeof REASONING_EFFORT_VALUES)[number];
 
-/** Tools that let an agent mutate the workspace or the machine. */
-export const WRITE_CAPABLE_TOOL_IDS = ["edit", "runCommands", "runInTerminal", "runTasks"] as const;
+/**
+ * Tools that let an agent mutate the workspace or the machine. `edit` and `execute` are
+ * toolset names: VS Code's core terminal and task tools sit in no extension manifest, so
+ * granting the group is the only grant the picker can see.
+ */
+export const WRITE_CAPABLE_TOOL_IDS = [
+  "edit", "execute", "runCommands", "runInTerminal", "runTasks",
+] as const;
 
 export interface AgentSettingEntry {
   model?: string;

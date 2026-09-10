@@ -12,6 +12,7 @@ import {
   expandEnvVars,
   type AlSourceEntry,
 } from "./alBaseCode";
+import { AL_SOURCE_MOUNT_PREFIX } from "./alSourceMountPlan";
 
 /**
  * Detection + repair for workspaces still on the pre-portable AL Base Code
@@ -21,7 +22,7 @@ import {
  */
 
 const SUPPRESS_KEY = "acdc.alBaseCode.migrationDismissed";
-const MOUNT_PREFIX = "[AL Src] ";
+const MOUNT_PREFIX = AL_SOURCE_MOUNT_PREFIX;
 
 export interface ILegacyFindings {
   /** Git-backed entries carrying a folder that belongs in `sourcesRoot`. */

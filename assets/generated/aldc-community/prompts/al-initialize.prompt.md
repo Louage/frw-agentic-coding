@@ -2,7 +2,7 @@
 agent: agent
 model: Claude Sonnet 4.5
 description: 'Initialize AL development environment and workspace for Business Central.'
-tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'github/*', 'github/*', 'microsoft-docs/*', 'upstash/context7/*', 'al-symbols-mcp/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, todo]
+tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'github/*', 'github/*', ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, todo]
 ---
 
 # AL Environment Initialization

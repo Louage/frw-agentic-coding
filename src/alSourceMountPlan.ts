@@ -5,6 +5,13 @@
  * in plain Node — `applyWorkspaceMounts` is a thin adapter over this module.
  */
 
+/**
+ * Display-name prefix of every workspace folder AC⚡DC mounts for AL Base Code.
+ * Also the marker other features use to tell a read-only source mirror from a
+ * real project folder.
+ */
+export const AL_SOURCE_MOUNT_PREFIX = "[AL Src] ";
+
 export type MountScheme = "virtual" | "file";
 
 export interface PlannedMount {

@@ -7,7 +7,7 @@
   "license": "MIT",
   "icon": "images/icon.png",
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.101.0"
   },
   "keywords": [
     "ALDC",
@@ -39,6 +39,12 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "acdc.alMcpServer",
+        "label": "AC⚡DC — AL Tools"
+      }
+    ],
     "languageModelTools": [
       {
         "name": "acdc_get_coding_standard",
@@ -101,6 +107,26 @@
           "spec",
           "plans",
           "branch"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "acdc_get_al_toolchain",
+        "displayName": "Get AL Toolchain",
+        "modelDescription": "Returns the AL toolchain that VS Code actually resolved for this window: the AL Language extension id, its version (e.g. `18.0.2732683`), the extension path, the absolute path of the `alc` compiler and of `altool` (absent on AL < 17), and which bin layout was found (`bin` for AL 18.x, `bin/win32` for AL 8.1). ALWAYS call this tool before running `alc`, `altool`, or any AL build/compile command, and NEVER glob `~/.vscode/extensions/ms-dynamics-smb.al-*` for a binary: several AL versions can be installed side by side and the active one is not necessarily the newest. Compare the returned version against the project's `app.json → runtime` and report a mismatch instead of starting a build that will fail.",
+        "toolReferenceName": "acdcAlToolchain",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(tools)",
+        "userDescription": "Show the resolved AL compiler / altool paths and version for this window.",
+        "tags": [
+          "acdc",
+          "al",
+          "business-central",
+          "toolchain",
+          "build"
         ],
         "inputSchema": {
           "type": "object",
@@ -1786,6 +1812,8 @@
     "vsix": "vsce package --no-dependencies",
     "sync:sources": "pwsh -File automation/scripts/Sync-ExternalSources.ps1 -Clean",
     "normalize:agents": "pwsh -File automation/scripts/Normalize-AgentTools.ps1",
+    "normalize:agents:source": "pwsh -File automation/scripts/Normalize-AgentTools.ps1 -AssetsRoot .github",
+    "normalize:agents:overlay": "pwsh -File automation/scripts/Normalize-AgentTools.ps1 -AssetsRoot automation/overlays/aldc-community",
     "normalize:em-dash": "pwsh -File automation/scripts/Normalize-EmDash.ps1",
     "inject:avatar-greeting": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1",
     "inject:avatar-greeting:source": "pwsh -File automation/scripts/Inject-AvatarGreeting.ps1 -AssetsRoot .github/agents",
@@ -1803,14 +1831,14 @@
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
     "rename:personas": "pwsh -File automation/scripts/Rename-AgentsToPersonas.ps1",
-    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:em-dash && npm run rename:personas && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
+    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:agents:source && npm run normalize:agents:overlay && npm run normalize:em-dash && npm run rename:personas && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
     "pipeline:mcp": "npm run sync:mcp-sources",
     "changelog:update": "pwsh -File automation/scripts/Update-Changelog.ps1",
     "release:cut": "pwsh -File automation/scripts/Cut-Release.ps1"
   },
   "devDependencies": {
     "@types/node": "^20.x",
-    "@types/vscode": "^1.95.0",
+    "@types/vscode": "^1.101.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vscode/vsce": "^3.2.0",

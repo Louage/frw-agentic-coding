@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { GetCodingStandardTool } from "./tools/getCodingStandardTool";
 import { ListAgentPlaceholdersTool } from "./tools/listAgentPlaceholdersTool";
 import { GetSddConfigTool } from "./tools/getSddConfigTool";
+import { GetAlToolchainTool } from "./tools/getAlToolchainTool";
 import { RenderSddPathTool } from "./tools/renderSddPathTool";
 import { AssetTreeProvider } from "./views/assetTreeProvider";
 import {
@@ -40,6 +41,8 @@ import {
 import { savePlaceholderTarget } from "./agentSettingsService";
 import { applyAgentContributionOverrides, resetAgentOverrideBaselines } from "./agentContributionOverrides";
 import { showReleaseNotesOnUpdate } from "./update/releaseNotes";
+import { migrateStoredToolIds } from "./tools/toolIdMigration";
+import { registerAlMcpServerProvider } from "./tools/alMcpServerProvider";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -69,6 +72,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.lm.registerTool("acdc_get_sdd_config", new GetSddConfigTool()),
     vscode.lm.registerTool("acdc_render_sdd_path", new RenderSddPathTool()),
+    vscode.lm.registerTool("acdc_get_al_toolchain", new GetAlToolchainTool()),
     vscode.lm.registerTool(
       "acdc_list_bcquality_custom_rules",
       new ListBcqualityCustomRulesTool(context)
@@ -351,6 +355,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // 5. Startup checks.
   void syncOnStartup(output);
   void promptForLegacyMigration(context, output);
+  void migrateStoredToolIds(context, output);
+  registerAlMcpServerProvider(context, output);
   showReleaseNotesOnUpdate(context, output);
 }
 

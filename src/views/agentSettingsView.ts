@@ -8,6 +8,16 @@ import {
   savePlaceholderRows,
   WRITE_CAPABLE_TOOL_IDS,
 } from "../agentSettingsService";
+import { normalizeStoredToolIds, qualifyToolId, resolveToolOwner, type ToolCatalogEntry, type ToolOwnerIndex } from "../tools/toolIdentity";
+import { buildHostOwnerIndex } from "../tools/toolIdMigration";
+import { getAvailableMcpServerIds } from "../tools/mcpDiscoveryService";
+import { buildPickerState, collectWriteCapableTools } from "../tools/toolPickerModel";
+import {
+  summarizeToolSelection,
+  type AvailabilityContext,
+} from "../tools/toolPickerPresentation";
+import { VSCODE_BUILTIN_PREFIXES } from "../tools/toolIdentity";
+import { ToolPickerPanel } from "./toolPickerPanel";
 
 const REASONING_EFFORT_LABELS: Record<string, string> = {
   low: "Low",
@@ -17,10 +27,6 @@ const REASONING_EFFORT_LABELS: Record<string, string> = {
   max: "Max",
 };
 
-interface ToolQuickPickItem extends vscode.QuickPickItem {
-  toolId?: string;
-}
-
 export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "acdc.agentSettings";
 
@@ -28,6 +34,8 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
   private selectedAgentId: string | undefined;
   private selectedAgentName: string | undefined;
   private declaredTools: string[] = [];
+  /** Cached from the last picker run; only used to expand MCP wildcards in the warning. */
+  private mcpServerIds: string[] = [];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -70,6 +78,11 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
     this.selectedAgentName = this.selectedAgentName ?? state.selected.name;
     this.declaredTools = state.selected.declaredTools;
     return {
+      toolCounts: await this.countTools(
+        state.selected.declaredTools,
+        state.selected.disabledTools,
+        state.selected.extraTools
+      ),
       selectedAgentId: this.selectedAgentId,
       selectedAgentName: this.selectedAgentName,
       selectedPlaceholder: state.selectedPlaceholder,
@@ -191,105 +204,130 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  /**
-   * Approximates the chat "Configure Tools" control with a native multi-select quick pick,
-   * because that control has no public API. The result is posted back to the webview so the
-   * panel keeps a single save path (pending state -> Apply), instead of writing settings here.
-   */
-  private async pickTools(disabledTools: string[], extraTools: string[]): Promise<void> {
-    const agentName = this.selectedAgentName ?? this.selectedAgentId ?? "this agent";
-    const declared = this.declaredTools;
-    const declaredSet = new Set(declared);
-    const disabled = new Set(disabledTools.map((toolId) => toolId.trim()).filter((toolId) => toolId.length > 0));
-    const extra = extraTools.map((toolId) => toolId.trim()).filter((toolId) => toolId.length > 0);
-    const extraSet = new Set(extra);
-
-    const registered = new Map(vscode.lm.tools.map((tool) => [tool.name, tool]));
-    const items: ToolQuickPickItem[] = [];
-
-    if (declared.length > 0) {
-      items.push({ label: "Declared by this agent", kind: vscode.QuickPickItemKind.Separator });
-      for (const toolId of declared) {
-        items.push({
-          label: toolId,
-          description: registered.get(toolId)?.description ?? "",
-          toolId,
-          picked: !disabled.has(toolId),
-        });
-      }
-    }
-
-    const available = [...registered.values()]
-      .filter((tool) => !declaredSet.has(tool.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    if (available.length > 0) {
-      items.push({ label: "Available tools", kind: vscode.QuickPickItemKind.Separator });
-      for (const tool of available) {
-        items.push({
-          label: tool.name,
-          description: tool.description,
-          toolId: tool.name,
-          picked: extraSet.has(tool.name),
-        });
-      }
-    }
-
-    const unavailable = extra.filter((toolId) => !declaredSet.has(toolId) && !registered.has(toolId));
-    if (unavailable.length > 0) {
-      items.push({ label: "Unavailable", kind: vscode.QuickPickItemKind.Separator });
-      for (const toolId of unavailable) {
-        items.push({
-          label: toolId,
-          description: "Not currently registered — uncheck to remove it from this agent.",
-          toolId,
-          picked: true,
-        });
-      }
-    }
-
-    const result = await vscode.window.showQuickPick(items, {
-      canPickMany: true,
-      matchOnDescription: true,
-      title: `Tools for ${agentName}`,
-      placeHolder: `Select the tools ${agentName} may use`,
-    });
-
-    if (!result) {
-      return;
-    }
-
-    const selected = new Set(
-      result
-        .map((item) => item.toolId)
-        .filter((toolId): toolId is string => Boolean(toolId))
-    );
-
-    const nextDisabled = declared.filter((toolId) => !selected.has(toolId));
-    // Keep previously stored extras in place and append newly picked ones at the end.
-    const nextExtra = extra.filter((toolId) => selected.has(toolId) && !declaredSet.has(toolId));
-    for (const toolId of selected) {
-      if (!declaredSet.has(toolId) && !nextExtra.includes(toolId)) {
-        nextExtra.push(toolId);
-      }
-    }
-
-    await this.view?.webview.postMessage({
-      type: "toolsPicked",
-      disabledTools: nextDisabled,
-      extraTools: nextExtra,
+  /** Projects `vscode.lm.tools` onto the vscode-free catalog the picker model consumes. */
+  private buildCatalog(ownerIndex: ToolOwnerIndex): ToolCatalogEntry[] {
+    return vscode.lm.tools.map((tool) => {
+      const qualifiedId = qualifyToolId(tool.name, ownerIndex);
+      const slashIndex = qualifiedId.lastIndexOf("/");
+      return {
+        runtimeName: tool.name,
+        qualifiedId,
+        label: slashIndex >= 0 ? qualifiedId.slice(slashIndex + 1) : qualifiedId,
+        description: tool.description ?? "",
+        owner: resolveToolOwner(tool.name, ownerIndex),
+      };
     });
   }
 
   /**
+   * Opens the tool picker as an editor tab (D20). A QuickPick cannot draw a tree, and the
+   * tri-state parent a partially selected group needs is only expressible in a webview
+   * (D22). All decisions stay in `toolPickerModel`; the panel only renders them.
+   *
+   * The result is posted back to this webview so the panel keeps a single save path
+   * (pending state -> Apply), instead of writing settings from the picker.
+   */
+  private async pickTools(disabledTools: string[], extraTools: string[]): Promise<void> {
+    const agentName = this.selectedAgentName ?? this.selectedAgentId ?? "this agent";
+    // Everything below works in qualified ids: the agent frontmatter already uses them,
+    // and they are what VS Code expects back in `tools:` (bare names raise "has been renamed").
+    const ownerIndex = buildHostOwnerIndex();
+    const declared = normalizeStoredToolIds(this.declaredTools, ownerIndex);
+    this.mcpServerIds = [...(await getAvailableMcpServerIds(this.context))];
+
+    const state = buildPickerState(
+      this.buildCatalog(ownerIndex),
+      declared,
+      normalizeStoredToolIds(disabledTools, ownerIndex),
+      normalizeStoredToolIds(extraTools, ownerIndex),
+      { mcpServerIds: this.mcpServerIds }
+    );
+
+    ToolPickerPanel.show({
+      agentName,
+      declaredTools: declared,
+      initialState: state,
+      availability: this.availabilityContext(ownerIndex),
+      onCommit: (deltas) => {
+        void this.postToolsPicked(deltas);
+      },
+    });
+  }
+
+  private async postToolsPicked(deltas: {
+    disabledTools: string[];
+    extraTools: string[];
+  }): Promise<void> {
+    await this.view?.webview.postMessage({
+      type: "toolsPicked",
+      disabledTools: deltas.disabledTools,
+      extraTools: deltas.extraTools,
+      toolCounts: await this.countTools(
+        this.declaredTools,
+        deltas.disabledTools,
+        deltas.extraTools
+      ),
+    });
+  }
+
+  /**
+   * B2: the panel used to count tokens, so a group wildcard read as "1 added" instead of
+   * the ten tools it grants. The expansion only exists on the host side, so the count is
+   * computed here and shipped with the state.
+   */
+  private async countTools(
+    declaredTools: string[],
+    disabledTools: string[],
+    extraTools: string[]
+  ): Promise<ReturnType<typeof summarizeToolSelection>> {
+    const ownerIndex = buildHostOwnerIndex();
+    this.mcpServerIds = [...(await getAvailableMcpServerIds(this.context))];
+    return summarizeToolSelection(
+      declaredTools,
+      disabledTools,
+      extraTools,
+      this.buildCatalog(ownerIndex),
+      { mcpServerIds: this.mcpServerIds }
+    );
+  }
+
+  /**
+   * B3: a token missing from the runtime catalog is not automatically a stale token. The
+   * owner index is built from extension manifests, but a large family of tools
+   * (`vscode_askQuestions`, `manage_todo_list`, `get_terminal_output`, ...) is registered
+   * by the workbench itself and appears in no manifest, so their frontmatter tokens can
+   * only be recognised by namespace.
+   */
+  private availabilityContext(ownerIndex: ToolOwnerIndex): AvailabilityContext {
+    return {
+      builtinNamespaces: new Set([...VSCODE_BUILTIN_PREFIXES, ...ownerIndex.toolSetNames]),
+      knownMcpServerIds: new Set(this.mcpServerIds),
+      installedExtensionIds: new Set(vscode.extensions.all.map((extension) => extension.id)),
+    };
+  }
+
+  /**
    * Several shipped agents (auditor, triage) are contractually read-only. Granting them a
-   * write-capable tool breaks that contract, so warn without blocking.
+   * write-capable tool breaks that contract, so warn without blocking. Wildcards count:
+   * `edit` or `<owner>/*` grants every write-capable tool in that group (D8).
    */
   private warnOnNewWriteCapableTools(previousExtraTools: string[], nextExtraTools: string[]): void {
-    const alreadyGranted = new Set([...previousExtraTools, ...this.declaredTools]);
-    const newlyGranted = nextExtraTools.filter(
-      (toolId) =>
-        (WRITE_CAPABLE_TOOL_IDS as readonly string[]).includes(toolId) && !alreadyGranted.has(toolId)
+    const catalog = this.buildCatalog(buildHostOwnerIndex());
+    const options = { mcpServerIds: this.mcpServerIds };
+    const before = new Set(
+      collectWriteCapableTools(
+        [...previousExtraTools, ...this.declaredTools],
+        catalog,
+        WRITE_CAPABLE_TOOL_IDS,
+        options
+      )
     );
+    const newlyGranted = collectWriteCapableTools(
+      nextExtraTools,
+      catalog,
+      WRITE_CAPABLE_TOOL_IDS,
+      options
+    ).filter((toolId) => !before.has(toolId));
 
     if (newlyGranted.length === 0) {
       return;
@@ -482,7 +520,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
       let state = null;
       let agentSaveTimer = 0;
       let dirty = false;
-      let pendingTools = { declared: [], disabled: [], extra: [] };
+      let pendingTools = { declared: [], disabled: [], extra: [], counts: null };
 
       function updateApplyUi() {
         const applyButton = document.getElementById('apply-chat');
@@ -550,15 +588,25 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         if (!summary) {
           return;
         }
-        const total = computeEffectiveTools().length;
+        // Counts come from the host with wildcards expanded (B2): 'ms-dynamics-smb.al/*'
+        // is one token but ten tools, and the headline number must be the ten.
+        const counts = pendingTools.counts;
+        const total = counts ? counts.tools : computeEffectiveTools().length;
+        const added = counts ? counts.added : pendingTools.extra.length;
+        const disabled = counts ? counts.disabled : pendingTools.disabled.length;
         const parts = [total + (total === 1 ? ' tool' : ' tools')];
-        if (pendingTools.disabled.length > 0) {
-          parts.push(pendingTools.disabled.length + ' disabled');
+        if (disabled > 0) {
+          parts.push(disabled + ' disabled');
         }
-        if (pendingTools.extra.length > 0) {
-          parts.push(pendingTools.extra.length + ' added');
+        if (added > 0) {
+          parts.push(added + ' added');
         }
-        summary.textContent = parts.join(' · ');
+        summary.textContent = parts.join(' \u00B7 ');
+        summary.title = counts
+          ? counts.tokens + (counts.tokens === 1 ? ' token' : ' tokens') +
+            ' written to the agent file, granting ' + counts.tools +
+            (counts.tools === 1 ? ' tool.' : ' tools.')
+          : '';
       }
 
       function saveAgent() {
@@ -655,6 +703,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
           declared: (state.selected.declaredTools || []).slice(),
           disabled: (state.selected.disabledTools || []).slice(),
           extra: (state.selected.extraTools || []).slice(),
+          counts: state.toolCounts || null,
         };
         renderToolsSummary();
         document.getElementById('tools-configure').onclick = () => {
@@ -781,6 +830,7 @@ export class AgentSettingsViewProvider implements vscode.WebviewViewProvider {
         if (message.type === 'toolsPicked') {
           pendingTools.disabled = (message.disabledTools || []).slice();
           pendingTools.extra = (message.extraTools || []).slice();
+          pendingTools.counts = message.toolCounts || null;
           renderToolsSummary();
           scheduleAgentSave();
         }

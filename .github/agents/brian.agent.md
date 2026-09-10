@@ -2,7 +2,7 @@
 name: "Brian, AL Pre-Sales"
 description: 'Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time & budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Orchestrates Angus, AL Architect and al-spec.create for comprehensive proposals. CREATES Technical_PreSales folder and documents dynamically on demand.'
 argument-hint: 'Project name, description, or request for proposal/cost estimation (e.g., "Evaluate customer loyalty system project", "Estimate cost for inventory optimization")'
-tools: [vscode, execute, read, agent, edit, search, web, github/search_code, github/search_repositories, github/search_code, github/search_repositories, github/search_code, github/search_repositories, 'markitdown/*', 'microsoft-learn/*', 'upstash/context7/*', vscode.mermaid-chat-features/renderMermaidDiagram, ms-vscode.vscode-websearchforcopilot/websearch, todo]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, vscode, execute, read, search, web, github/search_code, github/search_repositories, markitdown/*, ms-vscode.vscode-websearchforcopilot/websearch]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Design Architecture
@@ -141,7 +141,7 @@ Technical_PreSales/
 - ✅ Web search for market research (`websearch`)
 - ✅ Invoke `Angus, AL Architect` agent for architectural design
 - ✅ Execute `@workspace use al-spec.create` workflow for specifications
-- ✅ Analyze AL symbols for complexity estimation (`al-symbols-mcp/*`)
+- ✅ Analyze AL symbols for complexity estimation (`al_symbolsearch`)
 - ✅ Manage project memory and context (`memory`)
 - ✅ Track tasks with todo lists (`todo`)
 
@@ -293,7 +293,7 @@ Use AL Symbols MCP if available:
 ```markdown
 ## Complexity Metrics
 
-**Object Analysis** (use al-symbols-mcp/al_search_objects):
+**Object Analysis** (use `al_symbolsearch`):
 - Tables: [count] - Complexity: [Low/Med/High per table]
 - Pages: [count] - Complexity: [Low/Med/High per page]
 - Codeunits: [count] - Complexity: [Low/Med/High per codeunit]
