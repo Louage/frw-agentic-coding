@@ -2,7 +2,7 @@
 agent: agent
 model: Claude Sonnet 4.5
 description: "Generate or update context.md file documenting project structure, architecture, and key patterns for AI assistants and developers"
-tools: [vscode/memory, read/readFile, edit, search, 'microsoft-docs/*', 'al-symbols-mcp/*', todo]
+tools: [vscode/memory, read/readFile, edit, search, todo]
 ---
 
 # AL Context File Generator

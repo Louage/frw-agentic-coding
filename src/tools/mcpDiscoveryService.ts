@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { lookupKnownTool, type KnownToolSuggestion } from "./knownToolsCatalog";
+import { VSCODE_BUILTIN_PREFIXES } from "./toolIdentity";
 
 /**
  * Discovers MCP server IDs available to the current VS Code instance by:
@@ -34,11 +35,10 @@ export async function getAvailableMcpServerIds(
 
 /**
  * VS Code built-in tool group prefixes — always available, no MCP server needed.
- * Exported so consumers can filter them from required-tool reporting.
+ * Defined in the vscode-free `toolIdentity` module and re-exported here so existing
+ * consumers keep a single import site.
  */
-export const VSCODE_BUILTIN_PREFIXES = new Set([
-  "read", "search", "edit", "execute", "web", "browser", "agent", "todo", "new", "changes",
-]);
+export { VSCODE_BUILTIN_PREFIXES };
 
 /**
  * Checks a list of tool references (as found in agent files) against

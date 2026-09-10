@@ -6,6 +6,8 @@ out-test/
 .vscode-test/
 *.log
 
-# Regenerable sync caches (rebuilt by npm run sync:sources / sync:mcp-sources)
-tmp/external-sources/
-tmp/mcp-knowledge-sources/
+# Scratch/regenerable working area: sync caches, Extension Development Host
+# profiles, tool dumps. Everything under tmp/ is disposable except the files
+# explicitly re-included below.
+tmp/*
+!tmp/agentic-coding-al-TrainingMaterial.md

@@ -5,6 +5,7 @@ import * as path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
 import {
+  AL_SOURCE_MOUNT_PREFIX,
   planWorkspaceMounts,
   type MountedFolder,
   type PlannedMount,
@@ -34,7 +35,7 @@ const REPOS_KEY = "alBaseCode.repositories";
 const SOURCES_ROOT_KEY = "alBaseCode.sourcesRoot";
 const SYNC_ON_STARTUP_KEY = "alBaseCode.syncOnStartup";
 const ACCESS_MODE_KEY = "alBaseCode.accessMode";
-const MOUNT_PREFIX = "[AL Src] ";
+const MOUNT_PREFIX = AL_SOURCE_MOUNT_PREFIX;
 const SOURCES_SUBDIR = "acdc-sources";
 /**
  * MCP server id we own inside the workspace `.vscode/mcp.json`. A single

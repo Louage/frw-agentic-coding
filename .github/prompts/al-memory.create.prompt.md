@@ -2,7 +2,7 @@
 agent: agent
 model: Claude Sonnet 4.5
 description: "Generate or update memory.md file tracking decisions, changes, and learnings throughout project development for continuity across sessions"
-tools: [read/problems, edit, search/changes, 'markitdown/*', 'upstash/context7/*', todo]
+tools: [read/problems, edit, search/changes, 'markitdown/*', todo]
 ---
 
 # AL Memory File Generator

@@ -4,7 +4,7 @@ description: 'AL Code Review Subagent - Quality assurance for Business Central A
 user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Phase implementation to review with acceptance criteria and AL validation requirements'
-tools: [read/problems, read/readFile, search, 'al-symbols-mcp/*', ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, search, ms-dynamics-smb.al/al_debug, ms-dynamics-smb.al/al_setbreakpoint, ms-dynamics-smb.al/al_snapshotdebugging, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations]
 model: Claude Sonnet 4.6 (copilot)
 handoffs:
   - label: Return to Conductor
@@ -64,7 +64,7 @@ BCQuality is a curated, citable BC knowledge base bundled with this extension as
 
 Use `#changes`, `#usages`, `#problems`, `#search`, `#testFailure` to establish: object types touched, events added, tests added, `app/` vs `test/` placement, and compilation status.
 
-> **Consume the event-subscriber list, don't re-discover events.** The Conductor passes the implement-subagent's list of subscribers (each with its **exact base object + event name + signature**). **Validate against that list.** Use `al_symbolsearch` / `al-symbols-mcp/*` **only** to spot-confirm a single signature you genuinely cannot resolve from the list, **not** to enumerate or guess base events. (Measured: blind trial-and-error symbol searches, with name-variant duplicates, were a top token sink in review.)
+> **Consume the event-subscriber list, don't re-discover events.** The Conductor passes the implement-subagent's list of subscribers (each with its **exact base object + event name + signature**). **Validate against that list.** Use `al_symbolsearch` **only** to spot-confirm a single signature you genuinely cannot resolve from the list, **not** to enumerate or guess base events. (Measured: blind trial-and-error symbol searches, with name-variant duplicates, were a top token sink in review.)
 > **Don't re-read a file already in context.** If you read a source `.al`, an excerpt, the BCQuality skill, or `memory.md` earlier in this invocation, reuse it, never `read_file` the same path twice.
 
 ### Step 2, Verify against the checklist

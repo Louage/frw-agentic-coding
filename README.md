@@ -12,7 +12,7 @@ No files are copied into your workspace. Install once, works everywhere.
 
 ## Requirements
 
-- **VS Code** 1.95 or higher (**1.136+** for the per-agent *reasoning effort* override)
+- **VS Code** 1.101 or higher (**1.136+** for the per-agent *reasoning effort* override)
 - **GitHub Copilot** (with agent mode enabled)
 - **AL Language extension** (`ms-dynamics-smb.al`), for Business Central development
 
@@ -66,7 +66,11 @@ Select an agent in the **Agents** sidebar to open the **Agent Settings** panel, 
 
    ![reasoning effort](img/20260910082718.png)
 
-- The **tools**: a multi-select picker over the agent's declared tools. Choices are stored as *deltas* (`disabledTools` + `extraTools`) rather than a frozen list, so tools added in a future release still reach an agent you already overrode. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning.
+- The **tools**: a grouped picker over every tool registered in the window. Tools are listed under their owner — the contributing extension (*AL Language*), the MCP server from your `mcp.json` (`al-symbols-mcp`), or the built-in toolset (`read`, `edit`, …). Use the chevron to expand a group and pick individual tools, or check the group itself to grant **all** of it, now and in the future: a checked group is stored as its wildcard (`ms-dynamics-smb.al/*`, or the bare toolset name for a built-in one), not as a snapshot of today's tools. Groups the agent already picks tools from open expanded; everything else starts collapsed.
+
+   Choices are stored as *deltas* (`disabledTools` + `extraTools`) rather than a frozen list, so tools added in a future release still reach an agent you already overrode. Tool ids are stored **qualified** (`ms-dynamics-smb.al/al_build`, `read/readFile`) — the form VS Code expects in `tools:` frontmatter; ids stored bare by earlier versions are rewritten once, silently, at User scope. A tool whose owner is no longer installed is listed under **Unavailable**, stays checked, and is only removed if you uncheck it.
+
+   Granting a write-capable tool (`edit`, `execute`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning — including when the grant is made by checking a whole group.
 
    ![Tools Picker](img/Code_ngxlOOuBtr.gif)
 

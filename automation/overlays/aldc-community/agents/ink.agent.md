@@ -1,7 +1,7 @@
 ---
 name: "Ink, AL Lean SDD"
 description: "Lean Spec-Driven Development agent for Business Central AL. Use for low-to-medium complexity features with spec-kit-aligned workflow: constitution setup, feature spec, implementation, tests, docs, and finalise. Lower token cost than full ALDC orchestration."
-tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
+tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, vscode/resolveMemoryFileUri, execute, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolrelations, sshadowsdk.al-lsp-for-agents/bclsp_goToDefinition, sshadowsdk.al-lsp-for-agents/bclsp_hover, sshadowsdk.al-lsp-for-agents/bclsp_findReferences, sshadowsdk.al-lsp-for-agents/bclsp_documentSymbols]
 model: Claude Sonnet 4.6 (copilot)
 argument-hint: 'Feature slug or description (e.g. "fleet-registration", "implement SDD/2026-07-08-fleet-register")'
 handoffs:
