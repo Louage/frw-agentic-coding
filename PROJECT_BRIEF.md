@@ -18,9 +18,12 @@ are grounded in real AL code instead of model recall.
 **Work item 1 — Restore search over mounted AL sources.** Done, implemented and verified by
 the maintainer (see §3.2/§3.3 for the architecture, kept as the record of why).
 
-**Work item 2 — Release-facing documentation.** See §11.
+**Work item 2 — Release-facing documentation.** See §11. **Still open — the only remaining scope.**
 
 **Work item 3 — Agent tool picker: grouped selection + qualified tool IDs.** See §12.
+**SHIPPED in v2.7.0** (PR #60, commit `9d54ea3`, tag `c39682b`). Published to the Marketplace.
+
+**Work item 4 — AL toolchain resolution for agents.** See §13. **SHIPPED in v2.7.0** in the same PR.
 
 **Out of scope**
 - Changing how sources are cloned, pulled, or which repositories ship as defaults.
@@ -504,8 +507,19 @@ round-tripped untouched (M5).
   in `toolIdentity.ts` with tests U11/U12, per the instruction to fix it in the vscode-free module
   rather than special-case it in the view.
 
-**Next action**: `@ai-team-dev` replaces the picker with the D20 editor-tab webview tree and fixes
-B2 and B3. Work item 2 (§11) remains open against §11.4. Do not merge.
+**Next action**: work item 2 (§11 — README audit R1–R9 + release-notes-on-update) is the only
+remaining scope. Note it is now further out of date than §11.2 records: the README must also cover
+the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain`, and the
+`^1.101.0` engine floor shipped in v2.7.0.
+
+**Carried-over follow-ups (small, not blocking)**
+- `tsconfig.test.json` `include` omits `alToolchain.ts` and `toolPickerPresentation.ts`; they
+  compile only via transitive imports, so the list no longer describes the vscode-free surface.
+- `npm test` still needs Node ≥ 22 (glob argument). CI pins Node 20 and does not run it — the
+  87-test suite is therefore local-only. Worth closing before relying on it as a merge gate.
+- `AlToolchain.layout` is one field for two binaries (§13); lossy by construction, harmless today.
+- BC19 profile has no MCP symbol tooling: `al-symbols-mcp` was retired (D24) and `altool` needs
+  AL 17+ (D27). Options recorded under D27 if it becomes a problem.
 
 **Agreed sequencing (2026-09-10)**: B6 (§9, D28) and Work Item 4 (§13) first, **then** Work Item 2
 (§11 README + release notes).
