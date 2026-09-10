@@ -1,11 +1,11 @@
 ---
 applyTo: '**/*.al'
-description: Imported BCQuality rule from community/knowledge/data-modeling/owning-table-must-delete-dependents-in-ondelete.md
+description: Imported BCQuality rule from microsoft/knowledge/data-modeling/owning-table-must-delete-dependents-in-ondelete.md
 ---
 
 # A table that owns dependent records must delete them in `OnDelete`
 
-Source: community/knowledge/data-modeling/owning-table-must-delete-dependents-in-ondelete.md
+Source: microsoft/knowledge/data-modeling/owning-table-must-delete-dependents-in-ondelete.md
 
 # A table that owns dependent records must delete them in `OnDelete`
 

@@ -3,26 +3,28 @@ applyTo: '**/*.al'
 description: Imported BCQuality rule from microsoft/knowledge/testing/ui-handlers-in-tests.md
 ---
 
-# Wire and verify UI handlers with enqueue-driven expectations
+# Wire UI handlers and verify meaningful outcomes
 
 Source: microsoft/knowledge/testing/ui-handlers-in-tests.md
 
-# Wire and verify UI handlers with enqueue-driven expectations
+# Wire UI handlers and verify meaningful outcomes
 
 ## Description
 
-A test runs headless: there is no interactive user to answer a dialog. Every UI call the executed path raises — `Confirm`, `Message`, error dialogs, `Page.Run`/`RunModal`, `Report.Run`/`RunModal`, request pages, `StrMenu`, `Notification.Send` — must be intercepted by a handler carrying the matching attribute (`[ConfirmHandler]`, `[MessageHandler]`, `[StrMenuHandler]`, `[ModalPageHandler]`, …) and named in the method's `[HandlerFunctions(...)]`. The list is a two-sided contract: raise a UI call with no listed handler and the platform aborts with an *unhandled UI* error; list a handler the path never hits and it fails with *"handler function was not executed"*. Both are runtime failures — the test never reaches its verdict, so a reviewer sees an infrastructure error instead of a result on the behavior under test.
+A test runs headless, so every UI call on the executed path must be intercepted by a matching handler named in `[HandlerFunctions(...)]`. The list is a two-sided contract: an unhandled UI call aborts the test, while Microsoft documents that [every nonoptional listed handler must execute at least once](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/attributes/devenv-handlerfunctions-attribute#remarks) or the test fails.
 
-Getting the handler *present* is only half the job; the handler must also verify the *right* dialog fired the *right* number of times. Do that by driving handlers from the test, not by hardcoding answers inside them.
+Optionality is declared, not inferred. `SendNotificationHandler` and `RecallNotificationHandler` accept a `HandlerIsOptional` argument, so `[SendNotificationHandler(true)]` may stay listed on a run that never raises the notification, while the same attribute written without that argument is nonoptional like every other handler type. Notifications are conditional by nature, so an optional notification handler is listed precisely because the scenario may or may not reach it.
+
+Beyond that wiring guarantee, the test must verify the behavior it cares about. The appropriate pattern depends on the contract: a handler can capture concrete page state or a result and the test can assert that semantic postcondition after `RunModal`; assertions inside a handler are also supported. Queue/enqueue/dequeue and `LibraryVariableStorage.AssertEmpty` are useful when interaction order, count, text, replies, or a scripted sequence is itself part of the contract, but they are not mandatory for every handler.
 
 ## Best Practice
 
-Make the test own the expectations and the handlers consume them. Before acting, the test `Enqueue`s — in interaction order — the expected text (a stable substring) and any reply each handler must return. The handler `Dequeue`s the expected text, verifies it with the purpose-built asserts (`Assert.ExpectedMessage`, `Assert.ExpectedConfirm`, `Assert.ExpectedStrMenu` — which match on a fragment, not the full localized caption), then `Dequeue`s and returns its reply. Finish the test body with `LibraryVariableStorage.AssertEmpty` to prove every enqueued interaction fired exactly once, and start each test with an `Initialize` that calls `LibraryVariableStorage.Clear` so a value leaked by an earlier test cannot cascade. List in `[HandlerFunctions]` precisely the handlers the scenario triggers — no superset "just in case", no subset that happens to work today.
+List the handlers the scenario triggers, keep an optional notification handler listed for a notification the scenario may conditionally raise, and make each executed handler contribute meaningful evidence. For a single modal page, reset a capture variable before the action, capture a concrete value from the page in the handler, and assert the expected value after `RunModal`. For ordered or repeated interactions, let the test enqueue expectations, let handlers dequeue and verify them, clear storage during initialization, and finish with `AssertEmpty`.
 
 See sample: `ui-handlers-in-tests.good.al`.
 
 ## Anti Pattern
 
-Omitting a handler for a UI call the path raises (unhandled-UI abort), padding the list with a handler the path never reaches ("handler function was not executed"), or writing handlers that hardcode their answer and assert inline with no enqueue/dequeue. The last is the subtle one: nothing proves the correct dialog fired the expected number of times, and an inline assertion that fails inside a handler can be swallowed by the calling UI operation, leaving the suite green while the behavior is broken. Skipping `Initialize`/`AssertEmpty` hides both a leaked queue and a missing or extra dialog.
+Omitting a handler for a UI call, listing a nonoptional handler the path never reaches, or claiming action success from a Boolean set before the action runs. A handler that only closes a page can also leave the test without a semantic assertion. Do not flag the absence of queue storage by itself; require it only when the test needs to prove interaction order, count, text, replies, or a scripted sequence. Do not flag a listed `[SendNotificationHandler(true)]` or `[RecallNotificationHandler(true)]` that the run does not reach, and never propose removing one: the entry is what keeps the test passing on the runs where the notification does fire.
 
 See sample: `ui-handlers-in-tests.bad.al`.
