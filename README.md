@@ -26,7 +26,7 @@ No files are copied into your workspace. Install once, works everywhere.
 4. Pick an agent from the **AC⚡DC sidebar** (or press `Ctrl+Shift+P` → **AC/DC: Use Agent**).
 5. Describe your requirement, the agent guides you from spec to working code.
 
-![Start chat](img/Code_Xzm2b025t2.gif)
+![Start chat](img/Code_CsuHdmktzN.gif)
 
 ---
 
@@ -58,12 +58,29 @@ Everything is delivered automatically through the extension, no `.github/` setup
 ## Agent Settings panel
 
 Select an agent in the **Agents** sidebar to open the **Agent Settings** panel, where you can override, per agent:
- - The language **model**
- - The **reasoning effort**: `low`, `medium`, `high`, `xhigh` or `max`. Requires **VS Code 1.136+** and only takes effect on the agent-host path; older hosts ignore it.
- - The **argument hint**
- - The **review specialist**
- - The **tools**: a multi-select picker over the agent's declared tools. Choices are stored as *deltas* (`disabledTools` + `extraTools`) rather than a frozen list, so tools added in a future release still reach an agent you already overrode. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning.
- - The **handoffs**: Each handoff row includes an optional **Handoff Prompt** that is sent when that handoff is taken.
+- The language **model**
+
+   ![Model Effort](img/20260910082608.png)
+
+- The **reasoning effort**: `low`, `medium`, `high`, `xhigh` or `max`. Requires **VS Code 1.136+** and only takes effect on the agent-host path; older hosts ignore it.
+
+   ![reasoning effort](img/20260910082718.png)
+
+- The **tools**: a multi-select picker over the agent's declared tools. Choices are stored as *deltas* (`disabledTools` + `extraTools`) rather than a frozen list, so tools added in a future release still reach an agent you already overrode. Granting a write-capable tool (`edit`, `runCommands`, `runInTerminal`, `runTasks`) to an agent that does not declare one raises a non-blocking warning.
+
+   ![Tools Picker](img/Code_ngxlOOuBtr.gif)
+
+- The **argument hint**
+
+   ![argument hint](img/20260910083212.png)
+
+- The **review specialist**
+
+   ![review specialis](img/20260910083340.png)
+
+- The **handoffs**: Each handoff row includes an optional **Handoff Prompt** that is sent when that handoff is taken.
+
+   ![Agent SelectCustom handoff agent](img/Code_BXS9Erdvxg.gif)
 
 Edits are staged locally and are **not** applied automatically.
 The **Apply** button enables only once you change a setting; clicking it writes the overrides and **reloads the window** so chat picks them up.
@@ -71,16 +88,6 @@ The panel warns you before the reload.
 Overrides are stored in `acdc.agents.settings` and are scoped per agent, so an override configured on one agent never leaks into another.
 
 When an agent is selected in side panel, the customizable settings are shown in the panel below.
-
----
-
-![Agent Selector](img/Code_xVej0NAzzi.gif)
-
----
-
----
-
-![Agent SelectCustom handoff agent](img/Code_LIE6RNtaWW.gif)
 
 ---
 
@@ -96,6 +103,8 @@ Run **AC/DC: Manage AL Base Code / ISV Code** to open the table editor, then **A
 Sources are cloned under `acdc.alBaseCode.sourcesRoot`, resolved as `<sourcesRoot>/<repo>/<branch>` (default: `%LOCALAPPDATA%\acdc-sources`). Several projects therefore share one cache while each keeps its own branch or localization.
 
 The setting is **machine-scoped**, VS Code only accepts it in User settings, so a developer-specific path can never land in a shared `.code-workspace` file. Only `repository`, `branch` and `enabled` are per-workspace.
+
+![AL BAse Code ISV Code](img/20260910084344.png)
 
 ### 2. Two access modes
 
@@ -115,6 +124,8 @@ In `workspace` mode each source carries a **Searchable** toggle, off by default:
 | **off** *(default)* | `acdc-alsrc:/<repo>/<branch>` | Portable, every developer resolves it locally, but **browse-only**: open and read work, text and file search do not |
 | **on** | `file:<sourcesRoot>/<repo>/<branch>` | Reachable by VS Code text search, file search and the Search view, at the cost of writing the absolute, machine-specific path into the workspace file |
 
+![Isv Source Code](img/20260910083920.png)
+
 One line to remember: **searchable buys you `grep`, portability buys you a committable workspace file.** Turn it on for small ISV sources that are worth grepping, leave it off for the huge BC base app. Toggling remounts in place, nothing is re-cloned, and searchable folders are kept out of Source Control automatically.
 
 ---
@@ -124,6 +135,8 @@ One line to remember: **searchable buys you `grep`, portability buys you a commi
 On top of Microsoft's bundled BCQuality knowledge, you can attach private **BCQuality forks**, "custom layers", that carry your customer's or partner's house rules (naming conventions, prefix policies, security checks, etc.). Layers are pulled from git into the extension's per-user **globalStorage**; nothing is written into your AL workspace.
 
 ### 1. Add a layer
+
+![Add a layer](img/20260910084536.png)
 
 Run **AC/DC: Manage BCQuality Custom Layers** to open the table editor. Each row is one fork:
 
@@ -138,6 +151,8 @@ Run **AC/DC: Manage BCQuality Custom Layers** to open the table editor. Each row
 | **Status** | Resolved SHA + rule/skill counts once installed |
 
 Save & Sync runs the same interactive install as **AC/DC: Sync BCQuality Custom Layers**.
+
+![BCQuality Custom Layers](img/20260910084641.png)
 
 ### 2. Fork layout
 
@@ -205,8 +220,6 @@ The agent will assess the complexity and recommend the right workflow.
 ## TDD Orchestration with Malcolm
 
 When you route through `@Malcolm, AL Conductor`, each feature goes through a structured cycle:
-
-<!-- SCREENSHOT: Add a GIF or screenshot showing Malcolm's multi-phase output in chat, e.g. Phase 1 planning summary, then Phase 2 test creation, then the HITL approval prompt. -->
 
 1. **Plan**, research context, define phases
 2. **RED**, write failing tests first

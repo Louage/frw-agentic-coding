@@ -2,15 +2,18 @@
 name: "Angus, AL Architect"
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development.'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput, al-symbols-mcp/*, upstash/context7/*, microsoft-learn/*]
-model: Claude Sonnet 4.6 (copilot)
+model: 'GPT-5.3-Codex'
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
 handoffs:
-  - label: Implement with TDD
-    agent: Malcolm, AL Conductor
-    prompt: Implement the approved architecture using TDD orchestration
-  - label: Quick Implementation
-    agent: Phil, AL Developer
-    prompt: Implement simple feature directly (LOW complexity)
+  - label: 'Implement with TDD'
+    agent: 'Malcolm, AL Conductor'
+    prompt: 'Implement the approved architecture using TDD orchestration'
+  - label: 'Quick Implementation'
+    agent: 'Phil, AL Developer'
+    prompt: 'Implement simple feature directly (LOW complexity)'
+  - label: 'Implement with SDD'
+    agent: 'Ink, AL Lean SDD'
+    prompt: 'Implement the approved architecture using SDD orchestration'
 ---
 
 <!-- BEGIN:AC-DC-AVATAR-GREETING -->
