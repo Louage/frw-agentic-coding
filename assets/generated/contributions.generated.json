@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T05:17:53.2039358+00:00",
+  "generatedAt": "2026-09-14T05:18:37.5862920+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-sdd-implement-feature/SKILL.md"
@@ -163,15 +163,6 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/api-page-version-format.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/applicationarea-required-on-page-controls.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/begin-on-same-line-as-then-else-do.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/block-keywords-start-new-line.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/caption-required-on-page-fields.instructions.md"
     },
     {
@@ -181,16 +172,10 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/error-passes-parameters-directly-not-strsubstno.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/event-subscriber-param-names-match-publisher.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/fieldcaption-not-fieldname-in-user-messages.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/file-name-object-type-pattern.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/function-call-parentheses-required.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/label-comment-explains-placeholders.instructions.md"
@@ -199,55 +184,25 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/label-locked-for-non-translatable.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/label-suffix-approved-list.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/labels-declared-at-object-scope.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/lowercase-reserved-keywords.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/named-invocations-not-object-ids.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/no-begin-end-around-single-statement.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/no-else-after-terminating-statement.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/no-space-before-method-parenthesis.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/object-name-30-char-limit.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/optioncaption-required-and-matches-membercount.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/page-name-must-match-source-table.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/single-space-after-not-operator.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/single-space-around-binary-operators.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/temporary-variable-temp-prefix.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/this-keyword-in-codeunits.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/tooltip-required-on-page-fields.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/variable-declaration-order-by-type.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/variable-name-must-not-shadow.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/xmldoc-for-public-library-procedures.instructions.md"
@@ -256,13 +211,7 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/keep-copilot-help-url-to-two-path-levels.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/object-affixes-prevent-collisions.instructions.md"
-    },
-    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/permission-sets-cover-setup-and-usage-without-super.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/two-level-namespace-replaces-object-affix-not-extension-member-affix.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/api-enum-values-are-a-contract-by-name-not-ordinal.instructions.md"
@@ -695,9 +644,6 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/do-not-modify-code-already-marked-obsolete.instructions.md"
-    },
-    {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/namespace-is-part-of-published-object-identity.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/obsolete-table-fields-instead-of-deleting-them.instructions.md"

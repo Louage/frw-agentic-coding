@@ -13,11 +13,11 @@ Source: microsoft/skills/review/al-telemetry-review.md
 
 Reviews AL source changes against the `telemetry` knowledge domain in BCQuality and emits a findings report. This is a leaf action skill: it invokes no sub-skills. It is one of the skills composed by `al-code-review`.
 
-An orchestrator invokes this skill with either a `pr-diff` (the standard PR-review entry point) or a `file-path` (single-file review). Telemetry findings are narrow by design, they apply when the diff emits, wraps, or changes custom telemetry through `Session.LogMessage`, `Session.LogError`, `FeatureTelemetry`, or related telemetry helpers. The skill returns `not-applicable` when none of those apply.
+An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. Telemetry findings are narrow by design, they apply when the review scope emits, wraps, or changes custom telemetry through `Session.LogMessage`, `Session.LogError`, `FeatureTelemetry`, or related telemetry helpers. The skill returns `not-applicable` when none of those apply.
 
 ## Source
 
-Read the BCQuality knowledge index once, the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone, see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint, exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `telemetry` as this skill's candidate set across every enabled Microsoft, community, and custom layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/telemetry/**`.
+Use READ's **Bounded retrieval for review skills** workflow with `-Domain telemetry`. Consume every catalog page across enabled layers before applying this leaf's Relevance and Worklist; preserve each exact catalog path and open complete bodies only for exact paths selected by the Worklist. If the helper or prepared index is unavailable or invalid, use READ's explicit path-discovery and bounded native-read fallback.
 
 ## Relevance
 
