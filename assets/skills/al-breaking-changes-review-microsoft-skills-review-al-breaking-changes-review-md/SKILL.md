@@ -13,11 +13,11 @@ Source: microsoft/skills/review/al-breaking-changes-review.md
 
 Reviews AL source changes against the `breaking-changes` knowledge domain in BCQuality and emits a findings report. This is a leaf action skill: it invokes no sub-skills. It is one of the skills composed by `al-code-review`.
 
-An orchestrator invokes this skill with either a `pr-diff` (the standard PR-review entry point) or a `file-path` (single-file review). The skill produces a single JSON document conforming to the DO output contract.
+An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. The skill produces a single JSON document conforming to the DO output contract.
 
 ## Source
 
-Read the BCQuality knowledge index once — the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone — see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint — exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `breaking-changes` as this skill's candidate set across every enabled layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/breaking-changes/**`.
+Use READ's **Bounded retrieval for review skills** workflow with `-Domain breaking-changes`. Consume every catalog page across enabled layers before applying this leaf's Relevance and Worklist; preserve each exact catalog path and open complete bodies only for exact paths selected by the Worklist. If the helper or prepared index is unavailable or invalid, use READ's explicit path-discovery and bounded native-read fallback.
 
 ## Relevance
 
@@ -36,7 +36,7 @@ Narrow the relevant files to the subset that applies to the changes under review
 
 - The changed AL object names and types — especially codeunits, tables, and table extensions that expose procedures, fields, or events to other apps, and any member whose access is being widened.
 - The changed procedures, fields, and triggers, weighted toward non-`local` procedures, published table fields, event publishers, and any member whose signature, access modifier, or obsolete state is being altered.
-- Tokens extracted from the diff that relate to API stability and deprecation (`signature`, `parameter`, `return`, `var`, `Obsolete`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `Pending`, `Removed`, `CLEAN`, `SecretText`, `token`, `internal`, `local`, `public`, `protected`, `Scope`, `namespace`, `using`, `AS0007`).
+- Tokens extracted from the diff that relate to API stability and deprecation (`signature`, `parameter`, `return`, `var`, `Obsolete`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `Pending`, `Removed`, `CLEAN`, `SecretText`, `token`, `internal`, `local`, `public`, `protected`, `Scope`).
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file — its `## Best Practice` / `## Anti Pattern` bodies — only after it makes the worklist; candidate selection uses the index alone.
 
@@ -47,8 +47,7 @@ The following targeted checks cover every current `breaking-changes` article:
 - A published procedure changes parameter count/order/type/name, `var`, return type, or array shape instead of preserving the old signature and adding an overload — `do-not-change-published-procedure-signatures`.
 - A public procedure/event/interface exposes a credential or other sensitive value through `Text` or an externally callable contract — `do-not-expose-sensitive-data-through-public-api`.
 - Code already marked obsolete is expanded with new behavior instead of routing new callers to its replacement — `do-not-modify-code-already-marked-obsolete`.
-- A shipped table field is deleted, renamed, renumbered, or replaced without retaining the original field as `ObsoleteState = Pending` and migrating its data — `obsolete-table-fields-instead-of-deleting-them`. This owns AS0005 field-name changes; do not substitute the namespace article.
-- A published object's namespace changes between the base and changed source while its identity otherwise remains — `namespace-is-part-of-published-object-identity`. Do not apply it to a new, unshipped object or to an ordinary object-name change with no namespace change.
+- A shipped table field is deleted, renamed, renumbered, or replaced without retaining the original field as `ObsoleteState = Pending` and migrating its data — `obsolete-table-fields-instead-of-deleting-them`.
 
 For `obsolete-table-fields-instead-of-deleting-them`, compare the baseline ID and name before emitting. When the original field remains under the same ID and name with `ObsoleteState = Pending`, and the replacement uses a new ID, the change follows the rule and must not be flagged.
 
@@ -131,7 +130,7 @@ Output conforms to the DO output contract. Every finding this skill emits MUST s
 }
 ```
 
-The empty-corpus case — BCQuality's state until breaking-changes knowledge files land — produces:
+When no applicable breaking-changes knowledge is available, the report is:
 
 ```json
 {

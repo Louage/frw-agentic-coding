@@ -15,11 +15,11 @@ Reviews AL page source and control add-in UI files against the `ui` knowledge do
 
 UI findings apply to page files, files that declare `PageType = ...`, including `*.Page.al` under the standard file-naming convention, and to JavaScript/CSS/HTML files that implement Business Central control add-ins, including their client-service communication. The skill returns `not-applicable` when the diff contains no page or control add-in changes.
 
-An orchestrator invokes this skill with either a `pr-diff` or a `file-path`. The skill produces a single JSON document conforming to the DO output contract.
+An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. The skill produces a single JSON document conforming to the DO output contract.
 
 ## Source
 
-Read the BCQuality knowledge index once, the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone, see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint, exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `ui` as this skill's candidate set across every enabled layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/ui/**`.
+Use READ's **Bounded retrieval for review skills** workflow with `-Domain ui`. Consume every catalog page across enabled layers before applying this leaf's Relevance and Worklist; preserve each exact catalog path and open complete bodies only for exact paths selected by the Worklist. If the helper or prepared index is unavailable or invalid, use READ's explicit path-discovery and bounded native-read fallback.
 
 ## Relevance
 
