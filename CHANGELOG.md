@@ -1,5 +1,22 @@
 # Changelog
 
+
+## [2.8.0] - 2026-09-17
+
+### Added
+
+- feat(workflows): enhance release and sync processes with auto-merge and improved changelog entries (`a85b1d9`)
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- chore(workflows): upgrade actions to v5 and update action-gh-release to v3 feat(alBaseCode): enhance workspace folder management with confirmation handling (`161b4ae`)
+- Bundled external AI assets refreshed from upstream (weekly external-resource sync) (`e897c6c`)
+- docs: update PROJECT_BRIEF.md with status of work items and next actions (`1cf43cc`)
+
 ## [2.7.0] - 2026-09-10
 
 ### Added
