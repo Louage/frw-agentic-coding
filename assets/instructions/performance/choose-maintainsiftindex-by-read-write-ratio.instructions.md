@@ -19,7 +19,7 @@ Source: microsoft/knowledge/performance/choose-maintainsiftindex-by-read-write-r
 
 Measure aggregate-read latency and write cost under realistic filters and volumes. Keep `MaintainSIFTIndex = true` when the maintained aggregate materially benefits frequent `CalcSums` or FlowField reads. Consider `false` when writes dominate and the less-frequent aggregate reads can tolerate calculation from the base table.
 
-See sample: `choose-maintainsiftindex-by-read-write-ratio.good.al`.
+See sample: [`choose-maintainsiftindex-by-read-write-ratio.good.al`](choose-maintainsiftindex-by-read-write-ratio.good.al).
 
 ## Anti Pattern
 

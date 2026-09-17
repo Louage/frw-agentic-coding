@@ -17,7 +17,7 @@ Source: microsoft/knowledge/privacy/flowfield-flowfilter-classification-systemme
 
 Do not declare `DataClassification` on `FieldClass = FlowField` or `FieldClass = FlowFilter` fields, the inherited `SystemMetadata` is correct and the property is redundant. If a FlowField exposes sensitive data, ensure the underlying source field has the right `DataClassification`; that is where the platform reads classification from for GDPR and telemetry purposes.
 
-See sample: `flowfield-flowfilter-classification-systemmetadata.good.al`.
+See sample: [`flowfield-flowfilter-classification-systemmetadata.good.al`](flowfield-flowfilter-classification-systemmetadata.good.al).
 
 ## Anti Pattern
 

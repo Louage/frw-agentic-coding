@@ -13,11 +13,11 @@ Source: microsoft/skills/review/al-data-modeling-review.md
 
 Reviews AL source changes against the `data-modeling` knowledge domain in BCQuality and emits a findings report. This is a leaf action skill: it invokes no sub-skills. It is one of the skills composed by `al-code-review`.
 
-An orchestrator invokes this skill with either a `pr-diff` (the standard PR-review entry point) or a `file-path` (single-file review). Data-modeling findings are narrow by design — they apply when the diff touches setup or master tables, their card pages, primary keys, number-series assignment, block enforcement, or audit fields. The skill returns `not-applicable` when none of those apply.
+An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. Data-modeling findings are narrow by design — they apply when the review scope contains setup or master tables, their card pages, primary keys, number-series assignment, block enforcement, or audit fields. The skill returns `not-applicable` when none of those apply.
 
 ## Source
 
-Read the BCQuality knowledge index once — the `knowledge-index.json` BCQuality builds at the root of the knowledge checkout (Entry's preparation step regenerates it over the live, already-filtered clone — see `skills/entry.md`). It lists every article that survived layer and allow/deny filtering and carries, per article, its `path`, `layer`, `domain`, frontmatter dimensions, `keywords`, `title`, and a one-line `description` hint — exactly the fields Relevance and Worklist consume. Take the index entries whose `domain` is `data-modeling` as this skill's candidate set across every enabled layer; do not open the individual article files at this step. Open an article's full body only once it enters the Worklist below, so a review reads the index plus the handful of worklisted articles instead of every file under `*/knowledge/data-modeling/**`.
+Use READ's **Bounded retrieval for review skills** workflow with `-Domain data-modeling`. Consume every catalog page across enabled layers before applying this leaf's Relevance and Worklist; preserve each exact catalog path and open complete bodies only for exact paths selected by the Worklist. If the helper or prepared index is unavailable or invalid, use READ's explicit path-discovery and bounded native-read fallback.
 
 ## Relevance
 
