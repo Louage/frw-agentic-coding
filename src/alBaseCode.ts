@@ -685,6 +685,47 @@ export async function clearOurGitIgnoredRepositories(): Promise<void> {
   );
 }
 
+/** Safety net so a missing confirmation can never stall the sync forever. */
+const WORKSPACE_FOLDER_CHANGE_TIMEOUT_MS = 5000;
+
+/**
+ * Applies ONE workspace-folder change and waits for VS Code to confirm it.
+ *
+ * `updateWorkspaceFolders` refuses every call made before the previous one has
+ * been acknowledged (`onDidChangeWorkspaceFolders`) and signals that only
+ * through its return value. Firing a remove and an add back to back therefore
+ * drops the add silently — the folder disappears and its replacement never
+ * arrives. Awaiting each change is what keeps a mount migration atomic.
+ *
+ * Returns false when VS Code rejected the change outright.
+ */
+async function commitWorkspaceFolderChange(
+  index: number,
+  deleteCount: number,
+  toAdd: { uri: vscode.Uri; name: string }[] = []
+): Promise<boolean> {
+  let subscription: vscode.Disposable | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // Subscribed before the call so a fast acknowledgement cannot be missed.
+  const confirmed = new Promise<void>((resolve) => {
+    subscription = vscode.workspace.onDidChangeWorkspaceFolders(() => resolve());
+    timer = setTimeout(resolve, WORKSPACE_FOLDER_CHANGE_TIMEOUT_MS);
+  });
+
+  try {
+    if (!vscode.workspace.updateWorkspaceFolders(index, deleteCount, ...toAdd)) {
+      return false;
+    }
+    await confirmed;
+    return true;
+  } finally {
+    subscription?.dispose();
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
+
 /**
  * Mounts enabled+cloned folders as read-only workspace roots and unmounts
  * ones we previously added that are no longer wanted.
@@ -695,10 +736,10 @@ export async function clearOurGitIgnoredRepositories(): Promise<void> {
  * AlSourceFileSystemProvider). Toggling `searchable` migrates an existing mount
  * in either direction without touching the clone on disk.
  */
-export function applyWorkspaceMounts(output: vscode.OutputChannel): {
+export async function applyWorkspaceMounts(output: vscode.OutputChannel): Promise<{
   added: string[];
   removed: string[];
-} {
+}> {
   const currentFolders = vscode.workspace.workspaceFolders ?? [];
   const mounted: MountedFolder[] = currentFolders.map((f) => ({
     uriString: f.uri.toString(),
@@ -739,6 +780,7 @@ export function applyWorkspaceMounts(output: vscode.OutputChannel): {
   const added: string[] = [];
   const removed: string[] = [];
   const toAdd: { uri: vscode.Uri; name: string }[] = [];
+  const addLabels: string[] = [];
 
   for (const mount of plan.add) {
     const target = resolved.get(targetKey(mount));
@@ -748,16 +790,27 @@ export function applyWorkspaceMounts(output: vscode.OutputChannel): {
       continue;
     }
     toAdd.push({ uri: target.uri, name: mount.name });
-    added.push(target.label);
+    addLabels.push(target.label);
   }
 
+  // Highest index first, so every remaining index stays valid as folders drop.
   for (const index of plan.removeIndices) {
-    removed.push(currentFolders[index].name.slice(MOUNT_PREFIX.length));
-    vscode.workspace.updateWorkspaceFolders(index, 1);
+    const label = currentFolders[index].name.slice(MOUNT_PREFIX.length);
+    if (await commitWorkspaceFolderChange(index, 1)) {
+      removed.push(label);
+    } else {
+      output.appendLine(`[alBaseCode] Unmount refused by VS Code: ${label}`);
+    }
   }
   if (toAdd.length > 0) {
     const insertAt = vscode.workspace.workspaceFolders?.length ?? 0;
-    vscode.workspace.updateWorkspaceFolders(insertAt, 0, ...toAdd);
+    if (await commitWorkspaceFolderChange(insertAt, 0, toAdd)) {
+      added.push(...addLabels);
+    } else {
+      output.appendLine(
+        `[alBaseCode] Mount refused by VS Code: ${addLabels.join(", ")}`
+      );
+    }
   }
 
   for (const label of added) {
@@ -774,21 +827,25 @@ export function applyWorkspaceMounts(output: vscode.OutputChannel): {
  * Unmounts every workspace folder we own (prefix `[AL Src] `). Used when
  * switching from workspace mode → MCP mode so leftovers don't linger.
  */
-export function unmountAllOurWorkspaceMounts(
+export async function unmountAllOurWorkspaceMounts(
   output: vscode.OutputChannel
-): { removed: string[] } {
+): Promise<{ removed: string[] }> {
   const currentFolders = vscode.workspace.workspaceFolders ?? [];
-  const toRemove: number[] = [];
-  const removed: string[] = [];
+  const toRemove: { index: number; label: string }[] = [];
   currentFolders.forEach((f, i) => {
     if (f.name.startsWith(MOUNT_PREFIX)) {
-      toRemove.push(i);
-      removed.push(f.name.slice(MOUNT_PREFIX.length));
+      toRemove.push({ index: i, label: f.name.slice(MOUNT_PREFIX.length) });
     }
   });
-  toRemove.sort((a, b) => b - a);
-  for (const idx of toRemove) {
-    vscode.workspace.updateWorkspaceFolders(idx, 1);
+  toRemove.sort((a, b) => b.index - a.index);
+
+  const removed: string[] = [];
+  for (const { index, label } of toRemove) {
+    if (await commitWorkspaceFolderChange(index, 1)) {
+      removed.push(label);
+    } else {
+      output.appendLine(`[alBaseCode] Unmount refused by VS Code: ${label}`);
+    }
   }
   for (const label of removed) {
     output.appendLine(`[alBaseCode] Unmounted (mode switch): ${label}`);
@@ -1085,7 +1142,7 @@ export async function syncAlBaseCode(
   // so switching between modes is idempotent.
   const mode = getAccessMode();
   if (mode === "mcp") {
-    unmountAllOurWorkspaceMounts(output);
+    await unmountAllOurWorkspaceMounts(output);
     applyMcpMounts(output);
     // In MCP mode our folders are NOT workspace roots, so the git.ignore
     // scrubber has nothing to do (and would leave stale entries behind if
@@ -1093,7 +1150,7 @@ export async function syncAlBaseCode(
     await clearOurGitIgnoredRepositories();
   } else {
     unmountAllOurMcpMounts(output);
-    applyWorkspaceMounts(output);
+    await applyWorkspaceMounts(output);
     await clearOurGitIgnoredRepositories();
   }
   return results;
@@ -1165,12 +1222,12 @@ export async function syncOnStartup(
     if (mode === "mcp") {
       // In MCP mode: re-assert the mcp.json entry (folders may have appeared
       // since last session) and make sure no stale workspace mounts survive.
-      unmountAllOurWorkspaceMounts(output);
+      await unmountAllOurWorkspaceMounts(output);
       applyMcpMounts(output);
       await clearOurGitIgnoredRepositories();
     } else {
       unmountAllOurMcpMounts(output);
-      applyWorkspaceMounts(output);
+      await applyWorkspaceMounts(output);
       await clearOurGitIgnoredRepositories();
     }
   }
