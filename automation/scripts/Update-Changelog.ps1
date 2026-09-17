@@ -15,7 +15,8 @@ Behaviour:
      merge commits.
   4. Classifies each commit into `### Added`, `### Fixed`, or `### Changed`
      using Conventional-Commit prefixes when present; falls back to keyword
-     heuristics; otherwise bucketed as Changed.
+     heuristics; otherwise bucketed as Changed. `chore(assets):` sync commits
+     are rewritten into a readable external-resource refresh note.
   5. Rewrites the `## [Unreleased]` section, merging with entries already
      present so manual edits are preserved (dedupe key = commit subject).
   6. When `## [Unreleased]` is missing, inserts a fresh one directly below
@@ -121,9 +122,21 @@ $buckets = [ordered]@{
   "Changed" = @()
 }
 
+function Get-BulletText {
+  param([string]$Subject)
+
+  # The weekly sync lands as a meta-typed commit; spell out that the assets
+  # shipped inside the VSIX changed, not just repo plumbing.
+  if ($Subject -match '^chore\(assets\):') {
+    return "Bundled external AI assets refreshed from upstream (weekly external-resource sync)"
+  }
+
+  return $Subject
+}
+
 foreach ($c in $commits) {
   $bucket = Get-Bucket -Subject $c.Subject
-  $buckets[$bucket] += ("- {0} (``{1}``)" -f $c.Subject, $c.Sha)
+  $buckets[$bucket] += ("- {0} (``{1}``)" -f (Get-BulletText -Subject $c.Subject), $c.Sha)
 }
 
 # ---------------------------------------------------------------------------

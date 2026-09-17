@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write # required to dispatch the Release workflow after the merge
 
 jobs:
   sync:
@@ -106,6 +107,7 @@ jobs:
         run: npm run compile
 
       - name: Create Pull Request
+        id: cpr
         uses: peter-evans/create-pull-request@v8
         env:
           HUSKY: 0
@@ -121,6 +123,9 @@ jobs:
             - refreshed MCP knowledge source lock under automation/mcp
             - updated generated contribution manifest
             - synchronized package contributions
+
+            This PR is auto-merged and cuts a patch release: the refreshed
+            assets ship inside the VSIX, so they must reach the Marketplace.
           branch: chore/sync-external-ai-assets
           branch-suffix: timestamp
           delete-branch: true
@@ -128,3 +133,34 @@ jobs:
           labels: |
             automation
             assets
+
+      # No PR means the sync produced no diff — nothing to merge, and the
+      # release stays skipped.
+      - name: Auto-merge sync PR
+        id: merge
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ steps.cpr.outputs.pull-request-number }}
+        run: |
+          set -euo pipefail
+          if gh pr merge "$PR" --squash --delete-branch; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            # Branch protection may require checks that have not reported yet;
+            # queue the merge instead of failing the sync.
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            gh pr merge "$PR" --squash --delete-branch --auto
+            echo "::warning::Immediate merge refused — auto-merge queued on PR #$PR. Release must be dispatched manually once it lands."
+          fi
+
+      # A merge pushed with GITHUB_TOKEN does not raise a `push` event, so the
+      # Release workflow would never see the asset commit. workflow_dispatch is
+      # the documented exception to that rule.
+      - name: Trigger release
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run release.yml --ref main

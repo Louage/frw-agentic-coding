@@ -4,12 +4,16 @@ name: Release
 #
 # Triggers:
 #  - Push to `main` (any merge): the workflow inspects Conventional-Commit
-#    subjects since the latest `v*` tag and computes the next SemVer bump:
-#      * BREAKING CHANGE (subject `type(scope)!:` or body `BREAKING CHANGE:`)
-#        → major
+#    tokens since the latest `v*` tag and computes the next SemVer bump:
+#      * BREAKING CHANGE (`type(scope)!:`, or body `BREAKING CHANGE:`)  → major
 #      * `feat:` / `feat(scope):`                                       → minor
+#      * any `(assets)` scope — the weekly external-asset sync ships new
+#        content inside the VSIX, so it must cut a release             → patch
 #      * `fix:`, `perf:`, `refactor:`, `revert:`, non-conventional      → patch
 #      * only `docs:`, `chore:`, `style:`, `test:`, `ci:`, `build:`     → skip
+#    Tokens are matched anywhere in the subject AND the body, not just as the
+#    leading prefix, so a squash merge whose subject reads
+#    `chore(x): ... feat(y): ...` cannot swallow the `feat`.
 #    When a bump is required, the workflow:
 #      1. Runs `Update-Changelog.ps1` to backfill `[Unreleased]` from git.
 #      2. Runs `Cut-Release.ps1 -Version <computed> -NoConfirm -SkipCi
@@ -31,9 +35,11 @@ name: Release
 #    changelog mutation — the tag author is responsible for it. Useful for
 #    republishing or shipping from a hotfix branch.
 #
-#  - `workflow_dispatch` (Actions tab, "Run workflow"): treats the input
-#    version like an auto-bump — same CHANGELOG rewrite + push path as a
-#    main-push, but the version is forced instead of computed.
+#  - `workflow_dispatch` (Actions tab, or `gh workflow run release.yml`): same
+#    CHANGELOG rewrite + push path as a main-push. Leave `version` empty to
+#    auto-compute the bump, or set it to force a specific version. The weekly
+#    asset sync dispatches this after auto-merging its own PR, because a merge
+#    pushed with GITHUB_TOKEN does not raise a `push` event.
 on:
   push:
     tags:
@@ -43,8 +49,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Force a specific version (e.g. 1.3.0 or v1.3.0). Runs the full auto-release path."
-        required: true
+        description: "Force a specific version (e.g. 1.3.0 or v1.3.0). Leave empty to auto-compute the bump from Conventional Commits."
+        required: false
+        default: ""
         type: string
 
 permissions:
@@ -93,7 +100,7 @@ jobs:
           VERSION=""
           BUMP=""
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
             MODE="dispatch"
             RAW="${{ inputs.version }}"
             VERSION="${RAW#v}"
@@ -122,8 +129,17 @@ jobs:
                 "chore(release):"*) continue ;;
               esac
 
+              # Squash merges concatenate several commits into one subject line
+              # and list the originals in the body, so collect every token from
+              # both instead of only testing the leading prefix — otherwise a
+              # `chore(x): ... feat(y): ...` subject silently downgrades to a
+              # meta-only commit and no release is cut.
+              TOKENS=$(printf '%s\n%s\n' "$SUBJECT" "$BODY" \
+                | grep -oE "(feat|feature|fix|perf|refactor|revert|docs|chore|style|test|ci|build)(\([^)]*\))?!?:" \
+                || true)
+
               # BREAKING → major.
-              if echo "$SUBJECT" | grep -qE "^[a-zA-Z]+(\([^)]+\))?!:" \
+              if echo "$TOKENS" | grep -qE "!:" \
                  || echo "$BODY" | grep -qE "^BREAKING CHANGE:"; then
                 BUMP="major"
                 RELEASE_WORTHY=1
@@ -131,18 +147,34 @@ jobs:
               fi
 
               # feat → minor (unless we've already committed to major).
-              if echo "$SUBJECT" | grep -qE "^feat(\([^)]+\))?:"; then
+              if echo "$TOKENS" | grep -qE "^(feat|feature)"; then
                 [ "$BUMP" != "major" ] && BUMP="minor"
                 RELEASE_WORTHY=1
                 continue
               fi
 
-              # Meta-only commits → do not force a release, but do not block one either.
-              if echo "$SUBJECT" | grep -qE "^(docs|chore|style|test|ci|build)(\([^)]+\))?:"; then
+              # The weekly external-asset sync is meta-typed (`chore(assets):`)
+              # but changes what actually ships inside the VSIX, so the `assets`
+              # scope is release-worthy regardless of its commit type.
+              if echo "$TOKENS" | grep -qE "^[a-z]+\(assets\)"; then
+                [ -z "$BUMP" ] && BUMP="patch"
+                RELEASE_WORTHY=1
                 continue
               fi
 
-              # fix, perf, refactor, revert, or non-conventional → at least patch.
+              # fix, perf, refactor, revert → at least patch.
+              if echo "$TOKENS" | grep -qE "^(fix|perf|refactor|revert)"; then
+                [ -z "$BUMP" ] && BUMP="patch"
+                RELEASE_WORTHY=1
+                continue
+              fi
+
+              # Only meta tokens → do not force a release, but do not block one either.
+              if [ -n "$TOKENS" ]; then
+                continue
+              fi
+
+              # Non-conventional subject → at least patch.
               if [ -z "$BUMP" ]; then BUMP="patch"; fi
               RELEASE_WORTHY=1
             done < <(git log $RANGE --no-merges --format="%H")
