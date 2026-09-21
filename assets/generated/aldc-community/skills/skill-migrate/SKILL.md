@@ -21,6 +21,12 @@ This skill should be loaded when:
 
 ## Core Patterns
 
+For BC29 / AL18, first read [AL18 capability checks](references/al18-capabilities.md)
+when selecting new manifest, public-resource, isolation, testing or translation
+features. Apply only the sections needed by the requirement; distinguish announced
+capabilities from locally verified declarations. Keep BC28 configuration unchanged
+unless an upgrade is part of the approved task.
+
 ### Pattern 1: App.json Platform Update
 
 Update the three version-sensitive properties in `app.json`:
@@ -46,7 +52,7 @@ Update the three version-sensitive properties in `app.json`:
 - `platform`, target BC platform version (major.minor.0.0)
 - `runtime`, AL runtime version matching the target (see [runtime matrix](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-choosing-runtime))
 - `application`, must match or be compatible with target platform
-- Update all `dependencies` versions to match the target release
+- Resolve each dependency by identity, minimum version, target runtime and required APIs; do not require every library version to numerically match the application version.
 - Add new `features` flags required by the target runtime (e.g., `NoImplicitWith` from runtime 11.0+)
 
 ### Pattern 2: Deprecated Code Replacement

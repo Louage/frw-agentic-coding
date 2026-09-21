@@ -21,6 +21,11 @@ This skill should be loaded when:
 
 ## Core Patterns
 
+For BC29 query or isolated-storage concurrency work, read the query/storage
+sections of [AL18 capability checks](../skill-migrate/references/al18-capabilities.md).
+Confirm supported declarations and test transaction behavior before changing
+isolation; `DataScope` and transaction isolation are different concepts.
+
 ### Pattern 1: SetLoadFields + Early Filtering
 
 Always filter before finding, and load only needed fields. Order matters.

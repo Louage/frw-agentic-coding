@@ -1,6 +1,6 @@
 ---
 name: "Brian, AL Pre-Sales"
-description: 'Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time & budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Orchestrates Angus, AL Architect and al-spec.create for comprehensive proposals. CREATES Technical_PreSales folder and documents dynamically on demand.'
+description: 'Technical PreSales Agent for AL/Business Central projects. Specializes in project planning, cost estimation (time & budget), feasibility analysis, SWOT/risk assessment, and technical documentation. Orchestrates Angus, AL Architect and al-spec.create for comprehensive proposals. CREATES Technical_PreSales folder and documents dynamically on demand. Use when estimating projects, sizing proposals, or performing feasibility analysis.'
 argument-hint: 'Project name, description, or request for proposal/cost estimation (e.g., "Evaluate customer loyalty system project", "Estimate cost for inventory optimization")'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, vscode, execute, read, search, web, github/search_code, github/search_repositories, markitdown/*, ms-vscode.vscode-websearchforcopilot/websearch]
 model: Claude Sonnet 4.6 (copilot)

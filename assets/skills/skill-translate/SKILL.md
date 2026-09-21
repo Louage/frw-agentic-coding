@@ -20,6 +20,11 @@ This skill should be loaded when:
 
 ## Core Patterns
 
+Before adopting BC29 namespace-aware translations, read the translation section
+of [AL18 capability checks](../skill-migrate/references/al18-capabilities.md).
+Verify `TranslationsWithNamespaces` in the installed schema and compare generated
+XLF IDs and retained translations before changing an existing project's setting.
+
 ### Pattern 1: Create Language File
 
 Create a new XLF translation file from the generated source:
