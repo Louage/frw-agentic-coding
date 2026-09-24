@@ -1,6 +1,6 @@
 # PROJECT_BRIEF.md - AC⚡DC (Agentic Coding⚡Direct Coding)
 
-> Last updated: 2026-09-10
+> Last updated: 2026-09-24
 
 ## 1. Goal and Users
 
@@ -32,11 +32,15 @@ the maintainer (see §3.2/§3.3 for the architecture, kept as the record of why)
 
 ## 3. Stack and Architecture
 
-- Runtime/language: Node 20, TypeScript, VS Code extension API `^1.95.0`
+- Runtime/language: Node 20 (CI) / Node ≥ 22 (to run `npm test`), TypeScript, VS Code extension API
+  `^1.101.0` (bumped from `^1.95.0` in work item 3)
 - Build: esbuild (`node esbuild.js`), lint: ESLint 8/9 flat config
 - Data/services: workspace + user settings, git CLI, `.vscode/mcp.json`
-- Tests/checks: **no automated test harness exists today** (`package.json` has no `test` script,
-  no `*.test.ts`). Verification is currently `npm run compile` + `npm run lint` + manual F5.
+- Tests/checks: `npm test` compiles with `tsconfig.test.json` and runs `node --test` over
+  `out-test/test/**/*.test.js`. It covers only vscode-free modules (`test/*.test.ts`: mount plan, tool
+  identity, tool picker model/presentation, AL toolchain, AL MCP server, release-notes decision).
+  Full gate: `npm run compile` + `npm run lint` + `npx tsc --noEmit -p tsconfig.json` + `npm test`
+  + manual F5 for anything touching `vscode.*`. CI does not run `npm test` yet (Node 20).
 - Deployment: `npm run vsix` / `vsce package`, versioned via `automation/scripts/Cut-Release.ps1`
 
 ### 3.1 AL source mounting — how it works today
@@ -164,9 +168,12 @@ resolve entries → build `desired` → call `planWorkspaceMounts` → call
 - Setup: `npm install`
 - Build: `npm run compile` · Watch: `npm run watch` (VS Code task `npm: watch`)
 - Lint: `npm run lint`
-- Test: `npm test` — **to be introduced by this work item** (see §7)
+- Typecheck: `npx tsc --noEmit -p tsconfig.json` (esbuild does not type-check)
+- Test: `npm test` (VS Code task **AC/DC: Run unit tests**), requires Node ≥ 22
 - Package: `npm run vsix`
-- Repository rules: [.github/copilot-instructions.md](.github/copilot-instructions.md)
+- Repository rules: [AGENTS.md](AGENTS.md) (verification gate, testing boundary) and
+  [CLAUDE.md](CLAUDE.md) (codebase rules for Claude Code). `.github/copilot-instructions.md` is
+  **shipped AL product content**, not a rule set for this codebase.
 
 ## 6. Safety and Constraints
 
@@ -183,7 +190,10 @@ resolve entries → build `desired` → call `planWorkspaceMounts` → call
 
 ## 7. Testing Strategy
 
-The repository has **zero** automated tests today. Proportional approach: do not pull in
+> **Historical (work item 1, done).** This section records the plan that introduced the harness.
+> The current state is in §3 and §5.
+
+When this was written, the repository had **zero** automated tests. Proportional approach: do not pull in
 `@vscode/test-electron` (slow, heavyweight). Instead extract the decision logic into a
 vscode-free module and cover it with Node 20's built-in runner.
 
@@ -401,6 +411,10 @@ round-tripped untouched (M5).
 - Producer: scope, architecture contracts, acceptance criteria, merge
 - Dev: implementation, unit tests, manual verification evidence, PR
 - QA: not engaged for this work item
+
+The roles are available in both tools. GitHub Copilot uses the `ai-team-orchestration` plugin
+(`@ai-team-producer`, `@ai-team-dev`, `@ai-team-qa`). Claude Code uses the `.claude/agents/`
+subagents of the same names plus the `/ai-team-orchestration` and `/start-feature` skills.
 
 **Material decisions**
 - D1: per-entry `searchable` flag, not a global mount-scheme switch — the BC history repo must

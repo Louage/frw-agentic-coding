@@ -17,8 +17,7 @@ it only when the task is about that shipped content.
 
 Durable project state, work items, architecture contracts and numbered decisions (D1…) live in
 [PROJECT_BRIEF.md](PROJECT_BRIEF.md). Read the relevant section before planning or implementing.
-Some early sections (§3 "no automated test harness", §5 "Test: to be introduced") are historical.
-`npm test` exists now.
+Sections for finished work items are kept as the record of why decisions were made. §3 and §5 describe the current state.
 
 ## Commands
 
