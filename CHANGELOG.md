@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.8.2] - 2026-09-24
+
+### Added
+
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- Move to claude chat (#63) (`08f37e3`)
+
+
 ## [2.8.1] - 2026-09-21
 
 ### Added
