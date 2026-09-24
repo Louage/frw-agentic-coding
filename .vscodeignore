@@ -20,3 +20,5 @@ assets/skills/**
 tmp/**
 AGENTS.md
 PROJECT_BRIEF.md
+.claude/**
+CLAUDE.md
