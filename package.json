@@ -2,7 +2,7 @@
   "name": "acdc",
   "displayName": "Agentic Coding⚡Direct Coding",
   "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "publisher": "theframework",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -309,13 +309,13 @@
         "path": "./assets/generated/aldc-community/skills/skill-contribution-assistant/SKILL.md"
       },
       {
+        "path": "./assets/generated/aldc-community/skills/skill-al-review-pipeline/SKILL.md"
+      },
+      {
         "path": "./assets/generated/aldc-community/skills/skill-testing/SKILL.md"
       },
       {
         "path": "./assets/generated/aldc-community/skills/skill-debug/SKILL.md"
-      },
-      {
-        "path": "./assets/generated/aldc-community/skills/skill-manifest/SKILL.md"
       },
       {
         "path": "./assets/generated/aldc-community/skills/skill-copilot/SKILL.md"
@@ -346,6 +346,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/skills/al-performance-review-microsoft-skills-review-al-performance-review-md/SKILL.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/skills/al-reporting-review-microsoft-skills-review-al-reporting-review-md/SKILL.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/skills/al-upgrade-review-microsoft-skills-review-al-upgrade-review-md/SKILL.md"
@@ -485,10 +488,28 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/xmldoc-for-public-library-procedures.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/define-profiles-as-al-objects.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/do-not-hard-code-time-zone-offsets.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/keep-copilot-help-url-to-two-path-levels.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/keep-web-service-paths-free-of-ui-calls.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/permission-sets-cover-setup-and-usage-without-super.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/place-page-extension-actions-with-addfirst-or-addlast.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/set-usagecategory-on-searchable-entry-points.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/appsource/use-invariant-date-literals.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/api-enum-values-are-a-contract-by-name-not-ordinal.instructions.md"
@@ -776,6 +797,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/avoid-raising-events-inside-try-functions.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/changecompany-runs-triggers-in-the-calling-company.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/choose-static-vs-manual-subscribers-deliberately.instructions.md"
       },
       {
@@ -825,6 +849,33 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/use-ishandled-to-make-base-behaviour-overridable.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/clear-report-variable-before-independent-runmodal.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-break-ends-the-current-trigger.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-quit-rolls-back-and-skips-onpostreport.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-skip-does-not-stop-trigger-code.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/report-output-in-a-loop-needs-one-client-download.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/reportextension-dataitem-trigger-order-is-explicit.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/reportextension-report-triggers-run-after-base-triggers.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/settableview-cannot-broaden-dataitemtableview.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/stop-when-runrequestpage-returns-empty-parameters.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/upgrade/breaking-changes-only-on-tables-without-data.instructions.md"
@@ -932,10 +983,16 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/breaking-changes/unreleased-symbol-change-is-not-a-breaking-change.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/dataitemtablefilter-cannot-be-overwritten-at-runtime.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/reopening-query-resets-cursor-but-keeps-filters.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/set-query-filters-before-open.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/setfilter-overwrites-query-columnfilter.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/telemetry/choose-telemetry-scope-by-audience.instructions.md"
@@ -1046,6 +1103,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/secrettext-with-httpclient.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/validate-unauthenticated-response-before-use.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/validate-user-configurable-urls.instructions.md"
       },
       {
@@ -1148,6 +1208,21 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/isempty-before-findset-is-extra-round-trip.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-category-code-serializes-conflicting-jobs.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-external-effects-must-be-idempotent.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-handlers-must-not-require-ui.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-handlers-must-propagate-failures.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-on-hold-does-not-stop-running-work.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/load-common-fields-before-branching-on-case.instructions.md"
       },
       {
@@ -1209,6 +1284,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/skip-setloadfields-on-write-and-transferfields.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/store-scheduled-task-id-to-avoid-duplicate-tasks.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/temporary-tables-have-no-database-cost.instructions.md"
@@ -1720,6 +1798,12 @@
       },
       {
         "path": "./assets/generated/aldc-community/agents/acdc-al-review-subagent.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-developer-reviewer.agent.md"
+      },
+      {
+        "path": "./assets/generated/aldc-community/agents/al-spec-agent.agent.md"
       },
       {
         "path": "./assets/generated/aldc-community/agents/angus.agent.md"

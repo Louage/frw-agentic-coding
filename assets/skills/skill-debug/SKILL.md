@@ -7,6 +7,10 @@ description: "AL debugging and diagnostics for Business Central. Use when perfor
 
 ## Purpose
 
+For BC29 AL0926 section-order errors or new isolation behavior, read the relevant
+sections of [AL18 capability checks](../skill-migrate/references/al18-capabilities.md).
+Use actual compiler/runtime evidence and keep compilation distinct from execution.
+
 Systematic diagnosis and root cause analysis for AL Business Central issues: runtime errors, logic bugs, intermittent failures, performance bottlenecks, and configuration problems.
 
 ## When to Load
