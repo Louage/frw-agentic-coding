@@ -255,6 +255,16 @@ vscode-free module and cover it with Node 20's built-in runner.
 **Next**
 - Work item 2 (§11): README audit + surface release notes after an update.
 - Work item 3 (§12): grouped tool picker + qualified tool IDs in the Agent Settings panel.
+- Work item 5a (§14, issue #55): Claude Code plugin surface in the VSIX + self-registration in
+  `~/.claude/settings.json`. **Status (2026-09-24): Task 0 spike run — S5 PASS, S6 PASS, S9 PASS,
+  S7 triggers the §14.3 rule (the D44 "marketplace-update" fallback command is confirmed to report
+  success without fixing a changed path; whether `/reload-plugins`/restart works per M5 is
+  undetermined non-interactively). Handed back to the Producer per the spike rule; no code written.
+  Next: Producer decides the S7 fallback wording/mechanism (§14.3) before Dev opens PR-B.** PR-A
+  (emitter) is not blocked by S7 and can start. High-risk (writes outside the workspace), so PR-B
+  needs independent review/QA before merge. Scope extended 2026-09-24 (D45): Agent Settings overrides
+  are mirrored into the Claude plugin (§14.15, PR-C after PR-A). Q8/Q9 answered (D52 Copilot dev-mode guard as PR-D; D53 Copilot re-apply on activation, in PR-C). Work item 5b (instruction domains → skills, BCQuality
+  listing, hooks/MCP, retiring `ClaudePlugins/`) is deferred (§14.12).
 
 **Known issues (work item 3)**
 - **B2 (open): the Tools summary counts tokens, not tools.** Selecting the AL group stores one
@@ -546,6 +556,132 @@ the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain
   `app.json`; the resulting folder paths are appended to `AL_MCP_SERVER_ARGS`. No qualifying folder
   (or no folder open) → no positional args, exactly as today. Applies identically to single-folder
   and multi-root windows.
+
+**Work item 5a decisions (§14, issue #55, recorded 2026-09-24)**
+
+- D29 (maintainer): **scope is phased.** WI-5a = agents, commands (from prompt files), skills,
+  `plugin.json` + `marketplace.json`, packaging, a VSIX-contains-surface check and
+  self-registration. The 315 instruction files → domain skills, the BCQuality marketplace listing,
+  `hooks.json` / `.mcp.json` and retiring the standalone `ClaudePlugins/` install are **WI-5b**
+  (§14.12).
+- D30 (maintainer): **self-registration is automatic when the Claude config dir exists.** On
+  activate, ensure `extraKnownMarketplaces` (source `directory`, path = `context.extensionPath`) and
+  `enabledPlugins["acdc@acdc-vscode"]` in `~/.claude/settings.json`. Guard rails are part of the
+  contract (§14.6): read-modify-write preserving every other key, idempotent (no write when up to
+  date), never create the config dir, abort on unparseable JSON, atomic temp + rename, never flip a
+  user's `false`. High-risk: independent review/QA required.
+- D31 (producer; **maintainer-confirmed 2026-09-24, Q1**): kill-switch setting `acdc.claudeCode.autoRegister`
+  (boolean, default `true`, scope `application`). The explicit commands in §14.6 bypass it because
+  running one is a direct user request; nothing bypasses the "config dir must already exist" rule.
+- D32 (maintainer; contract accepted 2026-09-24): **emitter is a vscode-free TS core plus a thin Node CLI**, not the
+  `Emit-ClaudePlugin.ps1` the issue proposed. Core in `src/claudePlugin/`, unit-tested with
+  `node --test`; the CLI is a second esbuild entry built to `out-tools/`, which is never shipped
+  and never bundled into `dist/extension.js`.
+- D33 (maintainer; contract accepted 2026-09-24): **emitted output is committed**, like `assets/generated/`, so a dev
+  marketplace can point at a working clone. A `--check` mode in the CLI is the drift gate. It runs in
+  `release.yml`, and the husky pre-commit hook and the weekly sync re-emit.
+- D34 (producer; **maintainer-accepted 2026-09-24**): **plugin root layout.** The extension root is the marketplace root:
+  `.claude-plugin/marketplace.json` sits at the VSIX root and lists one plugin with
+  `"source": "./claude-plugin"`. The plugin (its own `.claude-plugin/plugin.json`, `agents/`,
+  `commands/`, `skills/`) lives in `claude-plugin/`. Rationale: no top-level `agents/` or `skills/`
+  in the repo root next to the Copilot sources, one folder to package and drift-check, and a
+  relative-path source in a local directory marketplace **loads in place** (not copied to the
+  cache), so an extension update only has to change the marketplace path (§14.3 S5).
+- D35 (producer; **maintainer-confirmed 2026-09-24, Q7**): names are marketplace **`acdc-vscode`** and plugin
+  **`acdc`**, so the enable key is `acdc@acdc-vscode`. They don't collide with the legacy
+  `aldc@aldc-marketplace` plugin or with any reserved marketplace name.
+- D36 (producer; **maintainer-confirmed 2026-09-24, Q6: emit all 13**): **the emitter's source list is `package.json → contributes`** (`chatAgents`,
+  `chatPromptFiles`, `chatSkills`), read from disk after `regenerate:agents` and the overlays have
+  run. It never reads `.github/agents/**` (the dev-time copy, B3b). Whatever #17 decides about the
+  agent set flows through automatically. Today that is 13 agents, 11 prompts and 41 skills.
+- D37 (producer; **maintainer-confirmed 2026-09-24, Q2**): **tool mapping emits an explicit allowlist of
+  Claude Code built-in tools only.** `acdc_*` (VS Code LM tools), VS Code-only tools, extension
+  namespaces (`ms-dynamics-smb.al/*`, `sshadowsdk.*`, `ms-vscode.*`) and MCP namespaces
+  (`github/*`, `markitdown/*`) are dropped and reported. This is D25 applied to the second host:
+  Claude-side MCP names are per-user (`mcp__<server>__…`) or plugin-scoped
+  (`mcp__plugin_acdc_<server>__…`), so hardcoding them is the same design violation.
+- D38 (producer): `handoffs` → an appended `## Handoffs` prose section. `agents:` (Malcolm's
+  subagent allowlist) → an appended `## Subagents` prose section plus the `Agent` tool.
+  `user-invocable` / `disable-model-invocation` → a description suffix. `argument-hint` is dropped
+  on agents and kept on commands. All other non-Claude keys are stripped (#15).
+- D39 (producer): **no `version` in the emitted `plugin.json` or marketplace entry.** A plugin
+  loaded in place ignores it (§14.3 S5), and leaving it out keeps the committed output stable when
+  `release.yml` runs `npm version`, so there's no drift on every release.
+- D40 (producer; **maintainer-accepted 2026-09-24**): **registration only overwrites a marketplace path it owns, and never
+  downgrades.** It owns the path when the entry is missing, the path equals `extensionPath`, or the
+  basename matches `theframework.acdc-<semver>`. A registered path whose version is newer than ours
+  *and* still exists on disk is left alone, so VS Code Stable and Insiders with different versions
+  can't flip-flop the file. Any other path (for example the maintainer's working clone) is
+  user-managed and only the force command replaces it.
+- D41 (producer; **maintainer-confirmed 2026-09-24, Q5**): **the extension never writes Claude Code's internal state** (`~/.claude/plugins/**`,
+  `known_marketplaces.json`, `installed_plugins.json`) and never enables, disables or uninstalls
+  another plugin. If the legacy `aldc@aldc-marketplace` is enabled, a **one-time notice**
+  recommends disabling it. It's never switched off automatically.
+- D42 (producer; **refined by D48**): the frontmatter parser for the emitter is the `yaml` package as a
+  **devDependency** (build-time only). No runtime dependency is added to the extension. Settings
+  handling is plain `JSON.parse` / `JSON.stringify`.
+- D43 (producer; **maintainer-confirmed 2026-09-24, Q3**): cleanup on uninstall (`vscode:uninstall`
+  hook) is deferred to WI-5b. WI-5a ships an explicit **Unregister** command and documents manual
+  cleanup.
+- D44 (maintainer, 2026-09-24, Q4; **contingent on the S6/S7 spike result**): if S6 or S7 fails,
+  the extension **may** offer a **user-clicked** action that opens a VS Code terminal running
+  `claude plugin install acdc@acdc-vscode` (S6 failure) or
+  `claude plugin marketplace update acdc-vscode` (S7 failure). It must **never run silently**:
+  nothing is spawned without a click on the notification button, and the command is shown in a
+  visible terminal. Fallback contract: §14.6 "Contingent fallback (D44)". If both S6 and S7 pass,
+  this fallback is **not built**.
+- The §14.9 test plan (E1–E30, R1–R20, M1–M12, plus F1–F7 and M13 for D44) was accepted by the
+  maintainer on 2026-09-24.
+- D45 (maintainer, 2026-09-24): **per-user Agent Settings overrides are mirrored into the Claude
+  plugin, in WI-5a.** This recalls the earlier "Not planned" note. Spec: §14.15.
+- D46 (producer, 2026-09-24): **approach = rewrite the installed
+  `claude-plugin/agents/<id>.md` in place**, reusing the originals + sha-sidecar ownership model
+  under its own subtree `agent-overrides/claude/…`. The Copilot paths and state are untouched.
+  **Rejected:** a separate user-level plugin in `globalStorage` registered as a second marketplace.
+  Its agents would appear twice unless the base plugin were auto-disabled (which conflicts with
+  D30/D41), it would mean more writes to `~/.claude/settings.json`, and the path would vary per
+  VS Code profile. The Copilot `resolveBaseline` is **not** refactored in 5a; the Claude path uses
+  the new pure `decideOverrideBaseline`.
+- D47 (producer, 2026-09-24): **mirroring runs inside `acdc.applyAgentSettingsToChat`** (before the
+  Copilot apply and its window reload) **and on activation.** The activation run re-applies
+  overrides after an extension update and needs no window reload. The Copilot side
+  now re-applies on activation too (**superseded in part by D53**, Q9).
+- D48 (producer, 2026-09-24; **refines D42**): the runtime rewrites only our own emitter output,
+  using a restricted, fixed format (A12: JSON-quoted one-line scalars, a one-line `tools` list,
+  marker-wrapped generated sections). The runtime bundle gains `toolMap.ts`, `slugifyAgentId`,
+  `claudeAgentOverrides.ts` and `overrideBaseline.ts`, **with no `yaml`**. `yaml` stays a
+  devDependency, importable only from `src/claudePlugin/frontmatter.ts` (enforced by ESLint
+  `no-restricted-imports` plus a bundle check).
+- D49 (producer, 2026-09-24): **Dev-host rule.** Claude mirroring is skipped when `extensionMode` is
+  Development or Test, so F5 never dirties the committed `claude-plugin/agents/*.md`. `--check`
+  stays strict. The pre-existing identical hazard on the Copilot path (Apply under F5 rewrites the
+  committed `assets/generated/…/*.agent.md`) is fixed by D52 (Q8).
+- D50 (producer, 2026-09-24): field mapping as in §14.15.3. `model` via `mapModel` (unmapped → keep
+  the baseline); `reasoningEffort` → `effort` (the same enum, per the sub-agents docs); tools
+  through TOOL_MAP with D37 built-ins only, so unmapped extra tools are dropped; `handoffs` → the
+  prose section. `argumentHint`, `bcReviewSpecialist` and `placeholderTarget` have no Claude
+  effect.
+- D51 (producer, 2026-09-24): users get a one-line `/reload-plugins` notice only when a mirror run
+  changed or restored at least one file. On the Apply path it's deferred across the window reload
+  via `globalState`. **On activation this notice is merged with the Copilot notice into one (D53).**
+- D52 (maintainer, 2026-09-24, Q8): **the Copilot "Apply to chat" path gets the same
+  Development/Test-mode guard as D49.** Under F5 the command writes nothing and says why, so it no
+  longer rewrites the committed `assets/generated/aldc-community/agents/*.agent.md`. The gate is the
+  shared pure `decideOverrideGate` (§14.15.8). Consequence accepted: Copilot overrides can only be
+  exercised on an installed VSIX. Placement: small PR-D, landed before PR-C.
+- D53 (maintainer, 2026-09-24, Q9): **Copilot overrides also re-apply on activation**, which removes
+  the asymmetry D47 described. Rules (§14.15.8):
+  - activation runs `applyAgentContributionOverrides` and the Claude mirror;
+  - the user is told **only when files actually changed or were restored** (typically after an
+    extension update re-baselined them), never on a steady-state activation, and never on
+    rebaselining alone;
+  - one combined notification covers both hosts: a **Reload Window** button when Copilot files
+    changed, and the `/reload-plugins` hint when Claude files changed;
+  - **never an automatic reload** on activation;
+  - skipped in Development/Test mode (D49/D52).
+
+  The notice decision is the pure `decideOverrideNotice`. Placement: folded into PR-C, because it
+  shares the activation run and the combined notice with D47/D51.
 
 ---
 
@@ -1096,3 +1232,1082 @@ introduces, and W2 alone already removes the warning the user is seeing.
 3. `toolPickerModel.ts` + P1–P10.
 4. `agentSettingsView.ts` `createQuickPick` adapter → **W1 closed**.
 5. README + CHANGELOG.
+
+---
+
+## 14. Work Item 5a — Claude Code plugin surface in the VSIX
+
+Issue [#55](https://github.com/Louage/frw-agentic-coding/issues/55). Related: #17 (which agent set
+survives), #29 (handoffs), #15 (extension-only frontmatter keys). Decisions D29–D43 (§10).
+
+### 14.1 Goal
+
+**One artifact, two hosts.** The VSIX that gives GitHub Copilot our agents, prompts and skills also
+gives them to Claude Code. The user doesn't install anything separately and never copies files
+into a project repo. The installed extension folder *is* the Claude Code marketplace, and the
+extension keeps `~/.claude/settings.json` pointed at whichever version is installed.
+
+**Built and emitted in 5a**
+- Emit the 13 contributed agents → `claude-plugin/agents/*.md`
+- Emit the 11 prompt files → `claude-plugin/commands/*.md`
+- Emit the 41 skills with clean ids + the plugin consumption note
+- `.claude-plugin/marketplace.json` + `claude-plugin/.claude-plugin/plugin.json`
+- Packaging (`.vscodeignore`, prepublish), drift check, VSIX-contents check
+- Self-registration on activate + kill-switch + Register/Unregister commands (+ the contingent D44
+  fallback, only if the spike requires it)
+- Per-user Agent Settings overrides (model, reasoning effort, extra or disabled tools, handoffs)
+  mirrored into the installed Claude agent files (§14.15, D45)
+
+**Deferred to WI-5b — NOT emitted or built in 5a** (details in §14.12)
+- 315 instruction files → domain skills with `references/`
+- BCQuality plugin listed in our `marketplace.json`
+- `hooks/hooks.json`, `.mcp.json`, `userConfig`
+- Retiring the standalone `ClaudePlugins/` install
+- `vscode:uninstall` cleanup (D43)
+
+**Hard constraints**
+- `package.json → contributes` (chat agents, prompts, skills, instructions, tools) is **not
+  changed**. Copilot behaviour stays identical (M4).
+- No proposed API. The engine stays `^1.101.0`. No new *runtime* dependency (D42).
+- Generated sources are never hand-edited. The emitter reads the post-sync, post-overlay,
+  post-`regenerate:agents` files (D36).
+- Cross-platform. JSON paths are serialised with `JSON.stringify`, so Windows backslashes are
+  escaped. Marketplace `source` paths always use `/`, because Claude Code refuses a backslash after
+  `./` on macOS/Linux (S1).
+
+### 14.2 The constraint that shapes the design
+
+Claude Code can't read a VS Code extension folder as such. It discovers agents and skills only from
+`~/.claude/…`, `<project>/.claude/…`, or **plugins from a marketplace registered in settings**. A
+`directory` marketplace takes an arbitrary absolute path, so the extension folder can be that path.
+Three things block it today, and each maps to a part of this plan:
+
+| Blocker | Resolved by |
+|---|---|
+| No manifest or Claude-shaped layout in the VSIX | Emitter (§14.4) + packaging (§14.7) |
+| Copilot frontmatter doesn't parse as Claude agents | Frontmatter mapping (§14.5) |
+| The version is baked into the install path (`theframework.acdc-2.8.1`) | Self-registration on activate (§14.6) |
+
+`~/.vscode/extensions/extensions.json` isn't a reliable resolver (issue #55). Only
+`context.extensionPath` at activation is authoritative.
+
+### 14.3 Task 0 — spike (research done by the Producer; Dev closes the open rows)
+
+Researched 2026-09-24 against the current Claude Code docs and the maintainer's own machine.
+
+| # | Question | Status | Finding / source |
+|---|---|---|---|
+| S1 | `plugin.json` / `marketplace.json` field set | **Confirmed** | `plugin.json`: only `name` is required. Optional: `displayName`, `version`, `description`, `author{name,email,url}`, `homepage`, `repository`, `license`, `keywords`, `defaultEnabled`, component paths (`agents`/`commands` **replace** the defaults, `skills` **adds**), `hooks`, `mcpServers`, `userConfig`, `dependencies`. `marketplace.json`: requires `name`, `owner.name` and `plugins[]{name, source}`. A relative `source` resolves against the **marketplace root (the folder that contains `.claude-plugin/`)**, must start with `./`, must not use `../`, and must use `/` separators. `acdc-vscode` isn't reserved. Sources: https://code.claude.com/docs/en/plugins-reference, https://code.claude.com/docs/en/plugin-marketplaces |
+| S1b | Is `pluginConfigs` plugin-declared or free-form? | **Confirmed** | The plugin declares it via `userConfig`. Answers are stored under `pluginConfigs["<plugin>@<marketplace>"].options` in user settings (observed: `aldc@aldc-marketplace`). Not used in 5a. |
+| S2 | Native equivalent of `handoffs` | **Confirmed: none** | No handoff field exists. Subagents can spawn subagents (the `Agent` tool, up to 3 levels deep by default), and `SendMessage` resumes one. Prose stays the idiom (D38). **Open for Dev (optional):** whether `tools: Agent(acdc:al-planning-subagent, …)` allowlisting works in a *plugin* agent. If it does, Malcolm may use it instead of plain `Agent`. Source: https://code.claude.com/docs/en/sub-agents |
+| S3 | Skill frontmatter and `references/` loading | **Confirmed** | Fields: `name`, `description`, `when_to_use`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `argument-hint`, `arguments`, `paths`, `hooks`, `shell`, `metadata`, `license`, `compatibility`. Supporting files load **only when `SKILL.md` references them** (progressive disclosure). For **plugin** skills, the frontmatter `name` sets the id's last segment (`/acdc:<name>`), so the emitter must write the clean id into `name`, not only into the folder name. Commands (`commands/*.md`) are the legacy skill form: `description`, `argument-hint`, `allowed-tools`, `model` and `disable-model-invocation` are allowed; `name` is not. Source: https://code.claude.com/docs/en/skills |
+| S4 | Does Claude Code re-read `settings.json` mid-session? | **Confirmed: partly** | Settings files are watched and reloaded live, but **plugin changes need `/reload-plugins` or a restart**, and plugin MCP servers only change in a new session. The documented post-update sequence is therefore *update extension → `/reload-plugins` (or restart Claude Code)*. Sources: https://code.claude.com/docs/en/settings ("When edits take effect"), https://code.claude.com/docs/en/discover-plugins ("Apply plugin changes without restarting") |
+| S5 | Is the plugin copied into a cache, which would make the version-in-path problem worse? | **PASS (re-verified 2026-09-24, `claude --version` 2.1.281)** | Isolated `CLAUDE_CONFIG_DIR` fixture (D34 layout, two content-distinct copies `acdc-2.8.1`/`acdc-2.8.2`). Registered purely via `settings.json` (`extraKnownMarketplaces`+`enabledPlugins`), then started one `claude -p … --bare` process. Result: `plugins/known_marketplaces.json.installLocation` == the fixture directory **itself**; no `plugins/cache/**` was ever created. Loads **in place**, matching docs, not the legacy caveat. The legacy `aldc` cache copy is a *different* code path: the real `~/.claude/plugins/installed_plugins.json` shows `aldc@aldc-marketplace` has an explicit **installed** record (`installPath` under `plugins/cache/aldc-marketplace/aldc/4.2.0`, 2026-07-01) — that record type is created by an explicit install flow (`claude plugin install`/`marketplace add`+install), which `registerClaudeCodePlugin()` never calls. No change forced on §14.4/§14.6. |
+| S6 | Does writing `extraKnownMarketplaces` + `enabledPlugins` to **user** settings make the plugin load **without** `/plugin install`? | **PASS (re-verified 2026-09-24)** | Same isolated run as S5. Before registration, `claude plugin marketplace list`/`plugin list`/`plugin details acdc@acdc-vscode` all reported nothing configured. After the settings.json write + one process start (no `/plugin install`, no `claude plugin install`, no `marketplace add` ever run), `claude plugin details acdc@acdc-vscode` succeeded and enumerated the live component inventory: `Agents (1) spike-probe`, `Skills (2) spike-probe, spike-probe` (the skill and the legacy-skill-form command are both counted as "skills" by this command). §14.6 as designed is sufficient; **the D44 "install" branch is not needed.** Nuance for M3/M6: `claude plugin list` and `installed_plugins.json` stay empty for a directory-source, enabled-via-settings plugin — that command/file tracks a narrower "installed" concept (github/npm sources, or an explicit `claude plugin install`). Use `claude plugin details` to check availability, not `claude plugin list`. Caveat: repeated attempts to complete a real authenticated `claude -p` turn (to see a live completion name `spike-probe`) hung 90–200s against a deliberately-invalid API key before failing with a 401 — no real-credential turn was completed during this spike; the PASS rests on `claude plugin details`, the documented purpose-built inspector for plugin component loading, not on an observed LLM completion. M3 (maintainer's own credentials) still gives the end-to-end check. |
+| S7 | When the registered **path changes** for an already-known marketplace (the update case), does Claude Code follow it? | **FAIL for the documented fallback command; part UNDETERMINED non-interactively — hand back to Producer** | Registered at fixture path A (creates `known_marketplaces.json.installLocation` = A, per S5/S6). Without removing the marketplace, changed only `settings.json`'s `extraKnownMarketplaces.acdc-vscode.source.path` to fixture path B (distinct content, same ids). Reproduced 3×: plain `claude plugin marketplace list`/`plugin details` still report A (expected, read-only). **`claude plugin marketplace update acdc-vscode`** — the exact command D44's "marketplace-update" notification tells the user to run — printed "✔ Successfully updated marketplace: acdc-vscode" and bumped `lastUpdated`, but **left `source.path`/`installLocation` at A**; it re-validates at the already-known location and never re-reads settings.json's new path. This is a **confirmed FAIL of the documented fallback command** as worded — running it reports success while fixing nothing. The only thing that changed the known location was `claude plugin marketplace remove acdc-vscode` (which itself rewrites the user's settings.json, stripping our keys — an action D41 forbids the extension from doing) followed by a fresh registration. **Undetermined non-interactively:** whether `/reload-plugins` (session-only slash command) or a full restart — what §14.9's **M5** actually claims ("`/reload-plugins`, or a restart, loads from the new folder"), which is a different claim from D44's notification text — re-diffs `extraKnownMarketplaces` against an *already-known* marketplace and follows the new path. Reaching a point where `/reload-plugins` could be issued needs a completed authenticated turn, which repeatedly hung 90–200s then failed 401 against a deliberately-invalid key; this was not tried against real credentials (see manual steps below). Because D44's own message text does not do what it claims, the Task 0 rule applies: **this contradicts the plan, stop and hand back to the Producer** rather than have Dev build the fallback around a guess. **Manual steps for the maintainer** (interactive, ~5 min, needs a logged-in `claude`): (1) register fixture A via settings.json as above; (2) `claude` interactively, confirm `@acdc:spike-probe` shows the A marker; (3) exit, edit only the path to fixture B; (4) start a **new** session (no `/reload-plugins` yet) and re-check the marker — isolates M5's "restart" claim; (5) if still A, run `/reload-plugins` in that session and re-check — isolates the slash command alone; (6) if still A, run `claude plugin marketplace update acdc-vscode` (confirmed here to be a no-op for the path) then `/reload-plugins`, matching D44's current text exactly, and re-check. Report which step (4/5/6/none) actually flips the marker, so §14.6/D44's notification text names the step that actually works. |
+| S8 | Do `.mcp.json` servers load (only context7 did in the issue's session)? | **Deferred to 5b** | No `.mcp.json` ships in 5a (D29). |
+| S9 | Does `vsce` package the dot-folder `.claude-plugin/`? | **PASS (2026-09-24, `@vscode/vsce` 3.9.2)** | Added the exact D34 layout as **untracked** files at the repo root (`.claude-plugin/marketplace.json`, `claude-plugin/.claude-plugin/plugin.json`, `claude-plugin/agents/spike-probe.md`, `claude-plugin/commands/spike-probe.md`, `claude-plugin/skills/spike-probe/SKILL.md` — none `git add`ed). `npx vsce ls` listed all five paths verbatim. Confirms vsce's packaging isn't restricted to git-tracked files, and neither `.claude-plugin/` nor `claude-plugin/` is filtered by `.vscodeignore` or vsce's `defaultIgnore`. Fixture removed immediately after; `git status` returned to the pre-spike state. |
+| S10 | Plugin agent id and name rules | **Confirmed** | The id is `<plugin>:<name>` (`acdc:phil`). `name` must not contain `:`. Plugin agents **ignore** `hooks`, `mcpServers`, `permissionMode` and `initialPrompt`. Model aliases: `sonnet`, `opus`, `haiku`, `fable`, `inherit`, or a full id. With `tools` omitted, the agent inherits every tool. Source: https://code.claude.com/docs/en/sub-agents |
+
+**Rule (as in §12.3):** if S5, S6 or S7 contradicts this plan, **stop and hand back to the
+Producer**. Don't bend §14.6 around a guess. Record the Claude Code version (`claude --version`)
+used for each observation.
+
+**Task 0 spike result (2026-09-24, `claude --version` 2.1.281, methodology and evidence in the
+S5/S6/S7/S9 rows above):** S5 PASS, S6 PASS, S9 PASS. **S7 triggers the rule** — the fallback
+command D44's own notification tells the user to run (`claude plugin marketplace update
+<name>`) is confirmed to report success while leaving the stale path in place, and whether the
+alternative (`/reload-plugins` or a restart, per M5) actually works could not be determined
+without a completed authenticated session. **Handed back to the Producer; no code written.**
+Producer must decide, before Dev starts PR-B: (a) which interactive step, if any, actually
+follows a changed path (needs one manual check — steps given in the S7 row), and (b) whether
+D44's "marketplace-update" notification text should drop `claude plugin marketplace update`
+and instead tell the user to restart Claude Code / run `/reload-plugins` only, or whether the
+whole marketplace-update branch should instead be replaced by a "remove and re-register" fallback
+(the one mechanism confirmed to work here, though D41 forbids the *extension* from calling
+`marketplace remove` itself — only a user-run CLI step could do it).
+
+### 14.4 Structural contract — emitter (vscode-free)
+
+**Layout produced** (committed, D33; packaged, D34):
+
+```
+.claude-plugin/marketplace.json          # marketplace "acdc-vscode" → plugin "acdc", source "./claude-plugin"
+claude-plugin/
+├─ .claude-plugin/plugin.json            # name "acdc", no version (D39)
+├─ agents/<id>.md                        # 13 today
+├─ commands/<id>.md                      # 11 today
+└─ skills/<id>/SKILL.md (+ every supporting file copied byte-for-byte)   # 41 today
+```
+
+**Modules**
+
+| File | Kind | Responsibility |
+|---|---|---|
+| `src/claudePlugin/types.ts` | vscode-free | Types below |
+| `src/claudePlugin/frontmatter.ts` | vscode-free | Parse and render frontmatter (uses the `yaml` devDependency, D42) |
+| `src/claudePlugin/toolMap.ts` | vscode-free | `TOOL_MAP`, `mapTools`, `mapModel` |
+| `src/claudePlugin/mapAgent.ts` | vscode-free | Agent, command and skill transforms |
+| `src/claudePlugin/planPluginSurface.ts` | vscode-free | Whole-surface plan from in-memory inputs |
+| `src/claudePlugin/emitCli.ts` | node-only (fs, no `vscode`) | Thin CLI: read inputs → plan → write or `--check` |
+
+```ts
+// src/claudePlugin/types.ts — must not import "vscode"
+
+/** Repo-relative POSIX path, e.g. "assets/generated/aldc-community/agents/phil.agent.md". */
+export type RelPath = string;
+
+export interface CopilotHandoff { label: string; agent: string; prompt?: string; send?: boolean }
+
+export interface CopilotAgentFrontmatter {
+  name: string;                        // "Phil, AL Developer" | "AL Planning Subagent"
+  description?: string;
+  tools?: string[];
+  model?: string;                      // "Claude Sonnet 4.6 (copilot)"
+  "argument-hint"?: string;
+  "user-invocable"?: boolean;
+  "disable-model-invocation"?: boolean;
+  handoffs?: CopilotHandoff[];
+  agents?: string[];                   // subagent allowlist by display name (Malcolm)
+  [extensionOnlyKey: string]: unknown; // stripped (#15)
+}
+
+export interface CopilotAgentDoc { sourcePath: RelPath; frontmatter: CopilotAgentFrontmatter; body: string }
+
+export type ClaudeModelAlias = "sonnet" | "opus" | "haiku";
+export type ClaudeToolName =
+  | "Read" | "Grep" | "Glob" | "Edit" | "Write" | "Bash" | "PowerShell"
+  | "WebFetch" | "WebSearch" | "Agent" | "Skill" | "TodoWrite";
+
+export interface ClaudeAgentDoc {
+  id: string;                          // "phil" → invoked as "acdc:phil"
+  fileName: string;                    // "phil.md"
+  frontmatter: { name: string; description: string; tools?: ClaudeToolName[]; model?: ClaudeModelAlias };
+  body: string;
+}
+
+export interface ClaudeCommandDoc {
+  id: string;                          // "al-spec-create"
+  fileName: string;                    // "al-spec-create.md"
+  frontmatter: { description: string; "argument-hint"?: string; model?: ClaudeModelAlias };
+  body: string;
+}
+
+export interface SkillSource {
+  dir: RelPath;                        // folder containing SKILL.md
+  skillMd: string;
+  supportingFiles: ReadonlyMap<RelPath, Uint8Array>;   // relative to `dir`
+}
+
+export interface ClaudeSkillDoc {
+  id: string;                          // "skill-api" | "al-performance-review"
+  skillMd: string;                     // rendered; frontmatter name === id
+  supportingFiles: ReadonlyMap<RelPath, Uint8Array>;   // copied verbatim
+}
+
+export type EmitCode =
+  | "tool-dropped" | "model-unmapped" | "key-stripped" | "handoff-target-unknown"
+  | "duplicate-agent-id" | "duplicate-command-id" | "duplicate-skill-id"
+  | "missing-source" | "unparseable-frontmatter" | "consumption-note-missing";
+
+export interface EmitDiagnostic { level: "info" | "warn" | "error"; source: RelPath; code: EmitCode; message: string }
+
+export interface PluginSurfaceInput {
+  /** From package.json. */
+  packageMeta: { name: string; displayName?: string; description?: string; publisher: string; license?: string; repositoryUrl?: string };
+  contributions: { agents: RelPath[]; prompts: RelPath[]; skills: RelPath[] };  // contributes.* paths, "./" stripped
+  /** Every file the plan may read, keyed by RelPath. The CLI decodes text files as UTF-8. */
+  files: ReadonlyMap<RelPath, string | Uint8Array>;
+}
+
+export interface PlannedFile { path: RelPath; content: string | Uint8Array }   // text is always LF, UTF-8
+
+export interface PluginFilePlan {
+  /** Every file under the managed roots. The CLI deletes anything on disk under them that isn't listed. */
+  files: PlannedFile[];
+  managedRoots: readonly [".claude-plugin", "claude-plugin"];
+  diagnostics: EmitDiagnostic[];
+  counts: { agents: number; commands: number; skills: number };
+}
+```
+
+```ts
+// src/claudePlugin/frontmatter.ts
+export function parseFrontmatter(text: string): { data: Record<string, unknown>; body: string } | undefined;
+/** Deterministic: fixed key order per doc kind, strings quoted only when YAML needs it, LF, trailing newline. */
+export function renderMarkdown(frontmatter: Record<string, unknown>, body: string): string;
+
+// src/claudePlugin/toolMap.ts
+export const TOOL_MAP: ReadonlyArray<{ match: string | RegExp; to: readonly ClaudeToolName[] }>;
+export function mapTools(tokens: readonly string[]): { tools: ClaudeToolName[]; dropped: string[] };
+export function mapModel(copilotModel: string | undefined): ClaudeModelAlias | undefined;
+
+// src/claudePlugin/mapAgent.ts
+export function slugifyAgentId(displayName: string): string;
+export function buildAgentIdIndex(docs: readonly CopilotAgentDoc[]): { byDisplayName: Map<string, string>; diagnostics: EmitDiagnostic[] };
+export function mapAgent(doc: CopilotAgentDoc, idIndex: Map<string, string>, invokedBy: readonly string[]): { agent: ClaudeAgentDoc; diagnostics: EmitDiagnostic[] };
+export function mapPromptToCommand(sourcePath: RelPath, text: string): { command: ClaudeCommandDoc; diagnostics: EmitDiagnostic[] };
+export function mapSkill(source: SkillSource): { skill: ClaudeSkillDoc; diagnostics: EmitDiagnostic[] };
+export const PLUGIN_CONSUMPTION_NOTE: string;
+
+// src/claudePlugin/planPluginSurface.ts
+export const MARKETPLACE_NAME = "acdc-vscode";
+export const PLUGIN_NAME = "acdc";
+export const PLUGIN_DIR = "claude-plugin";
+export function planPluginSurface(input: PluginSurfaceInput): PluginFilePlan;
+```
+
+**CLI contract (`emitCli.ts`, built by a second esbuild entry to `out-tools/emit-claude-plugin.cjs`)**
+- Reads `package.json`, collects the `contributes.chatAgents|chatPromptFiles|chatSkills` paths,
+  reads those files and every file under each skill folder, then calls `planPluginSurface`.
+- Default mode writes the plan and deletes files under the managed roots that aren't in the plan.
+  It prints the counts and every `warn` or `error` diagnostic. It exits `1` on any `error`.
+- `--check` writes nothing. It compares the plan to disk, **normalising CRLF → LF** so a Windows
+  `autocrlf` checkout doesn't fail, reports missing, extra and changed paths, and exits `1` on any
+  difference. This is the drift gate (D33).
+- Must run on Node 20 (CI). Must not be imported by `src/extension.ts`.
+
+### 14.5 Frontmatter mapping (the transform table — each row is a unit test)
+
+**Agents** (`contributes.chatAgents` → `claude-plugin/agents/<id>.md`)
+
+| # | Copilot | Claude | Rule |
+|---|---|---|---|
+| A1 | `name: "Phil, AL Developer"` | `name: phil`, file `phil.md` | `slugifyAgentId`: the text **before the first comma**, NFKD, strip non-ASCII, lowercase, runs of non-`[a-z0-9]` → `-`, trim `-`. No comma → the whole name (`AL Planning Subagent` → `al-planning-subagent`). Never contains `:`. |
+| A2 | persona display name | body prefix line `> Persona: **Phil, AL Developer** · Claude Code id \`acdc:phil\`` | Inserted **above** the existing body. The body is otherwise byte-identical, including the `<!-- BEGIN:… -->` / `<!-- END:… -->` blocks. |
+| A3 | `description:` | `description:` | Verbatim, plus A6 suffixes only. |
+| A4 | `tools: [...]` | `tools: Read, Grep, …` | `mapTools` over `TOOL_MAP` (below), de-duplicated, in canonical order. Source without `tools` → omit (inherit). A non-empty source that maps to nothing → `tools: Read` + `warn`, never an empty list. |
+| A5 | `model: Claude Sonnet 4.6 (copilot)` | `model: sonnet` | `mapModel`: `/sonnet/i` → `sonnet`, `/opus/i` → `opus`, `/haiku/i` → `haiku`. Anything else (GPT, Gemini, …) → omitted (inherit) + `warn model-unmapped`. |
+| A6 | `user-invocable: false` and/or `disable-model-invocation: true` | *(no field)* | Removed. Description suffix: with invokers → ` Internal subagent: only invoked by \`acdc:malcolm\` via the Agent tool.` (invokers = agents whose `agents:` list contains this display name). With none → ` Internal subagent: not for direct use.` `disable-model-invocation: true` alone → ` Use only when the user explicitly asks for this agent.` |
+| A7 | `handoffs: [{label, agent, prompt, send}]` | appended `## Handoffs` section | One bullet each: `- **<label>**: delegate to \`acdc:<id>\` with: <prompt>`. The target is resolved through `buildAgentIdIndex`. An unknown target keeps the display name + `warn handoff-target-unknown`. `send` is dropped. |
+| A8 | `agents: ['AL Planning Subagent', …]` | appended `## Subagents` section + `Agent` in `tools` | Lists `acdc:<id>` for each entry. |
+| A9 | `argument-hint:` | *(dropped)* | Agents only (S3). |
+| A10 | any other key (`bc-review-specialist`, `target`, `mcp-servers`, …) | *(dropped)* | `info key-stripped` (#15). |
+| A11 | `reasoning-effort: high` | `effort: high` | The values are identical (`low`, `medium`, `high`, `xhigh`, `max`). Any other value → dropped + `warn`. |
+| A12 | *(output format)* | restricted, fixed format | Needed for §14.15 (D48). Key order `name, description, tools, model, effort`. Every scalar is a one-line JSON string literal (`description: "…"`), which is valid YAML. `tools` is one line, comma-separated. The generated sections are wrapped in `<!-- BEGIN:ACDC-CLAUDE-HANDOFFS -->…<!-- END:ACDC-CLAUDE-HANDOFFS -->` and `<!-- BEGIN:ACDC-CLAUDE-SUBAGENTS -->…<!-- END:… -->`, so the runtime can parse and rewrite the file without a YAML library. |
+
+**`TOOL_MAP`** (reuses the vocabulary in `Normalize-AgentTools.ps1` `$CoreTools`; D37)
+
+| Copilot token(s) | Claude tools |
+|---|---|
+| `read`, `read/readFile`, `read/viewImage` | `Read` |
+| `search`, `search/codebase`, `search/textSearch`, `search/fileSearch`, `search/listDirectory`, `search/usages` | `Grep`, `Glob` |
+| `edit`, `edit/editFiles`, `edit/createFile`, `edit/createDirectory`, `edit/rename` | `Edit`, `Write` |
+| `execute`, `execute/runInTerminal`, `execute/getTerminalOutput` | `Bash`, `PowerShell` |
+| `web`, `web/fetch`, `web/githubTextSearch` | `WebFetch`, `WebSearch` |
+| `agent`, `search/searchSubagent` | `Agent` |
+| `read/skill` | `Skill` |
+| `todo` | `TodoWrite` |
+| `vscode`, `vscode/*`, `read/problems`, `read/getTaskOutput`, `search/changes`, `changes` | dropped (VS Code-only) |
+| `acdc_*` | dropped (VS Code LM tools; the SDD-paths block already tells the agent to ask the user when they're unavailable) |
+| `<publisher>.<ext>/*` (e.g. `ms-dynamics-smb.al/…`, `sshadowsdk.al-lsp-for-agents/…`, `ms-vscode.…`) | dropped (D37) |
+| `<server>/*` MCP tokens (`github/…`, `markitdown/*`) | dropped (D37, D25) |
+
+Canonical output order: `Read, Grep, Glob, Edit, Write, Bash, PowerShell, WebFetch, WebSearch,
+Agent, Skill, TodoWrite`.
+
+**Commands** (`contributes.chatPromptFiles` → `claude-plugin/commands/<id>.md`)
+
+| # | Rule |
+|---|---|
+| C1 | id = the file basename without `.prompt.md`, with `.` → `-` (`al-spec.create.prompt.md` → `al-spec-create`). |
+| C2 | Keep `description` and `argument-hint`. Map `model` with `mapModel`. |
+| C3 | Drop `agent:` and `tools:`. **Don't** translate `tools` into `allowed-tools`, because that would pre-approve Bash and Edit without a prompt. Least privilege: a command runs with the session's permissions. |
+| C4 | Drop every other key (`info key-stripped`). The body is verbatim. |
+
+**Skills** (`contributes.chatSkills` → `claude-plugin/skills/<id>/`)
+
+| # | Rule |
+|---|---|
+| K1 | id: if the frontmatter `name` starts with `microsoft-bcquality-assets-`, use the basename of the `Source:` line path without `.md` (`microsoft/skills/review/al-performance-review.md` → `al-performance-review`). Otherwise the id is the frontmatter `name` (`skill-api`). The frontmatter `name` is rewritten to the id (S3). |
+| K2 | The single blockquote paragraph that starts `> **Bundled consumption note.**` is replaced by `PLUGIN_CONSUMPTION_NOTE`. BCQuality skills without the note → `warn consumption-note-missing`. |
+| K3 | A description that matches `^Imported BCQuality skill from ` is replaced by the first sentence of the first prose paragraph after the second H1, capped at 1024 characters. Otherwise `description` is verbatim. |
+| K4 | Supporting files (`references/`, `examples/`, …) are copied byte-for-byte at the same relative paths. |
+| K5 | Duplicate ids → `error duplicate-skill-id`. |
+
+`PLUGIN_CONSUMPTION_NOTE` (Dev may polish the wording; the meaning is fixed):
+> **Plugin consumption note.** In Claude Code this skill ships inside the AC⚡DC plugin *without*
+> the bundled BCQuality instruction corpus. If a BCQuality `skills/entry.md` is available in this
+> session (for example from an installed BCQuality plugin), follow it. Otherwise apply this skill's
+> Relevance and Worklist natively and label findings **reduced confidence (no BCQuality citation)**.
+> Upstream clone-oriented paths below are kept for provenance.
+
+**Manifests** (the exact content is a unit test)
+
+```jsonc
+// .claude-plugin/marketplace.json
+{ "name": "acdc-vscode",
+  "owner": { "name": "<package.json publisher>" },
+  "metadata": { "description": "AC⚡DC VS Code extension, as a Claude Code marketplace." },
+  "plugins": [ { "name": "acdc", "source": "./claude-plugin", "description": "<package.json description>" } ] }
+
+// claude-plugin/.claude-plugin/plugin.json   (no "version", D39)
+{ "name": "acdc", "displayName": "AC⚡DC", "description": "<package.json description>",
+  "author": { "name": "<publisher>" }, "repository": "<repository.url>", "license": "MIT",
+  "keywords": ["AL", "Business Central", "Dynamics 365"] }
+```
+
+### 14.6 Structural contract — self-registration
+
+**Split:** `src/claudePlugin/claudeSettings.ts` (vscode-free, all decisions) and
+`src/claudePlugin/registration.ts` (thin adapter: fs, `vscode` configuration, output channel,
+notices).
+
+```ts
+// src/claudePlugin/claudeSettings.ts — must not import "vscode"
+
+export const ACDC_MARKETPLACE = "acdc-vscode";
+export const ACDC_PLUGIN_KEY = "acdc@acdc-vscode";
+export const LEGACY_PLUGIN_KEY = "aldc@aldc-marketplace";
+
+export interface RegistrationOptions {
+  extensionVersion: string;            // context.extension.packageJSON.version
+  platform: NodeJS.Platform;           // path comparison (win32: case-insensitive, \ ≡ /)
+  /** Whether the path currently registered under ACDC_MARKETPLACE exists on disk (the adapter stats it). */
+  registeredPathExists: boolean | undefined;
+  force: boolean;                      // true only from the explicit Register command
+}
+
+export type SkipReason =
+  | "up-to-date" | "unparseable" | "not-an-object"
+  | "user-managed-path" | "newer-version-registered";
+export type RegistrationChange = "settings-created" | "marketplace-added" | "marketplace-path-updated" | "plugin-enabled";
+export type RegistrationNotice = "legacy-aldc-enabled" | "plugin-disabled-by-user";
+
+export type SettingsUpdateResult =
+  | { changed: true; next: string; changes: RegistrationChange[]; notices: RegistrationNotice[] }
+  | { changed: false; skip: SkipReason; notices: RegistrationNotice[] };
+
+/** `current` = raw file text, or undefined when settings.json doesn't exist (its folder does). */
+export function computeClaudeSettingsUpdate(current: string | undefined, extensionPath: string, opts: RegistrationOptions): SettingsUpdateResult;
+
+/** Removes our marketplace entry and our enabledPlugins key only. Same preservation rules. */
+export function computeClaudeSettingsRemoval(current: string | undefined): SettingsUpdateResult;
+
+/** For the adapter to stat before calling computeClaudeSettingsUpdate. */
+export function readRegisteredMarketplacePath(current: string | undefined): string | undefined;
+
+export function resolveClaudeConfigDir(env: Record<string, string | undefined>, homedir: string, platform: NodeJS.Platform): string;
+
+export type RegistrationGate = { proceed: true } | { proceed: false; reason: "no-config-dir" | "disabled-by-setting" };
+export function decideRegistrationGate(input: { configDirExists: boolean; autoRegister: boolean; force: boolean }): RegistrationGate;
+
+export function pathsEqual(a: string, b: string, platform: NodeJS.Platform): boolean;
+export function versionFromExtensionDir(p: string): string | undefined;   // "…/theframework.acdc-2.8.1" → "2.8.1"
+```
+
+**Update rules (`computeClaudeSettingsUpdate`), in order**
+1. `current === undefined` → create `{ extraKnownMarketplaces: {…ours}, enabledPlugins: { [ACDC_PLUGIN_KEY]: true } }`.
+2. `JSON.parse` throws (this includes JSONC with comments) → `skip: "unparseable"`. The root, an
+   existing `extraKnownMarketplaces` or an existing `enabledPlugins` that isn't a plain object →
+   `skip: "not-an-object"`. Never clobber.
+3. Marketplace entry under `acdc-vscode`:
+   - missing → add `{ source: { source: "directory", path: extensionPath } }`
+   - `pathsEqual(existing, extensionPath)` → no change
+   - otherwise, when not `force`: if the existing path isn't owned (D40: basename not
+     `theframework.acdc-<semver>`) → `skip: "user-managed-path"`. If the existing version is newer
+     than `extensionVersion` **and** `registeredPathExists === true` → `skip: "newer-version-registered"`.
+   - otherwise → replace `source` only, and keep sibling fields such as `autoUpdate`.
+4. `enabledPlugins[ACDC_PLUGIN_KEY]`: `undefined` → set `true`. `false` → **leave it** and add the
+   notice `plugin-disabled-by-user`. `true` → no change.
+5. `enabledPlugins[LEGACY_PLUGIN_KEY] === true` → add the notice `legacy-aldc-enabled`. Never modify it (D41).
+6. Nothing changed → `skip: "up-to-date"` (**idempotent: no write, no mtime change**).
+7. Serialise: detect the original indent (spaces/tab and width), EOL (`\r\n` vs `\n`) and final
+   newline, then re-emit with `JSON.stringify(obj, null, indent)` in that style. Key order is
+   preserved, and new keys are appended at the end of their object.
+
+**Adapter (`registration.ts`)**
+
+```ts
+export function registerClaudeCodePlugin(context: vscode.ExtensionContext, output: vscode.OutputChannel, opts?: { force?: boolean }): Promise<void>;
+export function unregisterClaudeCodePlugin(context: vscode.ExtensionContext, output: vscode.OutputChannel): Promise<void>;
+```
+
+- Called from `activate()` **without await**, and wrapped so it can never throw into activation.
+  Logs one line to the existing `AC⚡DC` output channel
+  (`[Claude] registered|updated|up-to-date|skipped: <reason>`).
+- `configDir = resolveClaudeConfigDir(process.env, os.homedir(), process.platform)`. The gate
+  comes from `decideRegistrationGate`. **Never `mkdir` the config dir.**
+- Write: `settings.json.acdc-<pid>-<random>.tmp` in the same folder → `fs.rename` over the target.
+  Before the rename, re-read the target. If it changed since the first read (a concurrent Claude
+  Code write), delete the temp file and retry the whole compute once, then give up and log.
+- Notices: one-time `showInformationMessage`, each guarded by a `globalState` key.
+  `legacy-aldc-enabled` → "The standalone ALDC plugin is also enabled in Claude Code; its agents
+  duplicate AC⚡DC's. Disable it with `/plugin disable aldc@aldc-marketplace`."
+- Commands (added to `contributes.commands`; this doesn't touch the Copilot contributions):
+  `acdc.claudeCode.register` (runs with `force: true`; bypasses the setting, not the config-dir
+  rule) and `acdc.claudeCode.unregister`.
+- Remote windows (WSL/SSH): the extension host runs remotely, so it registers in the *remote*
+  home. That's correct, because Claude Code runs there too. Document it; don't special-case it.
+
+**Contingent fallback (D44): built only if the Task 0 spike shows S6 or S7 fails**
+
+If S6 and S7 both pass, skip this block entirely: no code, no tests F1–F7, no M13. If one fails,
+Dev reports to the Producer first and then builds only the branch that failed. The pure decision
+lives in `claudeSettings.ts`:
+
+```ts
+/** Set by Dev from the spike result; both false if S6 and S7 pass (and then this code isn't written). */
+export interface CliFallbackCapabilities { install: boolean /* S6 failed */; marketplaceUpdate: boolean /* S7 failed */ }
+
+export type CliFallbackOffer =
+  | { offer: false }
+  | { offer: true; kind: "install" | "marketplace-update"; command: string; message: string; onceKey: string };
+
+export function decideCliFallback(input: {
+  capabilities: CliFallbackCapabilities;
+  result: SettingsUpdateResult;          // outcome of this registration run
+  extensionVersion: string;
+  alreadyOffered: (onceKey: string) => boolean;   // globalState lookup, injected
+  suppressed: boolean;                   // user chose "Don't show again"
+  explicitCommand: boolean;              // true when run from acdc.claudeCode.register
+}): CliFallbackOffer;
+```
+
+**When it's offered** (all conditions must hold):
+- `kind: "install"` — `capabilities.install`, and `result.changed` with `settings-created`,
+  `marketplace-added` or `plugin-enabled` among its changes (a first registration).
+- `kind: "marketplace-update"` — `capabilities.marketplaceUpdate`, and `result.changed` with
+  `marketplace-path-updated`.
+- Never when `result.changed === false` (any skip), when the notice `plugin-disabled-by-user` is
+  present, or when `suppressed` is true.
+- At most once per `onceKey = "acdc.claudeCode.cliFallback.<kind>.<extensionVersion>"`. The
+  explicit Register command ignores the once-guard, but not `suppressed`.
+- Automatic registration only runs when the kill-switch is on, so the kill-switch also turns the
+  offer off.
+
+**Command it opens:**
+- `install`: `claude plugin install acdc@acdc-vscode`
+- `marketplace-update`: `claude plugin marketplace update acdc-vscode`
+
+**Notification** (`showInformationMessage`, non-modal). Buttons: **Run in terminal**,
+**Don't show again**.
+- install: "AC⚡DC registered its Claude Code plugin. Claude Code needs one more step to install it:
+  `claude plugin install acdc@acdc-vscode`. Requires the `claude` CLI on PATH."
+- marketplace-update: "AC⚡DC now points Claude Code at this version. Refresh Claude Code's copy
+  with `claude plugin marketplace update acdc-vscode`, then run `/reload-plugins` in any open
+  session."
+
+**Adapter behaviour:** only a click on **Run in terminal** does anything:
+`vscode.window.createTerminal({ name: "AC⚡DC: Claude Code" })`, then `show()`, then
+`sendText(command, true)`. The terminal is always visible. There's no `child_process`, no hidden
+terminal, and nothing runs before the click. **Don't show again** sets a `globalState` suppression
+flag. Dismissing the notification only marks the `onceKey`.
+
+**New setting** (`contributes.configuration`, "General" section):
+
+```json
+"acdc.claudeCode.autoRegister": {
+  "type": "boolean",
+  "default": true,
+  "scope": "application",
+  "markdownDescription": "When the Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR`) exists, register this extension's folder as the `acdc-vscode` plugin marketplace in its user `settings.json` on startup and enable the `acdc` plugin. Turn off to manage it yourself. [More](command:acdc.showSettingsHelp)"
+}
+```
+
+### 14.7 Build, packaging and hooks
+
+| Place | Change |
+|---|---|
+| `esbuild.js` | Second entry `src/claudePlugin/emitCli.ts` → `out-tools/emit-claude-plugin.cjs` (platform node, not in `dist/`) |
+| `package.json → scripts` | `emit:claude-plugin` (build the CLI + run it) and `check:claude-plugin` (the same with `--check`). `vscode:prepublish` → `regenerate:agents && emit:claude-plugin && package`. `pipeline:assets` → append `&& npm run emit:claude-plugin` |
+| `package.json → devDependencies` | `yaml` (D42) |
+| `.vscodeignore` | Add `out-tools/**`. Leave `.claude-plugin/**` and `claude-plugin/**` included, with a comment saying why. Confirm with `npx vsce ls` (S9) |
+| `.gitignore` | `out-tools/` |
+| `.husky/pre-commit` | Widen the trigger to staged paths under `assets/generated/`, `.github/agents/`, `automation/overlays/`, `assets/greetings.json`, `src/claudePlugin/` or `package.json`. Run `regenerate:agents` (as today), **then** `emit:claude-plugin`, then `git add .claude-plugin claude-plugin` |
+| `.github/workflows/sync-external-assets.yml` | Run `npm run emit:claude-plugin` after `regenerate:agents`, and include both roots in the commit |
+| `.github/workflows/release.yml` | Run `npm run check:claude-plugin` next to `validate:contribution-paths` |
+| `tsconfig.test.json` | Add the vscode-free `src/claudePlugin/*.ts` modules (not `registration.ts`, not `emitCli.ts`) |
+| `test/` | `claudePluginEmit.test.ts`, `claudeSettings.test.ts` |
+| `README.md`, `assets/help/settings-help.md`, `CHANGELOG.md` | See §14.10 |
+
+### 14.8 Use scenarios
+
+**Build and package**
+
+```mermaid
+flowchart LR
+  A["Sync-ExternalSources<br/>+ overlays + normalize"] --> B["regenerate:agents<br/>(greeting / SDD blocks)"]
+  B --> C["assets/generated/**<br/>package.json contributes"]
+  C --> D["emit:claude-plugin<br/>emitCli → planPluginSurface()"]
+  D --> E[".claude-plugin/marketplace.json<br/>claude-plugin/{agents,commands,skills}"]
+  E --> F["git commit (husky re-emits)<br/>release.yml: check:claude-plugin"]
+  E --> G["vsce package<br/>(vscode:prepublish re-emits)"]
+  G --> H["theframework.acdc-X.Y.Z.vsix<br/>Copilot contributions + Claude plugin"]
+```
+
+**Install / update → activate → register → Claude Code discovery**
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant VS as VS Code
+  participant X as AC⚡DC activate()
+  participant R as registration.ts (adapter)
+  participant P as claudeSettings.ts (pure)
+  participant S as ~/.claude/settings.json
+  participant CC as Claude Code
+  U->>VS: install / update VSIX
+  VS->>X: onStartupFinished (extensionPath = …/theframework.acdc-X.Y.Z)
+  X-)R: registerClaudeCodePlugin() (not awaited)
+  R->>P: decideRegistrationGate(configDirExists, autoRegister, force)
+  alt no ~/.claude or setting off
+    R-->>X: log "skipped" (nothing created)
+  else proceed
+    R->>S: read text (ENOENT → undefined)
+    R->>P: computeClaudeSettingsUpdate(text, extensionPath, opts)
+    alt changed
+      R->>S: write temp + rename (after re-read check)
+    else skip (up-to-date / unparseable / user-managed / newer)
+      R-->>X: log reason, no write
+    end
+  end
+  U->>CC: start session or /reload-plugins
+  CC->>S: read extraKnownMarketplaces + enabledPlugins
+  CC->>CC: load acdc in place from extensionPath/claude-plugin (S5; S6/S7 to verify)
+  U->>CC: @agent-acdc:phil, /acdc:al-build, /acdc:skill-api
+```
+
+### 14.9 Testing strategy
+
+Unit tests (`node --test`) cover the vscode-free modules only. The adapter, fs writes and
+packaging are verified manually, per the AGENTS.md boundary.
+
+#### Emitter — `claudePluginEmit.test.ts`
+
+| # | Given | When | Then |
+|---|---|---|---|
+| E1 | agent `name: "Bon, AL Auditor"` | `mapAgent` | id `bon`, file `bon.md`, frontmatter `name: bon` (A1) |
+| E2 | `name: AL Implementation Subagent` | `slugifyAgentId` | `al-implementation-subagent` |
+| E3 | a name with `⚡`, accents, quotes, double spaces | `slugifyAgentId` | ASCII `[a-z0-9-]`, no leading/trailing `-`, no `:` |
+| E4 | two agents that slug to the same id | `planPluginSurface` | `error duplicate-agent-id`, the CLI exits 1 |
+| E5 | a description with `:`, quotes, `→` and a newline | render → re-parse | round-trips to the identical string (A3) |
+| E6 | each `TOOL_MAP` row | `mapTools` | exactly the mapped Claude tools (parameterised, one case per row) |
+| E7 | `acdc_get_sdd_config`, `ms-dynamics-smb.al/al_build`, `sshadowsdk.al-lsp-for-agents/bclsp_hover`, `github/search_code`, `markitdown/*`, `vscode/memory` | `mapTools` | all in `dropped`, none in `tools` |
+| E8 | duplicates in mixed order (`edit`, `edit/editFiles`, `read`, `read/readFile`) | `mapTools` | de-duplicated, canonical order |
+| E9 | an agent without `tools` | `mapAgent` | no `tools` key (inherit) |
+| E10 | non-empty tools that all drop | `mapAgent` | `tools: Read` + `warn` |
+| E11 | `Claude Sonnet 4.6 (copilot)` / `Claude Opus 4.5` / `Claude Haiku 4.5` / `GPT-5 (copilot)` / absent | `mapModel` | `sonnet` / `opus` / `haiku` / `undefined` + `warn` / `undefined` |
+| E12 | a subagent with `user-invocable: false` + `disable-model-invocation: true`, listed in Malcolm's `agents:` | `mapAgent` | both keys absent. The description ends with the invokers suffix naming `acdc:malcolm` (A6) |
+| E13 | the same, but no invoker | `mapAgent` | the "not for direct use" suffix |
+| E14 | `handoffs` to `Phil, AL Developer` and to an unknown agent | `mapAgent` | a `## Handoffs` section with `acdc:phil`. The unknown target keeps its name + `warn` (A7) |
+| E15 | Malcolm's `agents:` list | `mapAgent` | a `## Subagents` section listing the three `acdc:` ids. `Agent` in `tools` (A8) |
+| E16 | `argument-hint` on an agent | `mapAgent` | dropped (A9) |
+| E17 | `bc-review-specialist`, `target`, `mcp-servers` | `mapAgent` | stripped + `info` (A10) |
+| E18 | a body with `<!-- BEGIN:AC-DC-AVATAR-GREETING -->…<!-- END:… -->` | `mapAgent` | the marker blocks are byte-identical in the output. The persona line is above them (A2) |
+| E19 | `al-spec.create.prompt.md` with `agent`, `model`, `tools`, `description` | `mapPromptToCommand` | `al-spec-create.md`. Keeps `description`, maps `model`, drops `agent`/`tools`, no `allowed-tools` (C1–C3) |
+| E20 | a prompt with `argument-hint` | `mapPromptToCommand` | `argument-hint` kept |
+| E21 | `skill-api` with `references/api-advanced-patterns.md` | `mapSkill` | `skills/skill-api/SKILL.md`, and `references/…` byte-identical (K4) |
+| E22 | BCQuality `al-performance-review-microsoft-skills-review-al-performance-review-md` | `mapSkill` | id and `name` `al-performance-review` (K1) |
+| E23 | a BCQuality skill with the bundled note | `mapSkill` | note replaced. The output has no `assets/generated` and does contain `Plugin consumption note` (K2) |
+| E24 | the BCQuality description `Imported BCQuality skill from …` | `mapSkill` | replaced by the first body sentence (K3) |
+| E25 | two skills with the same id | `planPluginSurface` | `error duplicate-skill-id` |
+| E26 | a contributed path missing from `files` | `planPluginSurface` | `error missing-source` |
+| E27 | the same input twice | `planPluginSurface` | byte-identical plans (determinism) |
+| E28 | CRLF source files | `planPluginSurface` | all text outputs are LF |
+| E29 | fixture `packageMeta` | `planPluginSurface` | `marketplace.json` and `plugin.json` deep-equal the §14.5 shapes. No `version` anywhere. The plugin `source` is `./claude-plugin` |
+| E30 | a fixture with 13 agents, 11 prompts, 41 skills | `planPluginSurface` | `counts` = 13 / 11 / 41, and every planned path is under the managed roots |
+| E31 | a source with `reasoning-effort: xhigh` / `reasoning-effort: turbo` | `mapAgent` | `effort: xhigh` / no `effort` + `warn` (A11) |
+| E32 | any emitted agent | `parseEmittedClaudeAgent` (§14.15) | parses with no YAML library. Frontmatter values equal the `ClaudeAgentDoc`. Handoff and subagent sections are found by their markers (A12) |
+
+#### Registration — `claudeSettings.test.ts`
+
+| # | Given | When | Then |
+|---|---|---|---|
+| R1 | `current` undefined | `computeClaudeSettingsUpdate` | `changed`, `settings-created`. The file has only our two keys |
+| R2 | settings with `model`, `permissions`, `hooks`, `pluginConfigs` and another marketplace | update | every foreign key deep-equal and in the same order. Ours are appended |
+| R3 | already registered at the same path and enabled | update | `changed: false, skip: "up-to-date"` (idempotent) |
+| R4 | the same path differing only in case, a trailing `\`, or `/` separators (win32) | update | `up-to-date`. On `linux` a case difference **is** a change |
+| R5 | registered at `…\theframework.acdc-2.8.0`, ours 2.8.1 | update | `marketplace-path-updated`. The sibling `autoUpdate: true` is preserved |
+| R6 | `enabledPlugins["acdc@acdc-vscode"]: false` + a stale path | update | the path is updated, the value **stays `false`**, notice `plugin-disabled-by-user` |
+| R7 | `current = "{ not json"` | update | `skip: "unparseable"`, no `next` |
+| R8 | JSONC (a `// comment` line) | update | `skip: "unparseable"` |
+| R9 | root `[]` / `null`, or `extraKnownMarketplaces: "x"`, or `enabledPlugins: []` | update | `skip: "not-an-object"` |
+| R10 | our entry points at `C:\dev\frw-agentic-coding` (not owned), no force | update | `skip: "user-managed-path"`. With `force: true` → updated |
+| R11 | registered `theframework.acdc-2.9.0`, ours 2.8.1, `registeredPathExists: true` | update | `skip: "newer-version-registered"`. With `registeredPathExists: false` → updated |
+| R12 | `enabledPlugins["aldc@aldc-marketplace"]: true` | update | notice `legacy-aldc-enabled`; the legacy key is untouched |
+| R13 | 4-space indent + CRLF + no final newline; tab indent | update | the output keeps the same indent, EOL and final-newline state |
+| R14 | `extensionPath` `C:\Users\x\.vscode\extensions\theframework.acdc-2.8.1` | update → `JSON.parse(next)` | the path string equals the input exactly (escaped backslashes) |
+| R15 | `CLAUDE_CONFIG_DIR=D:\cc` / unset | `resolveClaudeConfigDir` | `D:\cc` / `<home>\.claude` |
+| R16 | `configDirExists: false`, `force: true` | `decideRegistrationGate` | `no-config-dir` (force never creates the dir) |
+| R17 | `configDirExists: true`, `autoRegister: false`, `force: false` / `true` | `decideRegistrationGate` | `disabled-by-setting` / `proceed` |
+| R18 | registered + enabled + foreign keys | `computeClaudeSettingsRemoval` | only our marketplace entry and our key are removed. Everything else is untouched |
+| R19 | nothing of ours present | `computeClaudeSettingsRemoval` | `up-to-date` |
+| R20 | `…/theframework.acdc-2.8.1`, `…/theframework.acdc-2.9.0-beta.1`, `C:\dev\clone` | `versionFromExtensionDir` | `2.8.1`, `2.9.0-beta.1`, `undefined` |
+
+#### Contingent CLI fallback — `decideCliFallback` (only if D44 is built)
+
+| # | Given | Then |
+|---|---|---|
+| F1 | `install: true`, result `changed` with `settings-created`, not offered before | offer `install`, command `claude plugin install acdc@acdc-vscode`, `onceKey` includes the version |
+| F2 | `marketplaceUpdate: true`, result `changed` with `marketplace-path-updated` | offer `marketplace-update`, command `claude plugin marketplace update acdc-vscode` |
+| F3 | both capabilities false, any result | `offer: false` |
+| F4 | result `changed: false` (`up-to-date`, `unparseable`, `user-managed-path`, …) | `offer: false` |
+| F5 | notice `plugin-disabled-by-user` present | `offer: false` |
+| F6 | `alreadyOffered(onceKey)` true: automatic run / `explicitCommand: true` | `offer: false` / offer |
+| F7 | `suppressed: true`, `explicitCommand: true` | `offer: false` |
+
+#### Manual verification (Dev reports evidence with the exact strings observed)
+
+- **M1** F5 with `~/.claude` present: the output channel logs `[Claude] registered`, and the
+  `settings.json` diff shows only the two added keys. Reload the window: it logs `up-to-date` and
+  the file's mtime doesn't change.
+- **M2** `npm run vsix`, then unzip. `extension/.claude-plugin/marketplace.json` and
+  `extension/claude-plugin/.claude-plugin/plugin.json` are present, with 13 files in `agents/`,
+  11 in `commands/` and 41 folders in `skills/`. Attach the `npx vsce ls` output.
+- **M3** Install that VSIX. Start Claude Code in an empty temp folder with **no** `.claude/`. The
+  `@agent-acdc:` typeahead lists every emitted agent. Invoke `acdc:phil`, `acdc:bon` and
+  `acdc:malcolm` (Malcolm delegates to `acdc:al-planning-subagent`), and run `/acdc:al-build` and
+  `/acdc:skill-api`. Record `claude --version`.
+- **M4** Copilot unchanged: the chat agent picker shows the same 13 agents, the prompts and skills
+  still resolve, `git diff main -- package.json` touches only `scripts`, `devDependencies`,
+  `contributes.commands` and `contributes.configuration`, and
+  `npm run validate:contribution-paths` passes.
+- **M5** Update path: install the VSIX at version N and activate, then install N+1 (bump the
+  version locally) and activate. The settings path is rewritten to the new folder. `/reload-plugins`,
+  or a restart, loads from the new folder (proves S7).
+- **M6** Set `enabledPlugins["acdc@acdc-vscode"]` to `false`, then reload the window: it's still
+  `false`, and a one-time notice appears.
+- **M7** Corrupt `settings.json` (a trailing comma), then reload the window: the file is
+  byte-identical and the error is logged.
+- **M8** Set `acdc.claudeCode.autoRegister` to `false` and remove our keys, then reload: nothing is
+  written. Run *AC⚡DC: Register Claude Code plugin*: it's written.
+- **M9** Point `CLAUDE_CONFIG_DIR` at a missing folder (or rename `~/.claude` temporarily), then
+  reload: no folder is created and `skipped: no-config-dir` is logged.
+- **M10** With the legacy `aldc@aldc-marketplace` enabled: the notice appears once, and not after
+  the next reload. The legacy entry is unchanged.
+- **M11** Edit one source agent without re-emitting: `npm run check:claude-plugin` exits 1 and
+  names the file. Re-emit: it exits 0.
+- **M12** *AC⚡DC: Unregister Claude Code plugin* removes only our two keys.
+- **M13** (only if D44 is built) On a clean `CLAUDE_CONFIG_DIR`, a first activation shows the
+  install notification once. No terminal and no `claude` process exists before the click (check
+  the terminal list and Task Manager). **Run in terminal** opens a visible "AC⚡DC: Claude Code"
+  terminal with the exact command, and the plugin then loads in Claude Code. A reload doesn't
+  re-offer it. **Don't show again** suppresses it even for the Register command. For an S7 failure,
+  repeat with a version bump and the `marketplace update` notification.
+
+### 14.10 Acceptance criteria
+
+- [ ] The Task 0 findings for S5, S6, S7 and S9 (and optionally S2) are in the PR description, with
+      `claude --version`. The design matches what was observed, or the work was handed back.
+- [ ] `npm run emit:claude-plugin` produces `.claude-plugin/` and
+      `claude-plugin/{agents,commands,skills}` from the `package.json` contributions. The output is
+      committed. `check:claude-plugin` passes on a clean tree (M11).
+- [ ] Skills are emitted with clean ids (frontmatter `name` = folder = id) and the plugin
+      consumption note (E22–E24).
+- [ ] The frontmatter mapping follows §14.5 exactly, and E1–E30 pass.
+- [ ] The emitter runs from `vscode:prepublish`, `pipeline:assets`, the husky hook and the weekly
+      sync. `release.yml` runs the drift check. `.vscodeignore` ships the surface, and an unpacked
+      VSIX shows it (M2).
+- [ ] The extension registers its own `extensionPath` on activate under every rule in §14.6, and
+      R1–R20 pass. M1 and M5–M10 and M12 have evidence.
+- [ ] Only if S6 or S7 failed: the D44 fallback follows §14.6, F1–F7 pass and M13 has evidence. If both passed, the PR states that D44 wasn't built.
+- [ ] Every emitted user-facing agent can be invoked in Claude Code from a project with no local
+      `.claude/` (M3).
+- [ ] Copilot behaviour is unchanged. The `package.json` chat contributions are untouched (M4).
+- [ ] `src/claudePlugin/{types,frontmatter,toolMap,mapAgent,planPluginSurface,claudeSettings}.ts`
+      import nothing from `vscode` and are listed in `tsconfig.test.json`.
+- [ ] Agent Settings overrides are mirrored into the installed Claude agent files per §14.15:
+      O1–O14, B1–B5 and G1–G3 pass, and M14–M20 have evidence. `yaml` is absent from
+      `dist/extension.js` (D48).
+- [ ] D52: *Apply to chat* and the activation run write nothing in Development/Test mode (V1,
+      M24).
+- [ ] D53: Copilot and Claude overrides re-apply on activation. At most one combined notice with a
+      Reload Window button, only when files changed, never an automatic reload (V2–V10, M21–M23,
+      M25, M26).
+- [ ] `README.md` (a new "Claude Code" section: what registers, `/reload-plugins` or a restart
+      after an update, the kill-switch, the commands, manual cleanup after uninstall, remote
+      behaviour, disabling the legacy ALDC plugin), `assets/help/settings-help.md`
+      (`acdc.claudeCode.autoRegister`) and `CHANGELOG.md` are updated.
+- [ ] The full gate is green and **its real output is pasted** into the handoff: `npm run compile`,
+      `npm run lint`, `npx tsc --noEmit -p tsconfig.json`, `npm test`.
+- [ ] An independent review (or QA with `ai-team-qa`) of `claudeSettings.ts` and `registration.ts`
+      is done before merge. This is a high-risk write outside the workspace.
+
+### 14.11 Risks
+
+| Risk | Mitigation |
+|---|---|
+| We corrupt the user's `~/.claude/settings.json` (it's another tool's config) | Pure compute with R1–R20. Abort on a parse error. Atomic temp + rename. Re-read before the rename. Mandatory independent review |
+| Churn: a write on every activation, or two VS Code builds fighting | Idempotent `up-to-date` (R3/R4). Ownership + no-downgrade (D40, R10/R11) |
+| The plugin doesn't load from registration alone (S6), or doesn't follow a path change (S7) | Spike first. If either fails, the user-clicked CLI fallback (D44) is built, never run silently |
+| Duplicate agents while the legacy `aldc` plugin is enabled | The namespaces differ (`acdc:` vs `aldc:`), so there's no hard collision. One-time notice (D41). Retiring it is WI-5b |
+| Agents lose AL MCP tools in Claude Code (D37) | Accepted by the maintainer (Q2, D37). Documented in the README. 5b brings `.mcp.json` |
+| BCQuality skills have no corpus in 5a | The plugin consumption note makes the degradation explicit (reduced confidence). The corpus comes in WI-5b |
+| Drift between the committed output and its sources | `--check` in `release.yml` + husky re-emit + the sync-workflow emit |
+| An uninstalled extension leaves a dangling marketplace path | The Unregister command + manual cleanup in the README. `vscode:uninstall` in 5b (D43, Q3) |
+| `CLAUDE_CONFIG_DIR` is set in the shell but not in VS Code's environment | Documented. The Register command + README explain launching VS Code from that shell |
+| The VSIX grows (~1 MB of duplicated markdown) | Accepted |
+| Override mirroring corrupts or loses an installed Claude agent file | The same originals + sha-sidecar ownership model as the Copilot path, with its own subtree. The pure `decideOverrideBaseline` (B1–B5). Unparseable baseline → leave the file alone (O13). The reset-baselines command covers the subtree |
+| F5 dirties the committed `claude-plugin/agents/*.md` | Mirroring is skipped in Development/Test mode (D49, G1, M17) |
+| Claude Code keeps showing the old agent after a rewrite | One-line `/reload-plugins` notice, only when files changed (D51) |
+| Activation re-apply (D53) nags on every startup | Counts exclude `generatedFiles` and rebaselining. Writes only on difference. Covered by V5, M22 and M25 |
+| Activation rewrites Copilot agent files that Chat already loaded | Expected; hence the Reload Window button. It's never automatic, and a dismissed notice self-heals at the next startup (M23) |
+| The D52 guard blocks legitimate override testing under F5 | Accepted by the maintainer. Test overrides on an installed VSIX |
+| The emitter core leaks `yaml` into the runtime bundle | `no-restricted-imports` lint rule + bundle check (D48) |
+
+### 14.12 Deferred to WI-5b
+
+1. The 315 `*.instructions.md` → one skill per domain (performance 47, style 35, ui 30, security 25,
+   …), with the files under `references/` and loaded on demand. This restores the BCQuality
+   corpus and replaces the 5a consumption note.
+2. List the `Louage/BCQuality-AC-DC` plugin in our `marketplace.json`, so one registration installs
+   both and `skills/entry.md` resolves.
+3. `hooks/hooks.json` and `.mcp.json` (the `al` altool server per D23, context7, docs). Verify which
+   of them actually load (issue #55 saw only context7).
+4. Retire the standalone `ClaudePlugins/ALDC-AL-Development-Collection` install and remove
+   `aldc@aldc-marketplace` from the maintainer's settings. This is a maintainer action, not an
+   automatic one (D41).
+5. `vscode:uninstall` cleanup (D43).
+
+### 14.13 Maintainer questions — ALL CLOSED (Q1–Q9 answered 2026-09-24)
+
+- **Q1** Kill-switch `acdc.claudeCode.autoRegister` (default `true`, scope `application`), and the
+  Register command bypasses it? → **Yes.** D31 confirmed.
+- **Q2** Agent tools: the explicit built-in allowlist, or inherit for AL agents? → **The built-in
+  allowlist only.** D37 confirmed.
+- **Q3** Defer `vscode:uninstall` cleanup to 5b? → **Yes**, with an Unregister command in 5a. D43
+  confirmed.
+- **Q4** A user-clicked CLI fallback if S6/S7 fails? → **Yes, never silent.** Recorded as D44,
+  contract in §14.6, tests F1–F7, manual step M13. Contingent on the spike.
+- **Q5** A one-time notice for the legacy `aldc` plugin? → **Yes, that's enough.** D41 confirmed.
+- **Q6** Emit all 13 contributed agents? → **Yes.** D36 confirmed.
+- **Q7** Names `acdc-vscode` / `acdc`? → **Confirmed.** D35 confirmed.
+
+The maintainer also accepted D32/D33 (emitter), D34 (plugin root), D40 (registration safety) and
+the §14.9 test plan.
+
+**Questions from the scope change (D45), answered 2026-09-24.**
+- **Q8** Should the Copilot "Apply to chat" path get a Development-mode guard too? → **Yes.** D52,
+  as a small PR-D landed before PR-C.
+- **Q9** Should Copilot overrides also re-apply on activation? → **Yes, remove the asymmetry.** D53,
+  specified in §14.15.8 and folded into PR-C.
+
+### 14.14 Sequencing
+
+Four PRs, split by risk:
+
+1. **Task 0 spike** (S5, S6, S7, S9; half a day) → report to the Producer. If S6 or S7 fails, the D44 fallback for that branch joins PR-B.
+2. **PR-A (normal risk):** emitter core + E1–E32 → CLI + esbuild entry + scripts + the first
+   committed emit → `.vscodeignore`, husky and workflow wiring → M2, M4, M11.
+3. **PR-B (high risk):** `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
+   M5–M10, M12 → docs → **independent review / QA** → merge.
+4. **PR-D (small, normal risk; D52):** the Copilot *Apply to chat* development-host guard,
+   `decideOverrideGate` + V1 → M24 (the Apply half). No dependency on PR-A/B. **Land it before
+   PR-C**, so developing PR-C under F5 can't dirty the committed agent files.
+5. **PR-C (elevated risk; §14.15):** override mirroring, O1–O14, B1–B5, G1–G3 → M14–M20, **plus
+   D53** (activation re-apply for both hosts + the combined notice, V2–V10 → M21–M26) →
+   independent review → merge. D53 is folded in here because it shares the activation run and the
+   notice with D47/D51. **Depends on PR-A** (emitted files, the A12 format, `toolMap.ts`,
+   `slugifyAgentId`). It has **no code dependency on PR-B** and can run in parallel with it.
+   M14–M16 need the plugin loaded in Claude Code, so verify them after PR-B, or register the
+   marketplace manually with `claude plugin marketplace add <extension folder>`.
+
+**Next owner:** Dev, Task 0 spike (S5, S6, S7, S9). The contracts were accepted by the maintainer on 2026-09-24.
+
+### 14.15 Agent Settings overrides mirrored into the Claude plugin (D45–D53)
+
+#### 14.15.1 Goal and what exists today (verified 2026-09-24)
+
+A user who customises an agent in the Agent Settings panel (model, reasoning effort, tools,
+handoffs) gets the same customisation in Claude Code.
+
+Today's Copilot mechanism (`src/agentContributionOverrides.ts`):
+- `applyAgentContributionOverrides(context, output)` rewrites the **installed** contributed
+  `.agent.md` files under `context.extensionUri`. It keeps pristine copies in
+  `globalStorage/agent-overrides/originals/`, the last output in `…/generated/`, and a per-file
+  ownership sidecar in `…/state/<relPath>.json` (`baselineSha` plus the last 5 `writtenShas`).
+  `resolveBaseline` re-baselines when the installed file isn't "ours", which covers an extension
+  update, a git checkout or a manual edit. With no override, the original is restored.
+- **Only fields in `hasRuntimeOverride`** trigger a rewrite: `model`, `reasoningEffort`,
+  `argumentHint`, `disabledTools`, `extraTools`, `handoffs`. `bcReviewSpecialist` and
+  `placeholderTarget` never touch agent files.
+- **The single trigger is the `acdc.applyAgentSettingsToChat` command.** The panel's "Apply to
+  chat" button runs it with `autoReload: true`. It is **not** run on activation (D53 changes this), so after an
+  extension update the new install folder is pristine until the user applies again.
+- **There is no Development-mode guard.** Under F5, `extensionUri` is the repo clone, so an Apply
+  rewrites the committed `assets/generated/aldc-community/agents/*.agent.md`. This is a
+  pre-existing hazard. It is fixed in 5a by D52 (§14.15.8).
+- `resetAgentOverrideBaselines` deletes the whole `agent-overrides` tree.
+
+#### 14.15.2 Approach (D46)
+
+**Chosen: rewrite the installed Claude agent files in place.** For each contributed agent that has
+an override, rewrite `<extensionPath>/claude-plugin/agents/<id>.md`. The content is the pristine
+emitted baseline with the override applied by a small vscode-free function over the A12 format.
+It reuses the originals + sidecar ownership model under its own subtree
+**`globalStorage/agent-overrides/claude/{originals,state}/agents/<id>.md[.json]`**. There's no
+`generated/` copy, because nothing reads one. The Copilot paths and state are untouched.
+
+**Rejected: a separate user-level plugin in `globalStorage`, registered as its own marketplace.**
+- Claude Code can't hide one agent of plugin A behind an agent of plugin B. Overridden agents
+  would show up twice (`acdc:phil` and `acdc-user:phil`) unless the whole base plugin were disabled
+  and fully copied. That would mean toggling `enabledPlugins` automatically, which conflicts with
+  D30/D41's "never flip a user's value".
+- It needs a second marketplace entry in `~/.claude/settings.json` (more writes to another tool's
+  config) and a second full copy of the plugin.
+- `globalStorageUri` differs per VS Code profile and per remote, so the registered path would
+  change with the profile, which churns the same file D40 protects.
+
+The in-place approach inherits the lifecycle the Copilot overrides already have. A plugin loaded in
+place reads the extension folder directly (S5).
+
+#### 14.15.3 Field mapping (D50)
+
+| `AgentSettingEntry` field | Claude effect | Rule |
+|---|---|---|
+| `model` | `model:` | `mapModel(setting.model)`. `sonnet` / `opus` / `haiku` replace the baseline value. Unmapped (GPT, Gemini, …) → **keep the baseline model** + log `model-unmapped`. |
+| `reasoningEffort` | `effort:` | Claude Code subagent frontmatter supports `effort: low|medium|high|xhigh|max`, the same enum as `acdc.agents.settings.*.reasoningEffort` (https://code.claude.com/docs/en/sub-agents, field table). Set or replace it. Any other value → ignored. |
+| `disabledTools`, `extraTools` | `tools:` | The adapter computes the effective Copilot token list with the existing `resolveEffectiveTools` (`agentSettingsService.ts:157`, declared tokens + deltas) and passes it in. The pure function runs `mapTools` over it (TOOL_MAP, **D37 built-ins only**). Extra tools with no built-in mapping (`ms-dynamics-smb.al/*`, `acdc_*`, MCP tokens) are **dropped and logged**; they have no Claude effect. A disabled token removes its Claude tools **only** if no remaining token still maps to them (`edit` disabled but `edit/editFiles` kept → `Edit`, `Write` stay). `Agent` is kept when the baseline has a `SUBAGENTS` section (A8). An empty result → `tools: Read` (A4). |
+| `handoffs` | `HANDOFFS` marker section | Rendered with the A7 bullet format, replacing everything between the A12 markers. Targets resolve through `slugifyAgentId` over the agent display names the adapter loads from `agentSettingsService`. A missing prompt falls back to the baseline bullet with the same label, then to the label (the same precedence as `upsertHandoffs`). An empty list isn't an override. |
+| `argumentHint` | none | Agents have no `argument-hint` in Claude Code (D38, S3). |
+| `bcReviewSpecialist` | none | Visualisation metadata for the workflow view (`agentWorkflowService.ts`). It isn't written into Copilot agent files either (#15). |
+| `placeholderTarget` | none | Placeholders (`reviewAgent`, `developerAgent`, …) are resolved at runtime by `PlaceholderResolver` and the `acdc_*` LM tools. They are **not** substituted into agent bodies on the Copilot side, and the contributed agent bodies contain no agent-placeholder tokens (only `brian` has an unrelated `${projectSlug}`). The body is not changed. |
+
+"Has a Claude override" = `model`, `reasoningEffort`, `disabledTools`, `extraTools` or `handoffs`
+is set. `argumentHint` alone → the baseline is restored.
+
+#### 14.15.4 Contracts
+
+```ts
+// src/claudePlugin/claudeAgentOverrides.ts — must not import "vscode" or "yaml" (D48)
+
+export interface EmittedClaudeAgent {
+  frontmatter: { name: string; description: string; tools?: ClaudeToolName[]; model?: string; effort?: string };
+  preamble: string;                     // body up to the first generated marker
+  handoffs?: string;                    // text between the HANDOFFS markers
+  subagents?: string;                   // text between the SUBAGENTS markers
+  rest: string;                         // everything after, byte-identical
+}
+/** Restricted A12 parser. Returns undefined for anything that isn't emitter output. */
+export function parseEmittedClaudeAgent(text: string): EmittedClaudeAgent | undefined;
+export function renderEmittedClaudeAgent(doc: EmittedClaudeAgent): string;   // shared with the emitter
+
+export interface ClaudeAgentOverride {
+  model?: string;                       // setting.model (Copilot-side name)
+  reasoningEffort?: string;
+  effectiveCopilotTools?: string[];     // resolveEffectiveTools(declared, setting); undefined = no tool delta
+  handoffs?: Array<{ label: string; agent: string; prompt?: string }>;
+}
+
+export interface OverrideContext { agentIdByDisplayName: ReadonlyMap<string, string> }
+
+export type OverrideResult =
+  | { ok: true; content: string; dropped: string[]; notes: string[] }   // content === baseline when nothing applies
+  | { ok: false; reason: "unparseable-baseline" };
+
+export function hasClaudeOverride(setting: { model?: string; reasoningEffort?: string; disabledTools?: string[]; extraTools?: string[]; handoffs?: unknown[] } | undefined): boolean;
+export function applyOverridesToClaudeAgent(baselineClaudeMd: string, override: ClaudeAgentOverride, ctx: OverrideContext): OverrideResult;
+
+// src/claudePlugin/overrideBaseline.ts — vscode-free; the Claude path's ownership decision
+export interface OverrideState { baselineSha?: string; writtenShas: string[] }
+export type BaselineDecision =
+  | { action: "use-backup" }
+  | { action: "rebaseline"; nextState: OverrideState; reason: "no-backup" | "foreign-content" | "backup-integrity" };
+export function decideOverrideBaseline(input: { installedSha: string; backupSha?: string; state?: OverrideState }): BaselineDecision;
+export function recordWritten(state: OverrideState, sha: string, max?: number /* 5 */): OverrideState;
+
+export type MirrorGate = { proceed: true } | { proceed: false; reason: "development-host" | "no-plugin-dir" };
+export function decideClaudeMirror(input: { isDevelopmentOrTest: boolean; pluginDirExists: boolean }): MirrorGate;
+```
+
+The Copilot path keeps its own `resolveBaseline` in 5a. Moving it onto `decideOverrideBaseline`
+is a possible follow-up, deliberately not done here to avoid regressing the Copilot behaviour
+(D46).
+
+**Adapter** (new `src/claudePlugin/claudeAgentMirror.ts`, uses `vscode` and fs):
+
+```ts
+export interface MirrorResult { changed: number; restored: number; rebaselined: number; skipped: number; dropped: string[] }
+export function mirrorAgentOverridesToClaude(context: vscode.ExtensionContext, output: vscode.OutputChannel): Promise<MirrorResult>;
+```
+
+- For each `contributes.chatAgents` entry: `id = slugifyAgentId(profile.name)`, target
+  `<extensionPath>/claude-plugin/agents/<id>.md`. The rest follows the Copilot loop exactly:
+  resolve the baseline (with `decideOverrideBaseline`), restore when there's no Claude override,
+  otherwise apply, record the sha **before** writing, and write only if the content differs.
+- The effective tool list comes from `resolveEffectiveTools`, and display names from the existing
+  agent profile loader. There's no second frontmatter parser for Copilot files.
+- **Triggers (D47):**
+  1. Inside `acdc.applyAgentSettingsToChat`, **before** the Copilot apply and its window reload.
+     Counts are appended to the existing `[agent-overrides]` log line as `claude=changed/restored`.
+  2. On activation, not awaited and never throwing. The Claude side needs no window reload, and an
+     extension update installs a pristine `claude-plugin/`, so this re-applies the user's overrides
+     to the new version. Since D53 the Copilot side re-applies on activation too, and one combined
+     notice covers both hosts (§14.15.8).
+- `resetAgentOverrideBaselines` already deletes the whole `agent-overrides` tree, so the Claude
+  subtree is included with no code change. M20 verifies it.
+
+**Bundle and D42 (revisited in D48):** the runtime bundle (`dist/extension.js`) now includes
+`toolMap.ts`, `slugifyAgentId`, `claudeAgentOverrides.ts` and `overrideBaseline.ts`. These are
+plain TS with **no `yaml`**. The runtime only rewrites our own A12 output, so the fixed format is
+the parser contract. `yaml` stays a devDependency and may be imported **only** by
+`src/claudePlugin/frontmatter.ts` (the emitter). This is enforced with an ESLint
+`no-restricted-imports` rule for `yaml` everywhere else, plus an acceptance check that `yaml` is
+absent from `dist/extension.js`. `mapAgent.ts` and `planPluginSurface.ts` stay out of the runtime
+bundle.
+
+#### 14.15.5 Dev-host rule (D49)
+
+Under F5, `extensionPath` is the clone, and the Claude agent files there are committed (D33).
+`decideClaudeMirror` skips mirroring when `context.extensionMode` is `Development` or `Test` and
+logs `[claude-overrides] skipped: development host`. `--check` stays strict (D33). Test overrides
+in Claude Code with an installed VSIX (M14–M16). The Copilot path has the same hazard today with no
+guard (§14.15.1). D52 adds the same guard there (§14.15.8).
+
+#### 14.15.6 Telling the user (D51)
+
+- When a mirror run reports `changed + restored > 0` **and** the Claude config dir exists, show a
+  one-line non-modal info message: "AC⚡DC updated N Claude Code agent file(s) from Agent Settings.
+  Run `/reload-plugins` in open Claude Code sessions." It's never shown when nothing changed, so
+  it never appears on every activation.
+- On the Apply path the window reloads straight away, so the count is stored in `globalState`
+  (`acdc.claudeCode.pendingReloadNotice`) and shown once by the next activation, then cleared.
+- Rebaselining alone is never announced (the same rule as the Copilot path).
+
+#### 14.15.7 Tests
+
+**`claudeAgentOverrides.test.ts`**
+
+| # | Given | When | Then |
+|---|---|---|---|
+| O1 | emitted `phil.md`, no Claude override | `applyOverridesToClaudeAgent` | `content` byte-identical to the baseline (restore case) |
+| O2 | `model: "Claude Opus 4.5 (copilot)"` over baseline `sonnet` | apply | `model: "opus"`; nothing else changes |
+| O3 | `model: "GPT-5 (copilot)"` | apply | the baseline model is kept, and `notes` has `model-unmapped` |
+| O4 | `reasoningEffort: "xhigh"` / `"turbo"` | apply | `effort: "xhigh"` inserted in canonical key order / ignored |
+| O5 | effective tools gain `execute`, `web` | apply | `Bash, PowerShell, WebFetch, WebSearch` added, in canonical order |
+| O6 | effective tools gain `ms-dynamics-smb.al/al_build`, `acdc_get_sdd_config`, `github/*` | apply | the `tools` line is unchanged, and all three are in `dropped` |
+| O7 | `edit` disabled but `edit/editFiles` still effective | apply | `Edit, Write` stay |
+| O8 | every token disabled | apply | `tools: Read` |
+| O9 | Malcolm baseline with a SUBAGENTS section, `agent` disabled | apply | `Agent` is kept |
+| O10 | handoffs override to `Angus, AL Architect` with no prompt, the label matching a baseline bullet | apply | the HANDOFFS section is replaced, the target is `acdc:angus`, the prompt comes from the baseline bullet |
+| O11 | only `argumentHint`, `bcReviewSpecialist`, `placeholderTarget` set | `hasClaudeOverride` / apply | `false` / byte-identical |
+| O12 | the same inputs twice | apply | identical output (deterministic, no timestamps) |
+| O13 | a baseline without A12 markers, or a hand-edited frontmatter | apply | `{ ok: false, reason: "unparseable-baseline" }` |
+| O14 | a baseline with greeting and SDD `<!-- BEGIN/END -->` blocks | apply with every field | `preamble` and `rest` byte-identical |
+
+**`overrideBaseline.test.ts`**
+
+| # | Given | Then |
+|---|---|---|
+| B1 | no backup | `rebaseline`, `no-backup`, and `nextState` = `{ baselineSha: installed, writtenShas: [installed] }` |
+| B2 | installed sha == backup sha == `state.baselineSha` | `use-backup` |
+| B3 | installed sha in `writtenShas` (our override output) | `use-backup` |
+| B4 | installed sha unknown (an **extension update** shipped new content) | `rebaseline`, `foreign-content` |
+| B5 | backup sha ≠ `state.baselineSha` | `rebaseline`, `backup-integrity` |
+
+Plus `recordWritten`: newest first, de-duplicated, capped at 5.
+
+**Gate:** G1 `isDevelopmentOrTest: true` → `development-host`. G2 no `claude-plugin/` →
+`no-plugin-dir`. G3 otherwise → `proceed`.
+
+**Manual verification** (on an **installed** VSIX, except M17):
+- **M14** In Agent Settings, set Phil's model to a Claude Opus model, set effort to `high`, add
+  `execute`, then Apply to chat. After the reload the notice appears once.
+  `<ext>/claude-plugin/agents/phil.md` shows `model: "opus"`, `effort: "high"` and `Bash`. After
+  `/reload-plugins` in Claude Code, `acdc:phil` reflects the change (check the `/agents` detail).
+- **M15** Remove the override and apply: `phil.md` is byte-identical to the file in the unzipped
+  VSIX.
+- **M16** Keep the override and install version N+1 (bump locally): on activation the new
+  folder's `phil.md` carries the override without clicking Apply, the log shows `rebaselined`, and
+  the notice appears once.
+- **M17** F5: set an override and apply. `git status -- claude-plugin` is clean and the log says
+  `skipped: development host`. With D52 in place, the Copilot side also writes nothing (M24).
+- **M18** Add `ms-dynamics-smb.al/al_build` as an extra tool: it's absent from `phil.md` and listed
+  as dropped in the log.
+- **M19** Copilot regression: the same override produces the same `phil.agent.md` as before PR-C
+  (diff against a pre-PR-C install).
+- **M20** Run *Reset agent override baselines*, then Apply: both subtrees re-baseline and there's no
+  data loss.
+
+#### 14.15.8 Copilot dev-mode guard (D52) and re-apply on activation for both hosts (D53)
+
+**Pure logic** (new `src/agentOverrideActivation.ts`; must not import `vscode`):
+
+```ts
+export type OverrideGate = { proceed: true } | { proceed: false; reason: "development-host" };
+/** Used by BOTH the Copilot path (Apply command + activation) and the Claude mirror. It replaces
+ *  the development half of decideClaudeMirror, which keeps only the no-plugin-dir check. */
+export function decideOverrideGate(input: { isDevelopmentOrTest: boolean }): OverrideGate;
+
+/** Only files whose content actually changed. Rebaselining and "generatedFiles" never count. */
+export interface OverrideRunCounts { changed: number; restored: number }
+
+export type OverrideNotice =
+  | { show: false }
+  | { show: true; message: string; reloadWindowButton: boolean };
+
+export function decideOverrideNotice(input: {
+  copilot?: OverrideRunCounts;           // undefined = the path didn't run (gate or error)
+  claude?: OverrideRunCounts;
+  pendingClaudeFromApply: number;        // D51 globalState carry-over, 0 if none
+  claudeConfigDirExists: boolean;        // Claude part is suppressed without a Claude config dir
+}): OverrideNotice;
+```
+
+**Rules**
+1. **Gate (D52, D49).** `decideOverrideGate` runs first on every override path. When it blocks:
+   - The *Apply to chat* command writes nothing and shows "Agent overrides aren't applied in the
+     Extension Development Host, because they would rewrite committed files. Test them with an
+     installed VSIX." It logs `[agent-overrides] skipped: development host`.
+   - The activation run is silent (log only).
+
+   The panel's `autoReload` doesn't fire when the gate blocks.
+2. **Activation re-apply (D53).** Not awaited and never throwing. Run
+   `applyAgentContributionOverrides` (Copilot), then `mirrorAgentOverridesToClaude`. Both write only
+   when content differs, so a steady-state activation writes nothing. After an extension update
+   the new folder's files are foreign, so they're re-baselined, and the overrides are written
+   again (`changed > 0`).
+3. **Counting.** On the Copilot side use `changedContributionFiles` + `restoredContributionFiles`.
+   **Never `generatedFiles`**, because it increments on every run for every overridden agent and
+   would notify on every activation. The existing Apply command's `hasWork` check keeps its
+   current behaviour.
+4. **Notice** (`decideOverrideNotice`). One non-modal notification at most, per activation:
+
+   | Copilot changed+restored | Claude changed+restored (+pending) with a config dir | Message | Reload Window button |
+   |---|---|---|---|
+   | 0 | 0 | none | — |
+   | N > 0 | 0 | "AC⚡DC re-applied your Agent Settings to N Copilot agent(s). Reload the window so Chat uses them." | yes |
+   | 0 | M > 0 | "AC⚡DC updated M Claude Code agent file(s) from Agent Settings. Run `/reload-plugins` in open Claude Code sessions." (the D51 text) | no |
+   | N > 0 | M > 0 | "AC⚡DC re-applied your Agent Settings: N Copilot agent(s) (reload the window) and M Claude Code agent file(s) (run `/reload-plugins` in open Claude Code sessions)." | yes |
+
+   - The button only runs `workbench.action.reloadWindow` on a click. **Activation never reloads
+     automatically.** Dismissing the notice is fine: the next activation finds the files already
+     "ours", writes nothing and says nothing, and Chat reads the rewritten files at that startup.
+   - The D51 pending count (from an Apply → auto-reload) is folded in and then cleared, so there's
+     one notice, not two.
+   - With no Claude config dir the Claude part is dropped (the files are still mirrored).
+5. **Where the calls live.** `extension.ts` activation calls one new adapter
+   `reapplyAgentOverridesOnActivation(context, output)`, which runs the gate, both runs and the
+   notice. The Apply command gets the gate check at its top. No other Copilot logic changes.
+
+**Tests — `agentOverrideActivation.test.ts`**
+
+| # | Given | When | Then |
+|---|---|---|---|
+| V1 | `isDevelopmentOrTest: true` / `false` | `decideOverrideGate` | `development-host` / `proceed` |
+| V2 | Copilot `{changed: 1, restored: 0}`, Claude `{0, 0}`, pending 0 | `decideOverrideNotice` | show, Copilot text with N=1, `reloadWindowButton: true` |
+| V3 | Copilot `{0, 0}`, Claude `{2, 0}`, config dir present | notice | show, Claude text with M=2, no button |
+| V4 | Copilot `{1, 0}`, Claude `{0, 1}`, config dir present | notice | **one** combined message, button |
+| V5 | everything 0, pending 0 (steady state, or rebaselined only) | notice | `show: false` |
+| V6 | everything 0, pending 3 | notice | Claude text with M=3, no button |
+| V7 | Copilot `{0, 0}`, Claude `{2, 0}`, **no** config dir | notice | `show: false` |
+| V8 | Copilot `{0, 2}` (overrides removed, e.g. via Settings Sync) | notice | Copilot text with N=2, button |
+| V9 | Copilot undefined (gate blocked or error), Claude `{1, 0}` | notice | Claude text only |
+| V10 | Copilot `{1, 0}`, Claude `{1, 0}` with no config dir, pending 2 | notice | Copilot text only (the Claude part, pending included, is suppressed), button |
+
+**Manual verification** (installed VSIX unless stated otherwise)
+- **M21** With an override on Phil (model + an extra tool), install version N+1 and let VS Code
+  activate. **One** notification appears, with the combined text and a **Reload Window** button;
+  nothing reloads by itself. Click it: the Copilot Phil agent shows the override, and
+  `claude-plugin/agents/phil.md` carries it too.
+- **M22** Reload again: no notification. Both agent files keep the same mtime.
+- **M23** Repeat M21 but dismiss the notification. Reload manually: the override is active in
+  Copilot and no second notification appears.
+- **M24** F5: *Apply to chat* shows the development-host message, and
+  `git status -- assets/generated claude-plugin` is clean. Activation writes nothing and shows
+  nothing.
+- **M25** With no overrides configured, over several activations: no notification, and the
+  installed agent files are untouched (mtime).
+- **M26** *Apply to chat* with a change on both hosts: the window auto-reloads (the existing
+  behaviour), then exactly one notification with the Claude part only appears (the pending count).
