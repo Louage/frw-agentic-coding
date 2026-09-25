@@ -256,12 +256,10 @@ vscode-free module and cover it with Node 20's built-in runner.
 - Work item 2 (§11): README audit + surface release notes after an update.
 - Work item 3 (§12): grouped tool picker + qualified tool IDs in the Agent Settings panel.
 - Work item 5a (§14, issue #55): Claude Code plugin surface in the VSIX + self-registration in
-  `~/.claude/settings.json`. **Status (2026-09-24): Task 0 spike run — S5 PASS, S6 PASS, S9 PASS,
-  S7 triggers the §14.3 rule (the D44 "marketplace-update" fallback command is confirmed to report
-  success without fixing a changed path; whether `/reload-plugins`/restart works per M5 is
-  undetermined non-interactively). Handed back to the Producer per the spike rule; no code written.
-  Next: Producer decides the S7 fallback wording/mechanism (§14.3) before Dev opens PR-B.** PR-A
-  (emitter) is not blocked by S7 and can start. High-risk (writes outside the workspace), so PR-B
+  `~/.claude/settings.json`. **Status (2026-09-25): Task 0 spike done (S5/S6/S9 PASS, S7 FAIL). Maintainer
+  decision D54: register a stable path `~/.acdc/claude-marketplace`, re-pointed by junction/symlink
+  on each activation (§14.6 respecced); D44 retired. PR-A (emitter) in progress, with no contract
+  change. Next: Dev runs the S11 junction/symlink mini-spike before PR-B.** High-risk (writes outside the workspace), so PR-B
   needs independent review/QA before merge. Scope extended 2026-09-24 (D45): Agent Settings overrides
   are mirrored into the Claude plugin (§14.15, PR-C after PR-A). Q8/Q9 answered (D52 Copilot dev-mode guard as PR-D; D53 Copilot re-apply on activation, in PR-C). Work item 5b (instruction domains → skills, BCQuality
   listing, hooks/MCP, retiring `ClaudePlugins/`) is deferred (§14.12).
@@ -612,7 +610,7 @@ the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain
 - D39 (producer): **no `version` in the emitted `plugin.json` or marketplace entry.** A plugin
   loaded in place ignores it (§14.3 S5), and leaving it out keeps the committed output stable when
   `release.yml` runs `npm version`, so there's no drift on every release.
-- D40 (producer; **maintainer-accepted 2026-09-24**): **registration only overwrites a marketplace path it owns, and never
+- D40 (producer; **maintainer-accepted 2026-09-24; revised by D54 on 2026-09-25**: ownership and no-downgrade now apply to the *link target*, with the newer version winning and a tie keeping the incumbent. The settings path is constant): **registration only overwrites a marketplace path it owns, and never
   downgrades.** It owns the path when the entry is missing, the path equals `extensionPath`, or the
   basename matches `theframework.acdc-<semver>`. A registered path whose version is newer than ours
   *and* still exists on disk is left alone, so VS Code Stable and Insiders with different versions
@@ -628,7 +626,7 @@ the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain
 - D43 (producer; **maintainer-confirmed 2026-09-24, Q3**): cleanup on uninstall (`vscode:uninstall`
   hook) is deferred to WI-5b. WI-5a ships an explicit **Unregister** command and documents manual
   cleanup.
-- D44 (maintainer, 2026-09-24, Q4; **contingent on the S6/S7 spike result**): if S6 or S7 fails,
+- D44 (maintainer, 2026-09-24, Q4; **RETIRED 2026-09-25 by D54**: S6 passed, so there's no install branch; S7 showed `marketplace update` doesn't work, and the stable path removes the need): if S6 or S7 fails,
   the extension **may** offer a **user-clicked** action that opens a VS Code terminal running
   `claude plugin install acdc@acdc-vscode` (S6 failure) or
   `claude plugin marketplace update acdc-vscode` (S7 failure). It must **never run silently**:
@@ -636,7 +634,8 @@ the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain
   visible terminal. Fallback contract: §14.6 "Contingent fallback (D44)". If both S6 and S7 pass,
   this fallback is **not built**.
 - The §14.9 test plan (E1–E30, R1–R20, M1–M12, plus F1–F7 and M13 for D44) was accepted by the
-  maintainer on 2026-09-24.
+  maintainer on 2026-09-24. Revised 2026-09-25 for D54: F1–F7 dropped, L1–L12 added, R5/R11
+  rewritten, M1/M3/M5/M6/M12 revised, and M13 is now a link-safety step.
 - D45 (maintainer, 2026-09-24): **per-user Agent Settings overrides are mirrored into the Claude
   plugin, in WI-5a.** This recalls the earlier "Not planned" note. Spec: §14.15.
 - D46 (producer, 2026-09-24): **approach = rewrite the installed
@@ -669,6 +668,27 @@ the grouped tool picker, the contributed `al` MCP server, `acdc_get_al_toolchain
 - D51 (producer, 2026-09-24): users get a one-line `/reload-plugins` notice only when a mirror run
   changed or restored at least one file. On the Apply path it's deferred across the window reload
   via `globalState`. **On activation this notice is merged with the Copilot notice into one (D53).**
+- D54 (maintainer, 2026-09-25; S7 FAILED): **register a stable path and re-point it on every
+  activation.** Claude Code keeps a known marketplace's `installLocation` when the settings path
+  changes, `claude plugin marketplace update` reports success while changing nothing, and only
+  remove + re-add works (which strips our keys). So `settings.json` registers
+  `<home>/.acdc/claude-marketplace`, which never changes. On activation the extension makes it a
+  **directory junction (Windows, no admin needed) / symlink (macOS/Linux)** to
+  `context.extensionPath`. D34 is unchanged: the link target is the marketplace root.
+  Producer details inside D54:
+  - location under the home dir, not `globalStorage` (which differs for Stable/Insiders and per
+    profile);
+  - the newer version wins the link, and a tie keeps the incumbent;
+  - F5 never links;
+  - a real directory at the path is refused and never deleted;
+  - there is no recursive delete near the link;
+  - a read-only diagnostic of `known_marketplaces.json` gives a text-only reset hint.
+  D44 is retired. Verified by the new mini-spike S11 before PR-B. **No PR-A contract change.**
+- D55 (producer, 2026-09-25; **contingent on S11 failing**, maintainer to confirm only then): if
+  Claude Code resolves the link's realpath into `installLocation`, or rejects plugin files reached
+  through the link, replace the link with a hash-synced **materialised copy** at the same stable
+  path. It's marked `.acdc-managed`, uses the same newest-version-wins rule, and PR-C would mirror
+  overrides into the copy.
 - D52 (maintainer, 2026-09-24, Q8): **the Copilot "Apply to chat" path gets the same
   Development/Test-mode guard as D49.** Under F5 the command writes nothing and says why, so it no
   longer rewrites the committed `assets/generated/aldc-community/agents/*.agent.md`. The gate is the
@@ -1258,8 +1278,8 @@ extension keeps `~/.claude/settings.json` pointed at whichever version is instal
 - Emit the 41 skills with clean ids + the plugin consumption note
 - `.claude-plugin/marketplace.json` + `claude-plugin/.claude-plugin/plugin.json`
 - Packaging (`.vscodeignore`, prepublish), drift check, VSIX-contents check
-- Self-registration on activate + kill-switch + Register/Unregister commands (+ the contingent D44
-  fallback, only if the spike requires it)
+- Self-registration on activate via the stable link `~/.acdc/claude-marketplace` (D54) + kill-switch
+  + Register/Unregister commands
 - Per-user Agent Settings overrides (model, reasoning effort, extra or disabled tools, handoffs)
   mirrored into the installed Claude agent files (§14.15, D45)
 
@@ -1310,6 +1330,7 @@ Researched 2026-09-24 against the current Claude Code docs and the maintainer's 
 | S5 | Is the plugin copied into a cache, which would make the version-in-path problem worse? | **PASS (re-verified 2026-09-24, `claude --version` 2.1.281)** | Isolated `CLAUDE_CONFIG_DIR` fixture (D34 layout, two content-distinct copies `acdc-2.8.1`/`acdc-2.8.2`). Registered purely via `settings.json` (`extraKnownMarketplaces`+`enabledPlugins`), then started one `claude -p … --bare` process. Result: `plugins/known_marketplaces.json.installLocation` == the fixture directory **itself**; no `plugins/cache/**` was ever created. Loads **in place**, matching docs, not the legacy caveat. The legacy `aldc` cache copy is a *different* code path: the real `~/.claude/plugins/installed_plugins.json` shows `aldc@aldc-marketplace` has an explicit **installed** record (`installPath` under `plugins/cache/aldc-marketplace/aldc/4.2.0`, 2026-07-01) — that record type is created by an explicit install flow (`claude plugin install`/`marketplace add`+install), which `registerClaudeCodePlugin()` never calls. No change forced on §14.4/§14.6. |
 | S6 | Does writing `extraKnownMarketplaces` + `enabledPlugins` to **user** settings make the plugin load **without** `/plugin install`? | **PASS (re-verified 2026-09-24)** | Same isolated run as S5. Before registration, `claude plugin marketplace list`/`plugin list`/`plugin details acdc@acdc-vscode` all reported nothing configured. After the settings.json write + one process start (no `/plugin install`, no `claude plugin install`, no `marketplace add` ever run), `claude plugin details acdc@acdc-vscode` succeeded and enumerated the live component inventory: `Agents (1) spike-probe`, `Skills (2) spike-probe, spike-probe` (the skill and the legacy-skill-form command are both counted as "skills" by this command). §14.6 as designed is sufficient; **the D44 "install" branch is not needed.** Nuance for M3/M6: `claude plugin list` and `installed_plugins.json` stay empty for a directory-source, enabled-via-settings plugin — that command/file tracks a narrower "installed" concept (github/npm sources, or an explicit `claude plugin install`). Use `claude plugin details` to check availability, not `claude plugin list`. Caveat: repeated attempts to complete a real authenticated `claude -p` turn (to see a live completion name `spike-probe`) hung 90–200s against a deliberately-invalid API key before failing with a 401 — no real-credential turn was completed during this spike; the PASS rests on `claude plugin details`, the documented purpose-built inspector for plugin component loading, not on an observed LLM completion. M3 (maintainer's own credentials) still gives the end-to-end check. |
 | S7 | When the registered **path changes** for an already-known marketplace (the update case), does Claude Code follow it? | **FAIL for the documented fallback command; part UNDETERMINED non-interactively — hand back to Producer** | Registered at fixture path A (creates `known_marketplaces.json.installLocation` = A, per S5/S6). Without removing the marketplace, changed only `settings.json`'s `extraKnownMarketplaces.acdc-vscode.source.path` to fixture path B (distinct content, same ids). Reproduced 3×: plain `claude plugin marketplace list`/`plugin details` still report A (expected, read-only). **`claude plugin marketplace update acdc-vscode`** — the exact command D44's "marketplace-update" notification tells the user to run — printed "✔ Successfully updated marketplace: acdc-vscode" and bumped `lastUpdated`, but **left `source.path`/`installLocation` at A**; it re-validates at the already-known location and never re-reads settings.json's new path. This is a **confirmed FAIL of the documented fallback command** as worded — running it reports success while fixing nothing. The only thing that changed the known location was `claude plugin marketplace remove acdc-vscode` (which itself rewrites the user's settings.json, stripping our keys — an action D41 forbids the extension from doing) followed by a fresh registration. **Undetermined non-interactively:** whether `/reload-plugins` (session-only slash command) or a full restart — what §14.9's **M5** actually claims ("`/reload-plugins`, or a restart, loads from the new folder"), which is a different claim from D44's notification text — re-diffs `extraKnownMarketplaces` against an *already-known* marketplace and follows the new path. Reaching a point where `/reload-plugins` could be issued needs a completed authenticated turn, which repeatedly hung 90–200s then failed 401 against a deliberately-invalid key; this was not tried against real credentials (see manual steps below). Because D44's own message text does not do what it claims, the Task 0 rule applies: **this contradicts the plan, stop and hand back to the Producer** rather than have Dev build the fallback around a guess. **Manual steps for the maintainer** (interactive, ~5 min, needs a logged-in `claude`): (1) register fixture A via settings.json as above; (2) `claude` interactively, confirm `@acdc:spike-probe` shows the A marker; (3) exit, edit only the path to fixture B; (4) start a **new** session (no `/reload-plugins` yet) and re-check the marker — isolates M5's "restart" claim; (5) if still A, run `/reload-plugins` in that session and re-check — isolates the slash command alone; (6) if still A, run `claude plugin marketplace update acdc-vscode` (confirmed here to be a no-op for the path) then `/reload-plugins`, matching D44's current text exactly, and re-check. Report which step (4/5/6/none) actually flips the marker, so §14.6/D44's notification text names the step that actually works. |
+| S11 | **NEW (D54), mini-spike for Dev.** Does Claude Code load a directory marketplace reached through a **junction (Windows) / symlink (POSIX)**, keep the *link* path as `installLocation`, and pick up a re-pointed target? | **OPEN — blocking for PR-B** | Run in the isolated `CLAUDE_CONFIG_DIR` fixture already in the scratchpad (`wi5a-spike`), `claude --version` recorded. Steps: (1) create `<fixture>/acdc-link` as a junction to fixture A (`fs.symlink(A, link, "junction")`); (2) register `acdc-link` in `settings.json`, start one `claude -p … --bare`; (3) check `known_marketplaces.json.installLocation` equals the **link path, not A**, and `claude plugin details acdc@acdc-vscode` lists A's components (probe marker) — no "path outside plugin root" error in `/plugin` Errors or `--debug`; (4) re-point the junction to fixture B (remove link via `fs.rmdir` — verify A's files are intact afterwards — then re-create); (5) start a **new** process: `plugin details` shows B's marker, `installLocation` unchanged; (6) if an interactive logged-in session is available, also confirm `/reload-plugins` picks up B mid-session (otherwise note "new session only"). Repeat (1)–(5) with a POSIX symlink if a WSL/macOS box is at hand; otherwise mark POSIX as verified by M5 on a real machine. **PASS → build D54 as specified. FAIL at (3) or (5) → hand back; D55 (materialised copy) applies.** |
 | S8 | Do `.mcp.json` servers load (only context7 did in the issue's session)? | **Deferred to 5b** | No `.mcp.json` ships in 5a (D29). |
 | S9 | Does `vsce` package the dot-folder `.claude-plugin/`? | **PASS (2026-09-24, `@vscode/vsce` 3.9.2)** | Added the exact D34 layout as **untracked** files at the repo root (`.claude-plugin/marketplace.json`, `claude-plugin/.claude-plugin/plugin.json`, `claude-plugin/agents/spike-probe.md`, `claude-plugin/commands/spike-probe.md`, `claude-plugin/skills/spike-probe/SKILL.md` — none `git add`ed). `npx vsce ls` listed all five paths verbatim. Confirms vsce's packaging isn't restricted to git-tracked files, and neither `.claude-plugin/` nor `claude-plugin/` is filtered by `.vscodeignore` or vsce's `defaultIgnore`. Fixture removed immediately after; `git status` returned to the pre-spike state. |
 | S10 | Plugin agent id and name rules | **Confirmed** | The id is `<plugin>:<name>` (`acdc:phil`). `name` must not contain `:`. Plugin agents **ignore** `hooks`, `mcpServers`, `permissionMode` and `initialPrompt`. Model aliases: `sonnet`, `opus`, `haiku`, `fable`, `inherit`, or a full id. With `tools` omitted, the agent inherits every tool. Source: https://code.claude.com/docs/en/sub-agents |
@@ -1317,6 +1338,8 @@ Researched 2026-09-24 against the current Claude Code docs and the maintainer's 
 **Rule (as in §12.3):** if S5, S6 or S7 contradicts this plan, **stop and hand back to the
 Producer**. Don't bend §14.6 around a guess. Record the Claude Code version (`claude --version`)
 used for each observation.
+
+**Resolution (2026-09-25, maintainer, D54):** the S7 failure is designed around, not worked around. The registered path becomes a stable link (`~/.acdc/claude-marketplace`) that the extension re-points on activation (§14.6). Claude Code's `installLocation` therefore never changes. D44 is fully retired. The new mini-spike S11 verifies link resolution before PR-B.
 
 **Task 0 spike result (2026-09-24, `claude --version` 2.1.281, methodology and evidence in the
 S5/S6/S7/S9 rows above):** S5 PASS, S6 PASS, S9 PASS. **S7 triggers the rule** — the fallback
@@ -1554,44 +1577,103 @@ Agent, Skill, TodoWrite`.
 
 ### 14.6 Structural contract — self-registration
 
-**Split:** `src/claudePlugin/claudeSettings.ts` (vscode-free, all decisions) and
-`src/claudePlugin/registration.ts` (thin adapter: fs, `vscode` configuration, output channel,
-notices).
+**Revised 2026-09-25 by D54 (S7 failed).** Claude Code keeps a known marketplace's
+`installLocation` even when the `settings.json` path changes (S7). So the extension registers a
+**stable path that never changes across updates**, and on every activation it re-points that
+path at the current `context.extensionPath` with a directory link. The registered path and
+Claude Code's stored `installLocation` never go stale; only the link target moves.
+
+```
+%USERPROFILE%\.acdc\claude-marketplace   ──junction──▶  …\extensions\theframework.acdc-2.8.2\   (Windows)
+~/.acdc/claude-marketplace               ──symlink───▶  …/extensions/theframework.acdc-2.8.2/   (macOS/Linux)
+        ▲ registered in ~/.claude/settings.json (never changes)
+        └─ <link>/.claude-plugin/marketplace.json → "./claude-plugin" (D34 layout, unchanged)
+```
+
+**Location (D54).** `<home>/.acdc/claude-marketplace`. That's one path per OS user, shared by
+VS Code Stable, Insiders and every profile. `globalStorageUri` was rejected because it differs
+between Stable and Insiders (separate user-data dirs) and per profile, so each would register a
+different path and fight over the one `acdc-vscode` marketplace. `~/.acdc/` is our own folder, so
+creating it is allowed. It isn't Claude's config dir, and the "never create `~/.claude`" rule still
+applies. On a remote window (WSL/SSH) this is the remote home, which matches where Claude Code runs.
+
+**Split:**
+- `src/claudePlugin/claudeSettings.ts` (vscode-free) holds the settings decisions.
+- `src/claudePlugin/marketplaceLink.ts` (vscode-free, **new**) holds the link decision.
+- `src/claudePlugin/registration.ts` is the thin adapter: fs, links, `vscode` configuration, the
+  output channel and notices.
 
 ```ts
-// src/claudePlugin/claudeSettings.ts — must not import "vscode"
+// src/claudePlugin/marketplaceLink.ts — must not import "vscode" (NEW, D54/D55)
+
+export const STABLE_MARKETPLACE_DIRNAME = ".acdc/claude-marketplace";
+export function resolveStableMarketplacePath(homedir: string, platform: NodeJS.Platform): string;
+
+/** What the adapter observed at the stable path (via lstat + readlink, never following it for deletes). */
+export type LinkState =
+  | { kind: "missing" }
+  | { kind: "link"; target: string; targetExists: boolean }   // junction or symlink; target normalised (strip \\?\)
+  | { kind: "directory" }                                      // a REAL directory — never deleted
+  | { kind: "file" }
+  | { kind: "other" };
+
+export type LinkDecision =
+  | { action: "create" | "repoint"; target: string }
+  | { action: "keep"; reason: "up-to-date" | "newer-or-equal-incumbent" | "foreign-target" | "development-host" }
+  | { action: "refuse"; reason: "real-directory" | "file" | "unknown-entry" };
+
+export function decideMarketplaceLink(input: {
+  state: LinkState;
+  extensionPath: string;                 // context.extensionPath (the link target we want)
+  extensionVersion: string;
+  platform: NodeJS.Platform;
+  isDevelopmentOrTest: boolean;
+  force: boolean;                        // explicit Register command only
+}): LinkDecision;
+```
+
+**Link rules (`decideMarketplaceLink`), in order**
+1. `isDevelopmentOrTest` → `keep: "development-host"`. F5 never re-points the user's Claude Code at
+   the repo clone (it's consistent with D49/D52). Not even `force` overrides this.
+2. `directory` → `refuse: "real-directory"`. **Never delete or replace a real directory.** `file` →
+   `refuse: "file"`. `other` → `refuse: "unknown-entry"`. `force` changes none of these.
+3. `missing` → `create`.
+4. `link` whose target `pathsEqual` our `extensionPath` → `keep: "up-to-date"`.
+5. `link` whose target is dangling (`targetExists: false`) → `repoint`. The incumbent was
+   uninstalled or updated away.
+6. `link` to a target that isn't owned (basename not `theframework.acdc-<semver>`, e.g. a dev clone
+   the user linked by hand) → `keep: "foreign-target"`, unless `force` → `repoint`.
+7. `link` to an owned, existing target: **the newer version wins; a tie keeps the incumbent**
+   (D40). The target's version is newer than or equal to ours → `keep: "newer-or-equal-incumbent"`
+   (unless `force` → `repoint`). Ours is strictly newer → `repoint`.
+
+   So with Stable and Insiders both installed, the newer AC⚡DC serves Claude Code, and at equal
+   versions whichever linked first stays. No flip-flopping.
+
+```ts
+// src/claudePlugin/claudeSettings.ts — must not import "vscode" (revised by D54)
 
 export const ACDC_MARKETPLACE = "acdc-vscode";
 export const ACDC_PLUGIN_KEY = "acdc@acdc-vscode";
 export const LEGACY_PLUGIN_KEY = "aldc@aldc-marketplace";
 
 export interface RegistrationOptions {
-  extensionVersion: string;            // context.extension.packageJSON.version
   platform: NodeJS.Platform;           // path comparison (win32: case-insensitive, \ ≡ /)
-  /** Whether the path currently registered under ACDC_MARKETPLACE exists on disk (the adapter stats it). */
-  registeredPathExists: boolean | undefined;
   force: boolean;                      // true only from the explicit Register command
 }
 
-export type SkipReason =
-  | "up-to-date" | "unparseable" | "not-an-object"
-  | "user-managed-path" | "newer-version-registered";
+export type SkipReason = "up-to-date" | "unparseable" | "not-an-object" | "user-managed-path";
 export type RegistrationChange = "settings-created" | "marketplace-added" | "marketplace-path-updated" | "plugin-enabled";
-export type RegistrationNotice = "legacy-aldc-enabled" | "plugin-disabled-by-user";
+export type RegistrationNotice = "legacy-aldc-enabled" | "plugin-disabled-by-user" | "known-location-needs-reset";
 
 export type SettingsUpdateResult =
   | { changed: true; next: string; changes: RegistrationChange[]; notices: RegistrationNotice[] }
   | { changed: false; skip: SkipReason; notices: RegistrationNotice[] };
 
-/** `current` = raw file text, or undefined when settings.json doesn't exist (its folder does). */
-export function computeClaudeSettingsUpdate(current: string | undefined, extensionPath: string, opts: RegistrationOptions): SettingsUpdateResult;
-
-/** Removes our marketplace entry and our enabledPlugins key only. Same preservation rules. */
+/** `stablePath` = resolveStableMarketplacePath(...). It is the ONLY path this function ever writes. */
+export function computeClaudeSettingsUpdate(current: string | undefined, stablePath: string, opts: RegistrationOptions): SettingsUpdateResult;
 export function computeClaudeSettingsRemoval(current: string | undefined): SettingsUpdateResult;
-
-/** For the adapter to stat before calling computeClaudeSettingsUpdate. */
 export function readRegisteredMarketplacePath(current: string | undefined): string | undefined;
-
 export function resolveClaudeConfigDir(env: Record<string, string | undefined>, homedir: string, platform: NodeJS.Platform): string;
 
 export type RegistrationGate = { proceed: true } | { proceed: false; reason: "no-config-dir" | "disabled-by-setting" };
@@ -1601,25 +1683,32 @@ export function pathsEqual(a: string, b: string, platform: NodeJS.Platform): boo
 export function versionFromExtensionDir(p: string): string | undefined;   // "…/theframework.acdc-2.8.1" → "2.8.1"
 ```
 
-**Update rules (`computeClaudeSettingsUpdate`), in order**
+**Settings rules (`computeClaudeSettingsUpdate`), in order.** Rules 1, 2 and 4–7 are unchanged;
+rule 3 is simplified because the registered path is now constant.
 1. `current === undefined` → create `{ extraKnownMarketplaces: {…ours}, enabledPlugins: { [ACDC_PLUGIN_KEY]: true } }`.
-2. `JSON.parse` throws (this includes JSONC with comments) → `skip: "unparseable"`. The root, an
-   existing `extraKnownMarketplaces` or an existing `enabledPlugins` that isn't a plain object →
+2. `JSON.parse` throws (this includes JSONC) → `skip: "unparseable"`. The root, an existing
+   `extraKnownMarketplaces` or an existing `enabledPlugins` that isn't a plain object →
    `skip: "not-an-object"`. Never clobber.
 3. Marketplace entry under `acdc-vscode`:
-   - missing → add `{ source: { source: "directory", path: extensionPath } }`
-   - `pathsEqual(existing, extensionPath)` → no change
-   - otherwise, when not `force`: if the existing path isn't owned (D40: basename not
-     `theframework.acdc-<semver>`) → `skip: "user-managed-path"`. If the existing version is newer
-     than `extensionVersion` **and** `registeredPathExists === true` → `skip: "newer-version-registered"`.
-   - otherwise → replace `source` only, and keep sibling fields such as `autoUpdate`.
-4. `enabledPlugins[ACDC_PLUGIN_KEY]`: `undefined` → set `true`. `false` → **leave it** and add the
+   - missing → add `{ source: { source: "directory", path: stablePath } }`
+   - `pathsEqual(existing, stablePath)` → no change
+   - existing is an **owned versioned extension dir** (`theframework.acdc-<semver>`; only
+     pre-release and spike machines have these) → replace it with `stablePath` **and** add the
+     notice `known-location-needs-reset`. Because of S7, Claude Code won't follow the change until
+     the user runs `claude plugin marketplace remove acdc-vscode` once. That command also strips
+     our keys, and the next activation or the Register command re-adds them.
+   - anything else (not owned) → `skip: "user-managed-path"`, unless `force` → replace (with the
+     same notice).
+   - Sibling fields such as `autoUpdate` are always kept.
+4. `enabledPlugins[ACDC_PLUGIN_KEY]`: `undefined` → `true`. `false` → **leave it**, and add the
    notice `plugin-disabled-by-user`. `true` → no change.
-5. `enabledPlugins[LEGACY_PLUGIN_KEY] === true` → add the notice `legacy-aldc-enabled`. Never modify it (D41).
+5. `enabledPlugins[LEGACY_PLUGIN_KEY] === true` → notice `legacy-aldc-enabled`. Never modified (D41).
 6. Nothing changed → `skip: "up-to-date"` (**idempotent: no write, no mtime change**).
-7. Serialise: detect the original indent (spaces/tab and width), EOL (`\r\n` vs `\n`) and final
-   newline, then re-emit with `JSON.stringify(obj, null, indent)` in that style. Key order is
-   preserved, and new keys are appended at the end of their object.
+7. Serialise in the original indent, EOL and final-newline style. Key order is preserved, and new
+   keys are appended.
+
+The version and no-downgrade comparison (the old R11) moved from here to link rule 7. Settings no
+longer depend on the extension version at all.
 
 **Adapter (`registration.ts`)**
 
@@ -1628,76 +1717,63 @@ export function registerClaudeCodePlugin(context: vscode.ExtensionContext, outpu
 export function unregisterClaudeCodePlugin(context: vscode.ExtensionContext, output: vscode.OutputChannel): Promise<void>;
 ```
 
-- Called from `activate()` **without await**, and wrapped so it can never throw into activation.
-  Logs one line to the existing `AC⚡DC` output channel
-  (`[Claude] registered|updated|up-to-date|skipped: <reason>`).
-- `configDir = resolveClaudeConfigDir(process.env, os.homedir(), process.platform)`. The gate
-  comes from `decideRegistrationGate`. **Never `mkdir` the config dir.**
-- Write: `settings.json.acdc-<pid>-<random>.tmp` in the same folder → `fs.rename` over the target.
-  Before the rename, re-read the target. If it changed since the first read (a concurrent Claude
-  Code write), delete the temp file and retry the whole compute once, then give up and log.
-- Notices: one-time `showInformationMessage`, each guarded by a `globalState` key.
-  `legacy-aldc-enabled` → "The standalone ALDC plugin is also enabled in Claude Code; its agents
-  duplicate AC⚡DC's. Disable it with `/plugin disable aldc@aldc-marketplace`."
-- Commands (added to `contributes.commands`; this doesn't touch the Copilot contributions):
-  `acdc.claudeCode.register` (runs with `force: true`; bypasses the setting, not the config-dir
-  rule) and `acdc.claudeCode.unregister`.
-- Remote windows (WSL/SSH): the extension host runs remotely, so it registers in the *remote*
-  home. That's correct, because Claude Code runs there too. Document it; don't special-case it.
+Order on activation (not awaited, and never throwing into `activate()`):
+1. **Gate.** `decideRegistrationGate`: no Claude config dir or kill-switch off → stop. **Never
+   `mkdir` the Claude config dir.**
+2. **Link.** `lstat` the stable path (never `stat`: don't follow it). Build `LinkState`, then call
+   `decideMarketplaceLink`.
+   - `create` / `repoint`:
+     - `mkdir -p <home>/.acdc`.
+     - **POSIX:** `fs.symlink(target, tmp, "dir")`, then `fs.rename(tmp, stablePath)` (atomic).
+     - **Windows:** a junction can't be renamed over an existing junction, so if a link exists,
+       remove **only the link** with `fs.rmdir(stablePath)` / `fs.unlink`, after `lstat` confirms
+       `isSymbolicLink()`. Then `fs.symlink(target, stablePath, "junction")`. A junction needs no
+       admin rights and no Developer Mode; the target must be absolute. There's a sub-millisecond
+       window where the path is missing, which is accepted: Claude Code only reads it at session
+       start or on `/reload-plugins`.
+     - **Hard safety rule:** there is no `fs.rm(..., { recursive: true })` anywhere near the link
+       path. Deleting a link must never follow it into the installed extension.
+   - `refuse` → log and stop. **Don't write settings** (it would register a path that doesn't serve
+     our plugin). This is shown in a one-time notice naming the path.
+   - `keep: newer-or-equal-incumbent` / `foreign-target` → log. Continue to settings: the
+     registered path is still correct and just served by another install.
+3. **Settings.** `computeClaudeSettingsUpdate(text, stablePath, { platform, force })`. The write
+   uses a temp file + rename with the re-read check (unchanged).
+4. **Diagnostic (read-only).** If `~/.claude/plugins/known_marketplaces.json` exists and its
+   `acdc-vscode.installLocation` isn't `pathsEqual` to `stablePath`, log a warning and show the
+   one-time `known-location-needs-reset` notice. The extension only reads Claude Code's internal
+   files and never writes them (D41). The notice says: "Claude Code still has the `acdc-vscode`
+   marketplace at an old location. Run `claude plugin marketplace remove acdc-vscode` once, then
+   reload this window (AC⚡DC re-registers it)." It's text only, with no terminal button.
+5. Logs: `[Claude] link created|repointed|kept (<reason>)|refused (<reason>)` +
+   `[Claude] settings registered|up-to-date|skipped: <reason>`.
 
-**Contingent fallback (D44): built only if the Task 0 spike shows S6 or S7 fails**
+- **Unregister** (`acdc.claudeCode.unregister`): runs `computeClaudeSettingsRemoval`, then removes
+  the stable link **only if** `lstat` says it's a link **and** its target is this install or is
+  dangling. It never touches a real directory or another install's live link.
+- **Register** (`acdc.claudeCode.register`): `force: true`. It bypasses the kill-switch and the
+  keep rules 6–7, but never the Development-host rule, the real-directory refusal, or the missing
+  Claude-config-dir rule.
+- **Refresh after an update (S5 + S11).** An update changes only the link target. The registered
+  path and `installLocation` stay the same, so a **new Claude Code session or `/reload-plugins`**
+  loads the new content. Claude Code has no cache to invalidate (S5). The D51/D53 notices already
+  tell the user to run `/reload-plugins`, and the README says the same.
+- Notices (one-time, `globalState`-guarded): `legacy-aldc-enabled` (unchanged),
+  `known-location-needs-reset`, `link-refused`.
 
-If S6 and S7 both pass, skip this block entirely: no code, no tests F1–F7, no M13. If one fails,
-Dev reports to the Producer first and then builds only the branch that failed. The pure decision
-lives in `claudeSettings.ts`:
+**D44 is fully retired (2026-09-25).** The install branch isn't needed (S6 PASS). The
+marketplace-update branch is dropped: the command doesn't work (S7), and with a stable path it
+isn't needed. `decideCliFallback` and F1–F7 are removed, and the old M13 is replaced by a link-safety step. No terminal-running action exists
+anywhere in 5a; the only CLI hint is the text-only `known-location-needs-reset` notice.
 
-```ts
-/** Set by Dev from the spike result; both false if S6 and S7 pass (and then this code isn't written). */
-export interface CliFallbackCapabilities { install: boolean /* S6 failed */; marketplaceUpdate: boolean /* S7 failed */ }
-
-export type CliFallbackOffer =
-  | { offer: false }
-  | { offer: true; kind: "install" | "marketplace-update"; command: string; message: string; onceKey: string };
-
-export function decideCliFallback(input: {
-  capabilities: CliFallbackCapabilities;
-  result: SettingsUpdateResult;          // outcome of this registration run
-  extensionVersion: string;
-  alreadyOffered: (onceKey: string) => boolean;   // globalState lookup, injected
-  suppressed: boolean;                   // user chose "Don't show again"
-  explicitCommand: boolean;              // true when run from acdc.claudeCode.register
-}): CliFallbackOffer;
-```
-
-**When it's offered** (all conditions must hold):
-- `kind: "install"` — `capabilities.install`, and `result.changed` with `settings-created`,
-  `marketplace-added` or `plugin-enabled` among its changes (a first registration).
-- `kind: "marketplace-update"` — `capabilities.marketplaceUpdate`, and `result.changed` with
-  `marketplace-path-updated`.
-- Never when `result.changed === false` (any skip), when the notice `plugin-disabled-by-user` is
-  present, or when `suppressed` is true.
-- At most once per `onceKey = "acdc.claudeCode.cliFallback.<kind>.<extensionVersion>"`. The
-  explicit Register command ignores the once-guard, but not `suppressed`.
-- Automatic registration only runs when the kill-switch is on, so the kill-switch also turns the
-  offer off.
-
-**Command it opens:**
-- `install`: `claude plugin install acdc@acdc-vscode`
-- `marketplace-update`: `claude plugin marketplace update acdc-vscode`
-
-**Notification** (`showInformationMessage`, non-modal). Buttons: **Run in terminal**,
-**Don't show again**.
-- install: "AC⚡DC registered its Claude Code plugin. Claude Code needs one more step to install it:
-  `claude plugin install acdc@acdc-vscode`. Requires the `claude` CLI on PATH."
-- marketplace-update: "AC⚡DC now points Claude Code at this version. Refresh Claude Code's copy
-  with `claude plugin marketplace update acdc-vscode`, then run `/reload-plugins` in any open
-  session."
-
-**Adapter behaviour:** only a click on **Run in terminal** does anything:
-`vscode.window.createTerminal({ name: "AC⚡DC: Claude Code" })`, then `show()`, then
-`sendText(command, true)`. The terminal is always visible. There's no `child_process`, no hidden
-terminal, and nothing runs before the click. **Don't show again** sets a `globalState` suppression
-flag. Dismissing the notification only marks the `onceKey`.
+**Contingency if S11 fails (D55; Producer recommendation, maintainer to confirm only if it
+triggers).** If Claude Code resolves the link's realpath (so `installLocation` becomes the
+versioned target again), or refuses plugin files reached through a junction or symlink, then
+replace the link with a **materialised copy**. On activation, content-hash-sync
+`<extensionPath>/{.claude-plugin,claude-plugin}` into the same stable path, as a real directory
+**owned by us**, marked with a `.acdc-managed` file. It uses the same newest-version-wins rule,
+with the version recorded in the marker. PR-C would then mirror overrides into that copy instead of
+the installed folder. Contracts for this are only written if S11 fails.
 
 **New setting** (`contributes.configuration`, "General" section):
 
@@ -1706,7 +1782,7 @@ flag. Dismissing the notification only marks the `onceKey`.
   "type": "boolean",
   "default": true,
   "scope": "application",
-  "markdownDescription": "When the Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR`) exists, register this extension's folder as the `acdc-vscode` plugin marketplace in its user `settings.json` on startup and enable the `acdc` plugin. Turn off to manage it yourself. [More](command:acdc.showSettingsHelp)"
+  "markdownDescription": "When the Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR`) exists, point `~/.acdc/claude-marketplace` at this extension's folder and register it as the `acdc-vscode` plugin marketplace in its user `settings.json` on startup and enable the `acdc` plugin. Turn off to manage it yourself. [More](command:acdc.showSettingsHelp)"
 }
 ```
 
@@ -1756,11 +1832,13 @@ sequenceDiagram
   VS->>X: onStartupFinished (extensionPath = …/theframework.acdc-X.Y.Z)
   X-)R: registerClaudeCodePlugin() (not awaited)
   R->>P: decideRegistrationGate(configDirExists, autoRegister, force)
+  Note over R: lstat ~/.acdc/claude-marketplace → decideMarketplaceLink()
+  R->>R: create / repoint junction|symlink → extensionPath (or keep / refuse)
   alt no ~/.claude or setting off
     R-->>X: log "skipped" (nothing created)
   else proceed
     R->>S: read text (ENOENT → undefined)
-    R->>P: computeClaudeSettingsUpdate(text, extensionPath, opts)
+    R->>P: computeClaudeSettingsUpdate(text, stablePath, opts)
     alt changed
       R->>S: write temp + rename (after re-read check)
     else skip (up-to-date / unparseable / user-managed / newer)
@@ -1769,7 +1847,7 @@ sequenceDiagram
   end
   U->>CC: start session or /reload-plugins
   CC->>S: read extraKnownMarketplaces + enabledPlugins
-  CC->>CC: load acdc in place from extensionPath/claude-plugin (S5; S6/S7 to verify)
+  CC->>CC: load acdc in place from ~/.acdc/claude-marketplace → extensionPath (S5, S6 PASS; S11 to verify)
   U->>CC: @agent-acdc:phil, /acdc:al-build, /acdc:skill-api
 ```
 
@@ -1823,13 +1901,13 @@ packaging are verified manually, per the AGENTS.md boundary.
 | R2 | settings with `model`, `permissions`, `hooks`, `pluginConfigs` and another marketplace | update | every foreign key deep-equal and in the same order. Ours are appended |
 | R3 | already registered at the same path and enabled | update | `changed: false, skip: "up-to-date"` (idempotent) |
 | R4 | the same path differing only in case, a trailing `\`, or `/` separators (win32) | update | `up-to-date`. On `linux` a case difference **is** a change |
-| R5 | registered at `…\theframework.acdc-2.8.0`, ours 2.8.1 | update | `marketplace-path-updated`. The sibling `autoUpdate: true` is preserved |
+| R5 | registered at `…\theframework.acdc-2.8.0` (pre-D54 install) | update | replaced by `stablePath`, `marketplace-path-updated` + notice `known-location-needs-reset`. The sibling `autoUpdate: true` is preserved |
 | R6 | `enabledPlugins["acdc@acdc-vscode"]: false` + a stale path | update | the path is updated, the value **stays `false`**, notice `plugin-disabled-by-user` |
 | R7 | `current = "{ not json"` | update | `skip: "unparseable"`, no `next` |
 | R8 | JSONC (a `// comment` line) | update | `skip: "unparseable"` |
 | R9 | root `[]` / `null`, or `extraKnownMarketplaces: "x"`, or `enabledPlugins: []` | update | `skip: "not-an-object"` |
 | R10 | our entry points at `C:\dev\frw-agentic-coding` (not owned), no force | update | `skip: "user-managed-path"`. With `force: true` → updated |
-| R11 | registered `theframework.acdc-2.9.0`, ours 2.8.1, `registeredPathExists: true` | update | `skip: "newer-version-registered"`. With `registeredPathExists: false` → updated |
+| R11 | already registered at `stablePath`, twice in a row with different extension versions | update | `up-to-date` both times. Settings never depend on the version (D54) |
 | R12 | `enabledPlugins["aldc@aldc-marketplace"]: true` | update | notice `legacy-aldc-enabled`; the legacy key is untouched |
 | R13 | 4-space indent + CRLF + no final newline; tab indent | update | the output keeps the same indent, EOL and final-newline state |
 | R14 | `extensionPath` `C:\Users\x\.vscode\extensions\theframework.acdc-2.8.1` | update → `JSON.parse(next)` | the path string equals the input exactly (escaped backslashes) |
@@ -1840,27 +1918,32 @@ packaging are verified manually, per the AGENTS.md boundary.
 | R19 | nothing of ours present | `computeClaudeSettingsRemoval` | `up-to-date` |
 | R20 | `…/theframework.acdc-2.8.1`, `…/theframework.acdc-2.9.0-beta.1`, `C:\dev\clone` | `versionFromExtensionDir` | `2.8.1`, `2.9.0-beta.1`, `undefined` |
 
-#### Contingent CLI fallback — `decideCliFallback` (only if D44 is built)
+#### Marketplace link — `marketplaceLink.test.ts` (D54)
 
-| # | Given | Then |
-|---|---|---|
-| F1 | `install: true`, result `changed` with `settings-created`, not offered before | offer `install`, command `claude plugin install acdc@acdc-vscode`, `onceKey` includes the version |
-| F2 | `marketplaceUpdate: true`, result `changed` with `marketplace-path-updated` | offer `marketplace-update`, command `claude plugin marketplace update acdc-vscode` |
-| F3 | both capabilities false, any result | `offer: false` |
-| F4 | result `changed: false` (`up-to-date`, `unparseable`, `user-managed-path`, …) | `offer: false` |
-| F5 | notice `plugin-disabled-by-user` present | `offer: false` |
-| F6 | `alreadyOffered(onceKey)` true: automatic run / `explicitCommand: true` | `offer: false` / offer |
-| F7 | `suppressed: true`, `explicitCommand: true` | `offer: false` |
+| # | Given | When | Then |
+|---|---|---|---|
+| L1 | `missing` | `decideMarketplaceLink` | `create`, target = `extensionPath` |
+| L2 | `link` → our `extensionPath` (case/separator variant on win32) | decide | `keep: up-to-date` |
+| L3 | `link` → `…/theframework.acdc-2.8.1`, `targetExists: false`; ours 2.8.2 | decide | `repoint` |
+| L4 | `link` → existing `…acdc-2.8.1`, ours 2.8.2 | decide | `repoint` (newer wins) |
+| L5 | `link` → existing `…acdc-2.9.0` (e.g. Insiders), ours 2.8.2 | decide | `keep: newer-or-equal-incumbent`; with `force` → `repoint` |
+| L6 | `link` → existing `…acdc-2.8.2` in *another* extensions dir (Stable vs Insiders), ours 2.8.2 | decide | `keep: newer-or-equal-incumbent` (tie keeps the incumbent) |
+| L7 | `link` → existing `C:\dev\frw-agentic-coding` (foreign) | decide | `keep: foreign-target`; with `force` → `repoint` |
+| L8 | `directory` (a real folder at the stable path), with and without `force` | decide | `refuse: real-directory` both times |
+| L9 | `file` / `other` | decide | `refuse: file` / `refuse: unknown-entry` |
+| L10 | any state, `isDevelopmentOrTest: true`, `force: true` | decide | `keep: development-host` |
+| L11 | `link` target reported as `\\?\C:\Users\…\theframework.acdc-2.8.2` | decide | normalised; equal to `extensionPath` → `keep: up-to-date` |
+| L12 | homedir `C:\Users\x` (win32) / `/home/x` (linux) | `resolveStableMarketplacePath` | `C:\Users\x\.acdc\claude-marketplace` / `/home/x/.acdc/claude-marketplace` |
 
 #### Manual verification (Dev reports evidence with the exact strings observed)
 
-- **M1** F5 with `~/.claude` present: the output channel logs `[Claude] registered`, and the
+- **M1** (revised by D54: F5 never links, L10) *Installed VSIX* with `~/.claude` present: the output channel logs `[Claude] link created` + `[Claude] settings registered`, `~/.acdc/claude-marketplace` is a junction/symlink to the install folder, and the
   `settings.json` diff shows only the two added keys. Reload the window: it logs `up-to-date` and
   the file's mtime doesn't change.
 - **M2** `npm run vsix`, then unzip. `extension/.claude-plugin/marketplace.json` and
   `extension/claude-plugin/.claude-plugin/plugin.json` are present, with 13 files in `agents/`,
   11 in `commands/` and 41 folders in `skills/`. Attach the `npx vsce ls` output.
-- **M3** Install that VSIX. Start Claude Code in an empty temp folder with **no** `.claude/`. The
+- **M3** Install that VSIX. First confirm availability with `claude plugin details acdc@acdc-vscode` (lists the agents, commands and skills; **not** `claude plugin list`, which stays empty for a settings-enabled directory plugin, per S6). Start Claude Code in an empty temp folder with **no** `.claude/`. The
   `@agent-acdc:` typeahead lists every emitted agent. Invoke `acdc:phil`, `acdc:bon` and
   `acdc:malcolm` (Malcolm delegates to `acdc:al-planning-subagent`), and run `/acdc:al-build` and
   `/acdc:skill-api`. Record `claude --version`.
@@ -1868,11 +1951,14 @@ packaging are verified manually, per the AGENTS.md boundary.
   still resolve, `git diff main -- package.json` touches only `scripts`, `devDependencies`,
   `contributes.commands` and `contributes.configuration`, and
   `npm run validate:contribution-paths` passes.
-- **M5** Update path: install the VSIX at version N and activate, then install N+1 (bump the
-  version locally) and activate. The settings path is rewritten to the new folder. `/reload-plugins`,
-  or a restart, loads from the new folder (proves S7).
+- **M5** Update path (D54): install the VSIX at version N and activate, then install N+1 (bump the
+  version locally) and activate. `~/.acdc/claude-marketplace` now points at the N+1 folder, the
+  `settings.json` path is **unchanged**, and `known_marketplaces.json.installLocation` is still the
+  link path. A new Claude Code session (and `/reload-plugins` in an open one) shows N+1 content.
+  Also: with Stable at N+1 and Insiders at N, activating Insiders leaves the link on N+1 (L5).
 - **M6** Set `enabledPlugins["acdc@acdc-vscode"]` to `false`, then reload the window: it's still
-  `false`, and a one-time notice appears.
+  `false`, a one-time notice appears, and `claude plugin details acdc@acdc-vscode` reports it
+  disabled (don't rely on `claude plugin list`).
 - **M7** Corrupt `settings.json` (a trailing comma), then reload the window: the file is
   byte-identical and the error is logged.
 - **M8** Set `acdc.claudeCode.autoRegister` to `false` and remove our keys, then reload: nothing is
@@ -1883,13 +1969,14 @@ packaging are verified manually, per the AGENTS.md boundary.
   the next reload. The legacy entry is unchanged.
 - **M11** Edit one source agent without re-emitting: `npm run check:claude-plugin` exits 1 and
   names the file. Re-emit: it exits 0.
-- **M12** *AC⚡DC: Unregister Claude Code plugin* removes only our two keys.
-- **M13** (only if D44 is built) On a clean `CLAUDE_CONFIG_DIR`, a first activation shows the
-  install notification once. No terminal and no `claude` process exists before the click (check
-  the terminal list and Task Manager). **Run in terminal** opens a visible "AC⚡DC: Claude Code"
-  terminal with the exact command, and the plugin then loads in Claude Code. A reload doesn't
-  re-offer it. **Don't show again** suppresses it even for the Register command. For an S7 failure,
-  repeat with a version bump and the `marketplace update` notification.
+- **M12** *AC⚡DC: Unregister Claude Code plugin* removes only our two keys **and** the stable link
+  (the install folder's files are intact afterwards). It leaves a real directory at the stable path
+  alone.
+- **M13** (D54 safety) Create a real folder with a file in it at `~/.acdc/claude-marketplace`, then
+  reload: `link refused (real-directory)` is logged, one notice appears, the folder and file are
+  untouched, and `settings.json` is unchanged. Separately, on a machine that already knows
+  `acdc-vscode` at a versioned path (the spike fixture), the `known-location-needs-reset` notice
+  appears once, and the documented `marketplace remove` + reload fixes it.
 
 ### 14.10 Acceptance criteria
 
@@ -1904,13 +1991,14 @@ packaging are verified manually, per the AGENTS.md boundary.
 - [ ] The emitter runs from `vscode:prepublish`, `pipeline:assets`, the husky hook and the weekly
       sync. `release.yml` runs the drift check. `.vscodeignore` ships the surface, and an unpacked
       VSIX shows it (M2).
-- [ ] The extension registers its own `extensionPath` on activate under every rule in §14.6, and
+- [ ] The extension registers the stable path and re-points the link to its own `extensionPath` on activate under every rule in §14.6, and
       R1–R20 pass. M1 and M5–M10 and M12 have evidence.
-- [ ] Only if S6 or S7 failed: the D44 fallback follows §14.6, F1–F7 pass and M13 has evidence. If both passed, the PR states that D44 wasn't built.
+- [ ] S11 (junction/symlink mini-spike) passed and its evidence is in the PR, or the work was handed back for D55.
+- [ ] The stable link follows §14.6 (D54): L1–L12 pass, there's no recursive delete anywhere near the link path, and a real directory is never removed (M13). D44 isn't built (retired).
 - [ ] Every emitted user-facing agent can be invoked in Claude Code from a project with no local
       `.claude/` (M3).
 - [ ] Copilot behaviour is unchanged. The `package.json` chat contributions are untouched (M4).
-- [ ] `src/claudePlugin/{types,frontmatter,toolMap,mapAgent,planPluginSurface,claudeSettings}.ts`
+- [ ] `src/claudePlugin/{types,frontmatter,toolMap,mapAgent,planPluginSurface,claudeSettings,marketplaceLink}.ts`
       import nothing from `vscode` and are listed in `tsconfig.test.json`.
 - [ ] Agent Settings overrides are mirrored into the installed Claude agent files per §14.15:
       O1–O14, B1–B5 and G1–G3 pass, and M14–M20 have evidence. `yaml` is absent from
@@ -1935,12 +2023,15 @@ packaging are verified manually, per the AGENTS.md boundary.
 |---|---|
 | We corrupt the user's `~/.claude/settings.json` (it's another tool's config) | Pure compute with R1–R20. Abort on a parse error. Atomic temp + rename. Re-read before the rename. Mandatory independent review |
 | Churn: a write on every activation, or two VS Code builds fighting | Idempotent `up-to-date` (R3/R4). Ownership + no-downgrade (D40, R10/R11) |
-| The plugin doesn't load from registration alone (S6), or doesn't follow a path change (S7) | Spike first. If either fails, the user-clicked CLI fallback (D44) is built, never run silently |
+| Claude Code doesn't follow a changed marketplace path (S7 FAILED) | Designed out: the registered path never changes (D54), only the link target does. S11 verifies link resolution; D55 (materialised copy) if it fails |
+| Deleting or re-pointing the link follows it and deletes the installed extension | `lstat`-only inspection, link removed with `unlink`/`rmdir` (never recursive `rm`), atomic rename on POSIX. Covered by M12/M13 and S11 step 4 |
+| Something else occupies `~/.acdc/claude-marketplace` | A real directory, file or unknown entry is refused, never deleted (L8, L9, M13). Settings aren't written then |
+| Stable and Insiders fight over the link | Newer version wins; a tie keeps the incumbent (L5, L6) |
 | Duplicate agents while the legacy `aldc` plugin is enabled | The namespaces differ (`acdc:` vs `aldc:`), so there's no hard collision. One-time notice (D41). Retiring it is WI-5b |
 | Agents lose AL MCP tools in Claude Code (D37) | Accepted by the maintainer (Q2, D37). Documented in the README. 5b brings `.mcp.json` |
 | BCQuality skills have no corpus in 5a | The plugin consumption note makes the degradation explicit (reduced confidence). The corpus comes in WI-5b |
 | Drift between the committed output and its sources | `--check` in `release.yml` + husky re-emit + the sync-workflow emit |
-| An uninstalled extension leaves a dangling marketplace path | The Unregister command + manual cleanup in the README. `vscode:uninstall` in 5b (D43, Q3) |
+| An uninstalled extension leaves a dangling link at `~/.acdc/claude-marketplace` (Claude Code then reports the marketplace as missing) | Another installed AC⚡DC (Stable/Insiders) re-points it on its next activation (L3). Otherwise the Unregister command removes the link and keys (M12), and the README gives the manual cleanup. The `vscode:uninstall` cleanup of the link + keys stays in 5b (D43) |
 | `CLAUDE_CONFIG_DIR` is set in the shell but not in VS Code's environment | Documented. The Register command + README explain launching VS Code from that shell |
 | The VSIX grows (~1 MB of duplicated markdown) | Accepted |
 | Override mirroring corrupts or loses an installed Claude agent file | The same originals + sha-sidecar ownership model as the Copilot path, with its own subtree. The pure `decideOverrideBaseline` (B1–B5). Unparseable baseline → leave the file alone (O13). The reset-baselines command covers the subtree |
@@ -1974,7 +2065,8 @@ packaging are verified manually, per the AGENTS.md boundary.
 - **Q3** Defer `vscode:uninstall` cleanup to 5b? → **Yes**, with an Unregister command in 5a. D43
   confirmed.
 - **Q4** A user-clicked CLI fallback if S6/S7 fails? → **Yes, never silent.** Recorded as D44,
-  contract in §14.6, tests F1–F7, manual step M13. Contingent on the spike.
+  contract in §14.6, tests F1–F7, manual step M13. Contingent on the spike. **Superseded 2026-09-25:
+  D44 is retired by D54 (S6 passed; S7 designed out by the stable link).**
 - **Q5** A one-time notice for the legacy `aldc` plugin? → **Yes, that's enough.** D41 confirmed.
 - **Q6** Emit all 13 contributed agents? → **Yes.** D36 confirmed.
 - **Q7** Names `acdc-vscode` / `acdc`? → **Confirmed.** D35 confirmed.
@@ -1990,25 +2082,27 @@ the §14.9 test plan.
 
 ### 14.14 Sequencing
 
-Four PRs, split by risk:
+Four PRs (one branch, `louagej/issue55`), split by risk:
 
-1. **Task 0 spike** (S5, S6, S7, S9; half a day) → report to the Producer. If S6 or S7 fails, the D44 fallback for that branch joins PR-B.
+1. **Task 0 spike** (S5, S6, S7, S9): **DONE 2026-09-24.** S5/S6/S9 PASS, S7 FAIL → D54.
 2. **PR-A (normal risk):** emitter core + E1–E32 → CLI + esbuild entry + scripts + the first
    committed emit → `.vscodeignore`, husky and workflow wiring → M2, M4, M11.
-3. **PR-B (high risk):** `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
+3. **S11 mini-spike** (junction/symlink, about an hour, in the `wi5a-spike` fixture) → report. PASS → PR-B as specified; FAIL → hand back (D55). **PR-A doesn't depend on it.**
+4. **PR-B (high risk):** `marketplaceLink.ts` + L1–L12, `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
    M5–M10, M12 → docs → **independent review / QA** → merge.
-4. **PR-D (small, normal risk; D52):** the Copilot *Apply to chat* development-host guard,
+5. **PR-D (small, normal risk; D52; DONE 2026-09-25, commit 4ccadb7):** the Copilot *Apply to chat* development-host guard,
    `decideOverrideGate` + V1 → M24 (the Apply half). No dependency on PR-A/B. **Land it before
    PR-C**, so developing PR-C under F5 can't dirty the committed agent files.
-5. **PR-C (elevated risk; §14.15):** override mirroring, O1–O14, B1–B5, G1–G3 → M14–M20, **plus
-   D53** (activation re-apply for both hosts + the combined notice, V2–V10 → M21–M26) →
+6. **PR-C (elevated risk; §14.15):** override mirroring, O1–O14, B1–B5, G1–G3 → M14–M20, **plus
+   D53** (activation re-apply for both hosts + the combined notice, V2–V11 → M21–M26) →
    independent review → merge. D53 is folded in here because it shares the activation run and the
    notice with D47/D51. **Depends on PR-A** (emitted files, the A12 format, `toolMap.ts`,
    `slugifyAgentId`). It has **no code dependency on PR-B** and can run in parallel with it.
-   M14–M16 need the plugin loaded in Claude Code, so verify them after PR-B, or register the
-   marketplace manually with `claude plugin marketplace add <extension folder>`.
+   M14–M16 need the plugin loaded in Claude Code, so verify them after PR-B, or point the
+   stable link at the install folder and register it by hand (never `marketplace add` a versioned
+   path, because of S7).
 
-**Next owner:** Dev, Task 0 spike (S5, S6, S7, S9). The contracts were accepted by the maintainer on 2026-09-24.
+**Next owner:** Dev, S11 mini-spike (in parallel with PR-A), then PR-B. The contracts were accepted by the maintainer on 2026-09-24 and revised for D54 on 2026-09-25.
 
 ### 14.15 Agent Settings overrides mirrored into the Claude plugin (D45–D53)
 
@@ -2053,6 +2147,14 @@ It reuses the originals + sidecar ownership model under its own subtree
   config) and a second full copy of the plugin.
 - `globalStorageUri` differs per VS Code profile and per remote, so the registered path would
   change with the profile, which churns the same file D40 protects.
+
+**D54 check (2026-09-25):** mirroring still writes to `<context.extensionPath>/claude-plugin/agents/<id>.md`,
+the real install folder, never through the link. When this install is the link target, Claude
+Code sees the change through the link, so nothing changes for PR-C. When another install (for
+example a newer Insiders AC⚡DC) holds the link, Claude Code serves *that* install's files and
+overrides (Stable and Insiders keep separate VS Code settings). This install's mirroring then has
+no visible Claude effect, and the notice's Claude part is suppressed (§14.15.8 rule 4, V11). Under
+D55 the mirror target would become the materialised copy.
 
 The in-place approach inherits the lifecycle the Copilot overrides already have. A plugin loaded in
 place reads the extension folder directly (S5).
@@ -2247,6 +2349,7 @@ export function decideOverrideNotice(input: {
   claude?: OverrideRunCounts;
   pendingClaudeFromApply: number;        // D51 globalState carry-over, 0 if none
   claudeConfigDirExists: boolean;        // Claude part is suppressed without a Claude config dir
+  claudeServesThisInstall: boolean;      // D54: the stable link targets this install
 }): OverrideNotice;
 ```
 
@@ -2282,6 +2385,8 @@ export function decideOverrideNotice(input: {
    - The D51 pending count (from an Apply → auto-reload) is folded in and then cleared, so there's
      one notice, not two.
    - With no Claude config dir the Claude part is dropped (the files are still mirrored).
+   - With the stable link pointing at a different install (D54), the Claude part is dropped too.
+     The adapter passes `claudeServesThisInstall = linkTarget pathsEqual extensionPath`.
 5. **Where the calls live.** `extension.ts` activation calls one new adapter
    `reapplyAgentOverridesOnActivation(context, output)`, which runs the gate, both runs and the
    notice. The Apply command gets the gate check at its top. No other Copilot logic changes.
@@ -2300,6 +2405,7 @@ export function decideOverrideNotice(input: {
 | V8 | Copilot `{0, 2}` (overrides removed, e.g. via Settings Sync) | notice | Copilot text with N=2, button |
 | V9 | Copilot undefined (gate blocked or error), Claude `{1, 0}` | notice | Claude text only |
 | V10 | Copilot `{1, 0}`, Claude `{1, 0}` with no config dir, pending 2 | notice | Copilot text only (the Claude part, pending included, is suppressed), button |
+| V11 | Copilot `{0, 0}`, Claude `{2, 0}`, config dir present, `claudeServesThisInstall: false` | notice | `show: false` |
 
 **Manual verification** (installed VSIX unless stated otherwise)
 - **M21** With an override on Phil (model + an extra tool), install version N+1 and let VS Code
