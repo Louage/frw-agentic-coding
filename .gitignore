@@ -11,3 +11,6 @@ out-test/
 # explicitly re-included below.
 tmp/*
 !tmp/agentic-coding-al-TrainingMaterial.md
+
+# Claude Code agent worktrees (isolated checkouts created per task, never committed)
+.claude/worktrees/
