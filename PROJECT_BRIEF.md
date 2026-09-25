@@ -262,8 +262,13 @@ vscode-free module and cover it with Node 20's built-in runner.
   PR-A DONE 2026-09-25 (20bb792 emitter core + CLI, 0790b26 packaging/pre-commit/CI drift gate/docs):
   compile, lint and tsc clean, `npm test` 121/121, `check:claude-plugin` OK (13/11/41), `contributes`
   byte-identical to main, `claude plugin details` loads 13 agents in place. Seven deviations
-  triaged and accepted as contract amendments (§14.16). Open manual steps for the maintainer: M2
-  (unzip a real VSIX), M4 (live Copilot regression). Next: PR-B (Dev started 2026-09-25).** High-risk (writes outside the workspace), so PR-B
+  triaged and accepted as contract amendments (§14.16). PR-B DONE 2026-09-25 (fdac9af stable
+  junction/symlink self-registration; 51ca554 bounded EPERM/EBUSY/EACCES rename retry + temp cleanup
+  in `fsRetry.ts`, prerelease L13–L17): compile, lint and tsc clean, `npm test` 168/168,
+  `check:claude-plugin` OK. QA (`ai-team-qa`) said ship; the coordinator's spot-check found the
+  temp-file leak and the missing prerelease tests, both fixed in 51ca554. Four deviations accepted
+  (§14.16). **Open maintainer manual steps (installed VSIX): M1, M2, M3, M4, M5, M6, M12, M13.**
+  Next: PR-C, pending the maintainer's go-ahead after those checks.** High-risk (writes outside the workspace), so PR-B
   needs independent review/QA before merge. Scope extended 2026-09-24 (D45): Agent Settings overrides
   are mirrored into the Claude plugin (§14.15, PR-C after PR-A). Q8/Q9 answered (D52 Copilot dev-mode guard as PR-D; D53 Copilot re-apply on activation, in PR-C). Work item 5b (instruction domains → skills, BCQuality
   listing, hooks/MCP, retiring `ClaudePlugins/`) is deferred (§14.12).
@@ -1763,8 +1768,16 @@ Order on activation (not awaited, and never throwing into `activate()`):
   path and `installLocation` stay the same, so a **new Claude Code session or `/reload-plugins`**
   loads the new content. Claude Code has no cache to invalidate (S5). The D51/D53 notices already
   tell the user to run `/reload-plugins`, and the README says the same.
-- Notices (one-time, `globalState`-guarded): `legacy-aldc-enabled` (unchanged),
-  `known-location-needs-reset`, `link-refused`.
+- Notices: **every** `RegistrationNotice` (`legacy-aldc-enabled`, `plugin-disabled-by-user`,
+  `known-location-needs-reset`) plus `link-refused` is one-time and `globalState`-guarded (PR-B
+  amendment 1). The early skips (`unparseable`, `not-an-object`, `user-managed-path`) return no
+  notices, so the legacy-aldc notice waits until that condition is resolved (PR-B amendment 2).
+- Register/Unregister return `Promise<void>`. The commands show a generic completion toast and put
+  the details in the output channel (PR-B amendment 3).
+- Every temp-file + rename write (settings, and the POSIX link swap) goes through the vscode-free
+  `src/claudePlugin/fsRetry.ts`: a bounded retry on `EPERM`/`EBUSY`/`EACCES` (a Windows file locked by
+  Claude Code, an AV scanner or the indexer), and the temp file is always removed on final failure.
+  `writeClaudeSettingsAtomic` takes the output channel to log retries (PR-B addition).
 
 **D44 is fully retired (2026-09-25).** The install branch isn't needed (S6 PASS). The
 marketplace-update branch is dropped: the command doesn't work (S7), and with a stable path it
@@ -2000,17 +2013,22 @@ packaging are verified manually, per the AGENTS.md boundary.
       VSIX shows it (M2). **PR-A wired all of it (0790b26); still OPEN: M2, unzipping a real VSIX
       (maintainer manual step).**
 - [ ] The extension registers the stable path and re-points the link to its own `extensionPath` on activate under every rule in §14.6, and
-      R1–R20 pass. M1 and M5–M10 and M12 have evidence.
+      R1–R20 pass. M1 and M5–M10 and M12 have evidence. **PR-B: R1–R20 pass (`npm test` 168/168).
+      Still OPEN: the manual steps M1, M5, M6 and M12 (maintainer, installed VSIX). M7–M10 aren't
+      reported either.**
 - [x] S11 (junction/symlink mini-spike) passed (2026-09-25, §14.3) and its evidence is in the PR, or the work was handed back for D55.
 - [ ] The stable link follows §14.6 (D54): L1–L12 pass, there's no recursive delete anywhere near the link path, and a real directory is never removed (M13). D44 isn't built (retired).
+      **PR-B: L1–L17 pass (L13–L17 are the prerelease ordering tests) and D44 isn't built. Still
+      OPEN: M13 (maintainer).**
 - [ ] Every emitted user-facing agent can be invoked in Claude Code from a project with no local
       `.claude/` (M3).
 - [ ] Copilot behaviour is unchanged. The `package.json` chat contributions are untouched (M4).
       **PR-A: `contributes` is byte-identical to main (verified). Still OPEN: M4, the live Copilot
       regression (maintainer manual step).**
 - [ ] `src/claudePlugin/{types,frontmatter,toolMap,mapAgent,planPluginSurface,claudeSettings,marketplaceLink}.ts`
-      import nothing from `vscode` and are listed in `tsconfig.test.json`. **PR-A: done for the five
-      emitter modules; `claudeSettings` and `marketplaceLink` come in PR-B.**
+      import nothing from `vscode` and are listed in `tsconfig.test.json`. **Done:** the five emitter
+      modules (PR-A), plus `claudeSettings`, `marketplaceLink` and `fsRetry` (PR-B). Checked
+      2026-09-25: only the adapter `registration.ts` imports `vscode`.
 - [ ] Agent Settings overrides are mirrored into the installed Claude agent files per §14.15:
       O1–O14, B1–B5 and G1–G3 pass, and M14–M20 have evidence. `yaml` is absent from
       `dist/extension.js` (D48).
@@ -2022,11 +2040,18 @@ packaging are verified manually, per the AGENTS.md boundary.
 - [ ] `README.md` (a new "Claude Code" section: what registers, `/reload-plugins` or a restart
       after an update, the kill-switch, the commands, manual cleanup after uninstall, remote
       behaviour, disabling the legacy ALDC plugin), `assets/help/settings-help.md`
-      (`acdc.claudeCode.autoRegister`) and `CHANGELOG.md` are updated.
+      (`acdc.claudeCode.autoRegister`) and `CHANGELOG.md` are updated. **Partly: a README
+      "## Claude Code" section, the settings-help entry and a CHANGELOG entry exist (PR-A/PR-B).
+      Re-check completeness against this list, including the PR-C override behaviour, before the
+      final PR.**
 - [ ] The full gate is green and **its real output is pasted** into the handoff: `npm run compile`,
-      `npm run lint`, `npx tsc --noEmit -p tsconfig.json`, `npm test`.
-- [ ] An independent review (or QA with `ai-team-qa`) of `claudeSettings.ts` and `registration.ts`
-      is done before merge. This is a high-risk write outside the workspace.
+      `npm run lint`, `npx tsc --noEmit -p tsconfig.json`, `npm test`. **Green after PR-B (168/168);
+      re-run for the final PR after PR-C.**
+- [x] An independent review (or QA with `ai-team-qa`) of `claudeSettings.ts` and `registration.ts`
+      is done before merge. This is a high-risk write outside the workspace. **PR-B, 2026-09-25:
+      `ai-team-qa` said ship. The coordinator's spot-check found two defects (temp-file leak on a
+      locked rename; missing prerelease tests), both fixed in 51ca554. Note: the QA pass was shallow,
+      so the maintainer's manual M-steps carry weight.**
 
 ### 14.11 Risks
 
@@ -2035,6 +2060,7 @@ packaging are verified manually, per the AGENTS.md boundary.
 | We corrupt the user's `~/.claude/settings.json` (it's another tool's config) | Pure compute with R1–R20. Abort on a parse error. Atomic temp + rename. Re-read before the rename. Mandatory independent review |
 | Churn: a write on every activation, or two VS Code builds fighting | Idempotent `up-to-date` (R3/R4). Ownership + no-downgrade (D40, R10/R11) |
 | Claude Code doesn't follow a changed marketplace path (S7 FAILED) | Designed out: the registered path never changes (D54), only the link target does. S11 verifies link resolution; D55 (materialised copy) if it fails |
+| A temp-file rename fails on Windows because the target is locked (Claude Code, AV, the indexer), leaving an orphaned temp file or a skipped write | `fsRetry.ts`: a bounded retry on EPERM/EBUSY/EACCES, then temp cleanup and a logged skip. It's retried on the next activation. Proven against a real Windows lock on a fixture (51ca554) |
 | Deleting or re-pointing the link follows it and deletes the installed extension | `lstat`-only inspection, link removed with `unlink`/`rmdir` (never recursive `rm`), atomic rename on POSIX. Covered by M12/M13 and S11 step 4 |
 | Something else occupies `~/.acdc/claude-marketplace` | A real directory, file or unknown entry is refused, never deleted (L8, L9, M13). Settings aren't written then |
 | Stable and Insiders fight over the link | Newer version wins; a tie keeps the incumbent (L5, L6) |
@@ -2100,7 +2126,8 @@ Four PRs (one branch, `louagej/issue55`), split by risk:
    esbuild entry + scripts + the first committed emit → `.vscodeignore`, husky and workflow wiring →
    M11 verified. **M2 and M4 are open maintainer manual steps.** E32 moved to PR-C.
 3. **S11 mini-spike** (junction/symlink, about an hour, in the `wi5a-spike` fixture) → report. PASS → PR-B as specified; FAIL → hand back (D55). **PR-A doesn't depend on it.**
-4. **PR-B (high risk):** `marketplaceLink.ts` + L1–L12, `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
+4. **PR-B (high risk): DONE 2026-09-25** (fdac9af, 51ca554; 168/168; QA + spot-check). Manual M1, M3,
+   M5, M6, M12 and M13 are open for the maintainer. `marketplaceLink.ts` + L1–L12, `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
    M5–M10, M12 → docs → **independent review / QA** → merge.
 5. **PR-D (small, normal risk; D52; DONE 2026-09-25, commit 4ccadb7):** the Copilot *Apply to chat* development-host guard,
    `decideOverrideGate` + V1 → M24 (the Apply half). No dependency on PR-A/B. **Land it before
@@ -2114,7 +2141,9 @@ Four PRs (one branch, `louagej/issue55`), split by risk:
    stable link at the install folder and register it by hand (never `marketplace add` a versioned
    path, because of S7).
 
-**Next owner:** Dev, **PR-B (started 2026-09-25)**. PR-C can follow after it or in parallel. Maintainer: M2 and M4 from PR-A. Contracts accepted 2026-09-24, revised for D54 on 2026-09-25 and amended by §14.16 after PR-A.
+**Next owner:** the **maintainer**, for the manual VSIX checks M1–M6, M12 and M13 on an installed VSIX,
+and the go-ahead for PR-C. Then Dev takes **PR-C** (§14.15 + D53). Contracts accepted 2026-09-24, revised
+for D54 on 2026-09-25, and amended by §14.16 after PR-A and PR-B.
 
 ### 14.15 Agent Settings overrides mirrored into the Claude plugin (D45–D53)
 
@@ -2457,3 +2486,21 @@ PR-B needs none of the emitter modules.
 Verify availability with `claude plugin details acdc@acdc-vscode` against an isolated
 `CLAUDE_CONFIG_DIR` (the method used for S6/S11 and PR-A), never the maintainer's real
 `~/.claude`. F5 never links (L10), so M1, M5 and M12–M13 need an installed VSIX.
+
+#### PR-B deviations: triage (Producer, 2026-09-25)
+
+All four are **accepted**, and nothing is reopened. §14.6 is amended in place.
+
+| # | Deviation | Verdict | Contract change |
+|---|---|---|---|
+| 1 | All `RegistrationNotice` values + `link-refused` are one-time and `globalState`-guarded, including `plugin-disabled-by-user` | Accept. §14.6 omitted it by mistake; M6 already implies one-time | §14.6 notice bullet amended |
+| 2 | Early skips (`unparseable` / `not-an-object` / `user-managed-path`) return no notices, so the legacy-aldc notice waits | Accept. With unparseable settings `enabledPlugins` can't be read reliably, and a user-managed path means the user is steering. The notice appears once the condition clears | §14.6 amended (documented behaviour) |
+| 3 | Register/Unregister return `Promise<void>`: a generic toast + the output channel | Accept. It matches the §14.6 signatures and the existing command style | §14.6 amended |
+| 4 | Hand-rolled `compareVersions` (no semver dependency) | Accept. It keeps D42's no-runtime-dependency rule, and prerelease ordering is covered by L13–L17 | None (the L table is extended by L13–L17) |
+| + | New vscode-free `fsRetry.ts` + tests; `writeClaudeSettingsAtomic` gained an output param | Accept. It fixes a real defect found in the spot-check | §14.6 bullet + §14.10 module list + §14.11 risk row |
+
+**For PR-C's Dev:** reuse `fsRetry.ts` for the Claude-agent writes and the originals/state sidecars
+(the same Windows-lock exposure, since Claude Code may hold `claude-plugin/agents/*.md` open). The D53
+combined notice must follow the same one-time and `globalState` conventions as the PR-B notices.
+`claudeServesThisInstall` (§14.15.8) comes from reading the stable link through PR-B's `marketplaceLink.ts`
+helpers; don't re-implement link reading.
