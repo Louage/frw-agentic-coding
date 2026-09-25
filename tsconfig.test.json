@@ -19,6 +19,7 @@
     "src/claudePlugin/planPluginSurface.ts",
     "src/claudePlugin/claudeSettings.ts",
     "src/claudePlugin/marketplaceLink.ts",
+    "src/claudePlugin/fsRetry.ts",
     "test/**/*.ts"
   ]
 }

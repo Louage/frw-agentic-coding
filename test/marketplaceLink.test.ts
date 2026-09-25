@@ -136,6 +136,71 @@ test("L12: resolveStableMarketplacePath per platform", () => {
   assert.equal(resolveStableMarketplacePath("/home/x", "linux"), "/home/x/.acdc/claude-marketplace");
 });
 
+// L13
+test("L13: a prerelease incumbent (2.9.0-beta.1) is older than the release of the same core version (2.9.0) -> repoint", () => {
+  const decision = decide({
+    state: {
+      kind: "link",
+      target: "C:\\Users\\x\\.vscode\\extensions\\theframework.acdc-2.9.0-beta.1",
+      targetExists: true,
+    },
+    extensionVersion: "2.9.0",
+  });
+  assert.deepEqual(decision, { action: "repoint", target: EXT_PATH_WIN });
+});
+
+// L14
+test("L14: a later prerelease incumbent (2.9.0-beta.2) outranks an earlier one (ours: 2.9.0-beta.1) -> keep", () => {
+  const decision = decide({
+    state: {
+      kind: "link",
+      target: "C:\\Users\\x\\.vscode\\extensions\\theframework.acdc-2.9.0-beta.2",
+      targetExists: true,
+    },
+    extensionVersion: "2.9.0-beta.1",
+  });
+  assert.deepEqual(decision, { action: "keep", reason: "newer-or-equal-incumbent" });
+});
+
+// L15
+test("L15: prerelease numeric segments compare numerically, not lexically (beta.10 > beta.9) -> keep", () => {
+  const decision = decide({
+    state: {
+      kind: "link",
+      target: "C:\\Users\\x\\.vscode\\extensions\\theframework.acdc-2.9.0-beta.10",
+      targetExists: true,
+    },
+    extensionVersion: "2.9.0-beta.9",
+  });
+  assert.deepEqual(decision, { action: "keep", reason: "newer-or-equal-incumbent" });
+});
+
+// L16
+test("L16: identical prerelease versions are a tie -> keep (incumbent wins)", () => {
+  const decision = decide({
+    state: {
+      kind: "link",
+      target: "C:\\Users\\x\\.vscode\\extensions\\theframework.acdc-2.9.0-beta.1",
+      targetExists: true,
+    },
+    extensionVersion: "2.9.0-beta.1",
+  });
+  assert.deepEqual(decision, { action: "keep", reason: "newer-or-equal-incumbent" });
+});
+
+// L17
+test("L17: an unparseable extensionVersion never crashes and keeps the incumbent", () => {
+  const decision = decide({
+    state: {
+      kind: "link",
+      target: "C:\\Users\\x\\.vscode\\extensions\\theframework.acdc-2.9.0",
+      targetExists: true,
+    },
+    extensionVersion: "not-a-version",
+  });
+  assert.deepEqual(decision, { action: "keep", reason: "newer-or-equal-incumbent" });
+});
+
 // Extra coverage: development-host is checked before the real-directory refusal (rule ordering).
 test("decideMarketplaceLink: development-host wins over refuse even with force", () => {
   const decision = decide({ state: { kind: "directory" }, isDevelopmentOrTest: true, force: true });

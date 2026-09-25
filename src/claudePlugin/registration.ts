@@ -31,6 +31,7 @@ import {
   type RegistrationNotice,
 } from "./claudeSettings";
 import { decideMarketplaceLink, resolveStableMarketplacePath, type LinkState } from "./marketplaceLink";
+import { renameWithRetry, type RenameRetryDeps } from "./fsRetry";
 import { decideOverrideGate } from "../agentOverrideActivation";
 
 const SETTING_AUTO_REGISTER = "claudeCode.autoRegister";
@@ -133,12 +134,35 @@ function removeStableLinkOnly(stablePath: string, platform: NodeJS.Platform): vo
 }
 
 /**
- * Safety rule: **junction on Windows / symlink on POSIX, no admin rights.**
- * POSIX creates the new link at a temp path and renames it over the stable
- * path atomically (rename replaces an existing symlink in one step). Windows
- * junctions can't be renamed over an existing entry, so if one is there it is
- * removed first via `removeStableLinkOnly` (never recursively) — there is a
- * sub-millisecond window where the path is missing, accepted per §14.6.
+ * A short, bounded, synchronous delay (never more than a couple hundred ms
+ * total across all retries — see `renameWithRetry`'s defaults) between
+ * rename retries. `registerClaudeCodePlugin` runs fire-and-forget from
+ * `activate()`, so this must never block for long. Falls back to no delay
+ * at all if `Atomics.wait` isn't available rather than throwing.
+ */
+function sleepSync(ms: number): void {
+  try {
+    const sharedBuffer = new SharedArrayBuffer(4);
+    Atomics.wait(new Int32Array(sharedBuffer), 0, 0, ms);
+  } catch {
+    // No delay is safer than a hang; the retry still happens, just immediately.
+  }
+}
+
+const RENAME_DEPS: RenameRetryDeps = { rename: fs.renameSync, unlink: fs.unlinkSync, sleep: sleepSync };
+
+/**
+ * Safety rule: **junction on Windows / symlink on POSIX, no admin rights,
+ * and no orphaned temp entry.** POSIX creates the new link at a temp path
+ * and renames it over the stable path atomically (rename replaces an
+ * existing symlink in one step) via `renameWithRetry`, which retries a
+ * locked destination a bounded number of times and — if it still fails —
+ * removes the temp symlink itself (`unlinkSync`, never recursive) before
+ * reporting the failure, so `<stablePath>.acdc-tmp-*` is never left behind.
+ * Windows junctions can't be renamed over an existing entry, so if one is
+ * there it is removed first via `removeStableLinkOnly` (never recursively)
+ * — there is a sub-millisecond window where the path is missing, accepted
+ * per §14.6.
  */
 function createOrRepointStableLink(stablePath: string, target: string, state: LinkState, platform: NodeJS.Platform): void {
   fs.mkdirSync(path.dirname(stablePath), { recursive: true }); // only ever "<home>/.acdc", never "~/.claude".
@@ -151,19 +175,26 @@ function createOrRepointStableLink(stablePath: string, target: string, state: Li
   } else {
     const tmp = `${stablePath}.acdc-tmp-${process.pid}-${Date.now()}`;
     fs.symlinkSync(target, tmp, "dir");
-    fs.renameSync(tmp, stablePath); // atomic; replaces an existing symlink at stablePath if present.
+    const outcome = renameWithRetry(tmp, stablePath, RENAME_DEPS); // atomic; replaces an existing symlink at stablePath if present.
+    if (!outcome.ok) {
+      throw outcome.error instanceof Error ? outcome.error : new Error(String(outcome.error));
+    }
   }
 }
 
 /**
- * Safety rule: **atomic write, re-read check, abort without writing on drift.**
- * Writes to a temp file in the same directory then renames it into place, but
- * only after re-reading the settings file and confirming it still matches the
- * text the caller computed `nextText` from — if something else (the user, a
- * second VS Code window) changed it meanwhile, the write is skipped rather
- * than clobbering it.
+ * Safety rule: **atomic write, re-read check, abort without writing on
+ * drift, and no orphaned temp file.** Writes to a temp file in the same
+ * directory then renames it into place via `renameWithRetry` — which
+ * retries a transiently locked `settings.json` (Claude Code or an AV
+ * scanner briefly holding it open on Windows) a bounded number of times and,
+ * if it still fails, always removes the temp file before returning — but
+ * only after re-reading the settings file and confirming it still matches
+ * the text the caller computed `nextText` from; if something else (the
+ * user, a second VS Code window) changed it meanwhile, the write is skipped
+ * rather than clobbering it.
  */
-function writeClaudeSettingsAtomic(settingsPath: string, expectedCurrentText: string | undefined, nextText: string): boolean {
+function writeClaudeSettingsAtomic(settingsPath: string, expectedCurrentText: string | undefined, nextText: string, output: vscode.OutputChannel): boolean {
   const reRead = readTextFileIfExists(settingsPath);
   if (reRead !== expectedCurrentText) {
     return false;
@@ -171,7 +202,11 @@ function writeClaudeSettingsAtomic(settingsPath: string, expectedCurrentText: st
   const dir = path.dirname(settingsPath);
   const tmp = path.join(dir, `.${path.basename(settingsPath)}.acdc-tmp-${process.pid}-${Date.now()}`);
   fs.writeFileSync(tmp, nextText, "utf8");
-  fs.renameSync(tmp, settingsPath);
+  const outcome = renameWithRetry(tmp, settingsPath, RENAME_DEPS);
+  if (!outcome.ok) {
+    output.appendLine(`${OUTPUT_PREFIX} settings rename failed after retries (temp file removed): ${String(outcome.error)}`);
+    return false;
+  }
   return true;
 }
 
@@ -313,11 +348,11 @@ export async function registerClaudeCodePlugin(
     const result = computeClaudeSettingsUpdate(currentText, stablePath, { platform, force });
 
     if (result.changed) {
-      const wrote = writeClaudeSettingsAtomic(settingsPath, currentText, result.next);
+      const wrote = writeClaudeSettingsAtomic(settingsPath, currentText, result.next, output);
       output.appendLine(
         wrote
           ? `${OUTPUT_PREFIX} settings registered: ${result.changes.join(", ")}`
-          : `${OUTPUT_PREFIX} settings write aborted: changed concurrently`
+          : `${OUTPUT_PREFIX} settings write aborted (concurrent change, or a rename failure logged above)`
       );
     } else {
       output.appendLine(`${OUTPUT_PREFIX} settings skipped: ${result.skip}`);
@@ -358,8 +393,8 @@ export async function unregisterClaudeCodePlugin(context: vscode.ExtensionContex
     const result = computeClaudeSettingsRemoval(currentText);
 
     if (result.changed) {
-      const wrote = writeClaudeSettingsAtomic(settingsPath, currentText, result.next);
-      output.appendLine(wrote ? `${OUTPUT_PREFIX} settings unregistered` : `${OUTPUT_PREFIX} settings unregister aborted: changed concurrently`);
+      const wrote = writeClaudeSettingsAtomic(settingsPath, currentText, result.next, output);
+      output.appendLine(wrote ? `${OUTPUT_PREFIX} settings unregistered` : `${OUTPUT_PREFIX} settings unregister aborted (see the rename failure above, if any)`);
     } else {
       output.appendLine(`${OUTPUT_PREFIX} settings unregister skipped: ${result.skip}`);
     }
