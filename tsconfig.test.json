@@ -6,6 +6,7 @@
     "sourceMap": false
   },
   "include": [
+    "src/agentOverrideActivation.ts",
     "src/alSourceMountPlan.ts",
     "src/tools/alMcpServer.ts",
     "src/tools/toolIdentity.ts",

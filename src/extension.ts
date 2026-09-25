@@ -40,6 +40,7 @@ import {
 } from "./tools/bcqualityCustomSkillsTool";
 import { savePlaceholderTarget } from "./agentSettingsService";
 import { applyAgentContributionOverrides, resetAgentOverrideBaselines } from "./agentContributionOverrides";
+import { decideOverrideGate } from "./agentOverrideActivation";
 import { showReleaseNotesOnUpdate } from "./update/releaseNotes";
 import { migrateStoredToolIds } from "./tools/toolIdMigration";
 import { registerAlMcpServerProvider } from "./tools/alMcpServerProvider";
@@ -168,6 +169,23 @@ export function activate(context: vscode.ExtensionContext): void {
       const autoReload = options?.autoReload ?? false;
       const promptReload = options?.promptReload ?? true;
       const silentNoChanges = options?.silentNoChanges ?? false;
+
+      // D52/D49: never rewrite the committed contribution files under F5 — that
+      // would dirty `assets/generated/aldc-community/agents/*.agent.md` in the
+      // repo clone itself. Test overrides on an installed VSIX instead.
+      const gate = decideOverrideGate({
+        isDevelopmentOrTest:
+          context.extensionMode === vscode.ExtensionMode.Development ||
+          context.extensionMode === vscode.ExtensionMode.Test,
+      });
+      if (!gate.proceed) {
+        output.appendLine("[agent-overrides] skipped: development host");
+        vscode.window.showInformationMessage(
+          "Agent overrides aren't applied in the Extension Development Host, because they " +
+            "would rewrite committed files. Test them with an installed VSIX."
+        );
+        return;
+      }
 
       const result = await applyAgentContributionOverrides(context, output);
       output.appendLine(

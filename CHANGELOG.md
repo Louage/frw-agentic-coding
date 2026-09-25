@@ -1,6 +1,23 @@
 # Changelog
 
 
+## [Unreleased]
+
+### Added
+
+_None yet._
+
+### Fixed
+
+- *AC/DC: Apply Agent Settings to Chat* no longer rewrites committed agent files when run under
+  `F5` (Extension Development Host). It now writes nothing and shows an explanatory message
+  instead (issue #55, D52).
+
+### Changed
+
+_None yet._
+
+
 ## [2.8.2] - 2026-09-24
 
 ### Added

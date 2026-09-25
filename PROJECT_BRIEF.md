@@ -265,6 +265,11 @@ vscode-free module and cover it with Node 20's built-in runner.
   needs independent review/QA before merge. Scope extended 2026-09-24 (D45): Agent Settings overrides
   are mirrored into the Claude plugin (§14.15, PR-C after PR-A). Q8/Q9 answered (D52 Copilot dev-mode guard as PR-D; D53 Copilot re-apply on activation, in PR-C). Work item 5b (instruction domains → skills, BCQuality
   listing, hooks/MCP, retiring `ClaudePlugins/`) is deferred (§14.12).
+  **PR-D status (2026-09-25): implemented and committed on `louagej/issue55`** (one branch, one PR
+  at the end of WI-5a). `decideOverrideGate` in `src/agentOverrideActivation.ts` (V1 covered) is
+  wired into `acdc.applyAgentSettingsToChat` ahead of `applyAgentContributionOverrides`: under F5
+  it writes nothing, shows the D52 message and logs `[agent-overrides] skipped: development host`.
+  Manual M24 (Apply half) not yet verified. D53 and the Claude mirror stay in PR-C.
 
 **Known issues (work item 3)**
 - **B2 (open): the Tools summary counts tokens, not tools.** Selecting the AL group stores one

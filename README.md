@@ -242,7 +242,7 @@ All commands are under the **AC/DC** category (`Ctrl+Shift+P` → type `AC/DC`).
 |---------|--------------|
 | **AC/DC: Use Agent** | Pick an agent from a list, activates it in chat and enables its tools |
 | **AC/DC: Reload Agent List** | Refresh the Agents sidebar after adding custom agents |
-| **AC/DC: Apply Agent Settings to Chat** | Write the staged per-agent overrides into the agent files so chat picks them up (same as the panel's **Apply**) |
+| **AC/DC: Apply Agent Settings to Chat** | Write the staged per-agent overrides into the agent files so chat picks them up (same as the panel's **Apply**). Under the Extension Development Host (`F5`) this writes nothing and shows why, because it would otherwise rewrite committed source files — test overrides with an installed VSIX instead |
 | **AC/DC: Reset Agent Override Baselines** | Discard the stored agent-override backups, the installed agent files become the new baseline |
 | **AC/DC: Set Agent Placeholder…** | Configure which persona names are used in agent cross-references |
 | **AC/DC: Pick SDD Plans Root Folder…** | Set where spec/architecture/plan files are stored |
