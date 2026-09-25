@@ -258,8 +258,12 @@ vscode-free module and cover it with Node 20's built-in runner.
 - Work item 5a (§14, issue #55): Claude Code plugin surface in the VSIX + self-registration in
   `~/.claude/settings.json`. **Status (2026-09-25): Task 0 spike done (S5/S6/S9 PASS, S7 FAIL). Maintainer
   decision D54: register a stable path `~/.acdc/claude-marketplace`, re-pointed by junction/symlink
-  on each activation (§14.6 respecced); D44 retired. PR-A (emitter) in progress, with no contract
-  change. S11 PASSED 2026-09-25 (D55 not needed); next: PR-B after PR-A.** High-risk (writes outside the workspace), so PR-B
+  on each activation (§14.6 respecced); D44 retired. S11 PASSED 2026-09-25 (D55 not needed).
+  PR-A DONE 2026-09-25 (20bb792 emitter core + CLI, 0790b26 packaging/pre-commit/CI drift gate/docs):
+  compile, lint and tsc clean, `npm test` 121/121, `check:claude-plugin` OK (13/11/41), `contributes`
+  byte-identical to main, `claude plugin details` loads 13 agents in place. Seven deviations
+  triaged and accepted as contract amendments (§14.16). Open manual steps for the maintainer: M2
+  (unzip a real VSIX), M4 (live Copilot regression). Next: PR-B (Dev started 2026-09-25).** High-risk (writes outside the workspace), so PR-B
   needs independent review/QA before merge. Scope extended 2026-09-24 (D45): Agent Settings overrides
   are mirrored into the Claude plugin (§14.15, PR-C after PR-A). Q8/Q9 answered (D52 Copilot dev-mode guard as PR-D; D53 Copilot re-apply on activation, in PR-C). Work item 5b (instruction domains → skills, BCQuality
   listing, hooks/MCP, retiring `ClaudePlugins/`) is deferred (§14.12).
@@ -1410,7 +1414,7 @@ export type ClaudeToolName =
 export interface ClaudeAgentDoc {
   id: string;                          // "phil" → invoked as "acdc:phil"
   fileName: string;                    // "phil.md"
-  frontmatter: { name: string; description: string; tools?: ClaudeToolName[]; model?: ClaudeModelAlias };
+  frontmatter: { name: string; description: string; tools?: ClaudeToolName[]; model?: ClaudeModelAlias; effort?: string };   // effort: A11 (PR-A amendment 1)
   body: string;
 }
 
@@ -1506,12 +1510,12 @@ export function planPluginSurface(input: PluginSurfaceInput): PluginFilePlan;
 | A3 | `description:` | `description:` | Verbatim, plus A6 suffixes only. |
 | A4 | `tools: [...]` | `tools: Read, Grep, …` | `mapTools` over `TOOL_MAP` (below), de-duplicated, in canonical order. Source without `tools` → omit (inherit). A non-empty source that maps to nothing → `tools: Read` + `warn`, never an empty list. |
 | A5 | `model: Claude Sonnet 4.6 (copilot)` | `model: sonnet` | `mapModel`: `/sonnet/i` → `sonnet`, `/opus/i` → `opus`, `/haiku/i` → `haiku`. Anything else (GPT, Gemini, …) → omitted (inherit) + `warn model-unmapped`. |
-| A6 | `user-invocable: false` and/or `disable-model-invocation: true` | *(no field)* | Removed. Description suffix: with invokers → ` Internal subagent: only invoked by \`acdc:malcolm\` via the Agent tool.` (invokers = agents whose `agents:` list contains this display name). With none → ` Internal subagent: not for direct use.` `disable-model-invocation: true` alone → ` Use only when the user explicitly asks for this agent.` |
+| A6 | `user-invocable: false` and/or `disable-model-invocation: true` | *(no field)* | Removed. Description suffix: with invokers → ` Internal subagent: only invoked by \`acdc:malcolm\` via the Agent tool.` (invokers = agents whose `agents:` list contains this display name; several invokers render as a comma-separated list of backticked ids, in `contributes.chatAgents` order, e.g. ``only invoked by `acdc:malcolm`, `acdc:ink` via the Agent tool.``, PR-A amendment 5). With none → ` Internal subagent: not for direct use.` `disable-model-invocation: true` alone → ` Use only when the user explicitly asks for this agent.` |
 | A7 | `handoffs: [{label, agent, prompt, send}]` | appended `## Handoffs` section | One bullet each: `- **<label>**: delegate to \`acdc:<id>\` with: <prompt>`. The target is resolved through `buildAgentIdIndex`. An unknown target keeps the display name + `warn handoff-target-unknown`. `send` is dropped. |
 | A8 | `agents: ['AL Planning Subagent', …]` | appended `## Subagents` section + `Agent` in `tools` | Lists `acdc:<id>` for each entry. |
 | A9 | `argument-hint:` | *(dropped)* | Agents only (S3). |
 | A10 | any other key (`bc-review-specialist`, `target`, `mcp-servers`, …) | *(dropped)* | `info key-stripped` (#15). |
-| A11 | `reasoning-effort: high` | `effort: high` | The values are identical (`low`, `medium`, `high`, `xhigh`, `max`). Any other value → dropped + `warn`. |
+| A11 | `reasoning-effort: high` | `effort: high` | The values are identical (`low`, `medium`, `high`, `xhigh`, `max`). Any other value → dropped + a `warn` with code `key-stripped` (PR-A amendment 2: no dedicated EmitCode). |
 | A12 | *(output format)* | restricted, fixed format | Needed for §14.15 (D48). Key order `name, description, tools, model, effort`. Every scalar is a one-line JSON string literal (`description: "…"`), which is valid YAML. `tools` is one line, comma-separated. The generated sections are wrapped in `<!-- BEGIN:ACDC-CLAUDE-HANDOFFS -->…<!-- END:ACDC-CLAUDE-HANDOFFS -->` and `<!-- BEGIN:ACDC-CLAUDE-SUBAGENTS -->…<!-- END:… -->`, so the runtime can parse and rewrite the file without a YAML library. |
 
 **`TOOL_MAP`** (reuses the vocabulary in `Normalize-AgentTools.ps1` `$CoreTools`; D37)
@@ -1552,6 +1556,7 @@ Agent, Skill, TodoWrite`.
 | K3 | A description that matches `^Imported BCQuality skill from ` is replaced by the first sentence of the first prose paragraph after the second H1, capped at 1024 characters. Otherwise `description` is verbatim. |
 | K4 | Supporting files (`references/`, `examples/`, …) are copied byte-for-byte at the same relative paths. |
 | K5 | Duplicate ids → `error duplicate-skill-id`. |
+| K6 | Every other skill frontmatter key (e.g. `argument-hint`, `allowed-tools`, `user-invocable`) passes through verbatim. They're valid Claude skill keys (S3), and Claude ignores unknown ones (PR-A amendment 3). |
 
 `PLUGIN_CONSUMPTION_NOTE` (Dev may polish the wording; the meaning is fixed):
 > **Plugin consumption note.** In Claude Code this skill ships inside the AC⚡DC plugin *without*
@@ -1891,7 +1896,7 @@ packaging are verified manually, per the AGENTS.md boundary.
 | E29 | fixture `packageMeta` | `planPluginSurface` | `marketplace.json` and `plugin.json` deep-equal the §14.5 shapes. No `version` anywhere. The plugin `source` is `./claude-plugin` |
 | E30 | a fixture with 13 agents, 11 prompts, 41 skills | `planPluginSurface` | `counts` = 13 / 11 / 41, and every planned path is under the managed roots |
 | E31 | a source with `reasoning-effort: xhigh` / `reasoning-effort: turbo` | `mapAgent` | `effort: xhigh` / no `effort` + `warn` (A11) |
-| E32 | any emitted agent | `parseEmittedClaudeAgent` (§14.15) | parses with no YAML library. Frontmatter values equal the `ClaudeAgentDoc`. Handoff and subagent sections are found by their markers (A12) |
+| E32 | *(moved to PR-C, amendment 6)* any emitted agent | `parseEmittedClaudeAgent` (§14.15) | parses with no YAML library. Frontmatter values equal the `ClaudeAgentDoc`. Handoff and subagent sections are found by their markers (A12) |
 
 #### Registration — `claudeSettings.test.ts`
 
@@ -1982,15 +1987,18 @@ packaging are verified manually, per the AGENTS.md boundary.
 
 - [ ] The Task 0 findings for S5, S6, S7 and S9 (and optionally S2) are in the PR description, with
       `claude --version`. The design matches what was observed, or the work was handed back.
-- [ ] `npm run emit:claude-plugin` produces `.claude-plugin/` and
+- [x] `npm run emit:claude-plugin` produces `.claude-plugin/` and
       `claude-plugin/{agents,commands,skills}` from the `package.json` contributions. The output is
-      committed. `check:claude-plugin` passes on a clean tree (M11).
-- [ ] Skills are emitted with clean ids (frontmatter `name` = folder = id) and the plugin
-      consumption note (E22–E24).
-- [ ] The frontmatter mapping follows §14.5 exactly, and E1–E30 pass.
+      committed. `check:claude-plugin` passes on a clean tree (M11). **PR-A, 2026-09-25:** agents=13
+      commands=11 skills=41, M11 verified.
+- [x] Skills are emitted with clean ids (frontmatter `name` = folder = id) and the plugin
+      consumption note (E22–E24). **PR-A.**
+- [x] The frontmatter mapping follows §14.5 (including the §14.16 amendments), and E1–E31 pass.
+      **PR-A:** `npm test` 121/121. E32 moved to PR-C.
 - [ ] The emitter runs from `vscode:prepublish`, `pipeline:assets`, the husky hook and the weekly
       sync. `release.yml` runs the drift check. `.vscodeignore` ships the surface, and an unpacked
-      VSIX shows it (M2).
+      VSIX shows it (M2). **PR-A wired all of it (0790b26); still OPEN: M2, unzipping a real VSIX
+      (maintainer manual step).**
 - [ ] The extension registers the stable path and re-points the link to its own `extensionPath` on activate under every rule in §14.6, and
       R1–R20 pass. M1 and M5–M10 and M12 have evidence.
 - [x] S11 (junction/symlink mini-spike) passed (2026-09-25, §14.3) and its evidence is in the PR, or the work was handed back for D55.
@@ -1998,8 +2006,11 @@ packaging are verified manually, per the AGENTS.md boundary.
 - [ ] Every emitted user-facing agent can be invoked in Claude Code from a project with no local
       `.claude/` (M3).
 - [ ] Copilot behaviour is unchanged. The `package.json` chat contributions are untouched (M4).
+      **PR-A: `contributes` is byte-identical to main (verified). Still OPEN: M4, the live Copilot
+      regression (maintainer manual step).**
 - [ ] `src/claudePlugin/{types,frontmatter,toolMap,mapAgent,planPluginSurface,claudeSettings,marketplaceLink}.ts`
-      import nothing from `vscode` and are listed in `tsconfig.test.json`.
+      import nothing from `vscode` and are listed in `tsconfig.test.json`. **PR-A: done for the five
+      emitter modules; `claudeSettings` and `marketplaceLink` come in PR-B.**
 - [ ] Agent Settings overrides are mirrored into the installed Claude agent files per §14.15:
       O1–O14, B1–B5 and G1–G3 pass, and M14–M20 have evidence. `yaml` is absent from
       `dist/extension.js` (D48).
@@ -2085,8 +2096,9 @@ the §14.9 test plan.
 Four PRs (one branch, `louagej/issue55`), split by risk:
 
 1. **Task 0 spike** (S5, S6, S7, S9): **DONE 2026-09-24.** S5/S6/S9 PASS, S7 FAIL → D54.
-2. **PR-A (normal risk):** emitter core + E1–E32 → CLI + esbuild entry + scripts + the first
-   committed emit → `.vscodeignore`, husky and workflow wiring → M2, M4, M11.
+2. **PR-A (normal risk): DONE 2026-09-25** (20bb792, 0790b26). The emitter core + E1–E31 → CLI +
+   esbuild entry + scripts + the first committed emit → `.vscodeignore`, husky and workflow wiring →
+   M11 verified. **M2 and M4 are open maintainer manual steps.** E32 moved to PR-C.
 3. **S11 mini-spike** (junction/symlink, about an hour, in the `wi5a-spike` fixture) → report. PASS → PR-B as specified; FAIL → hand back (D55). **PR-A doesn't depend on it.**
 4. **PR-B (high risk):** `marketplaceLink.ts` + L1–L12, `claudeSettings.ts` + R1–R20 → adapter, setting and commands → M1, M3,
    M5–M10, M12 → docs → **independent review / QA** → merge.
@@ -2102,7 +2114,7 @@ Four PRs (one branch, `louagej/issue55`), split by risk:
    stable link at the install folder and register it by hand (never `marketplace add` a versioned
    path, because of S7).
 
-**Next owner:** Dev, PR-A (in progress), then PR-B. S11 PASSED 2026-09-25. The contracts were accepted by the maintainer on 2026-09-24 and revised for D54 on 2026-09-25.
+**Next owner:** Dev, **PR-B (started 2026-09-25)**. PR-C can follow after it or in parallel. Maintainer: M2 and M4 from PR-A. Contracts accepted 2026-09-24, revised for D54 on 2026-09-25 and amended by §14.16 after PR-A.
 
 ### 14.15 Agent Settings overrides mirrored into the Claude plugin (D45–D53)
 
@@ -2422,3 +2434,26 @@ export function decideOverrideNotice(input: {
   installed agent files are untouched (mtime).
 - **M26** *Apply to chat* with a change on both hosts: the window auto-reloads (the existing
   behaviour), then exactly one notification with the Claude part only appears (the pending count).
+
+### 14.16 PR-A deviations: triage (Producer, 2026-09-25)
+
+All seven are **accepted**. None is sent back, and the contract is amended in place where noted.
+
+| # | Deviation | Verdict | Contract change |
+|---|---|---|---|
+| 1 | `ClaudeAgentDoc.frontmatter` gained `effort?: string` for A11 | Accept. It was a gap in §14.4 | §14.4 type amended. PR-C's `EmittedClaudeAgent` already has `effort` |
+| 2 | An unsupported `reasoning-effort` reuses EmitCode `key-stripped` | Accept. It's emitted at `warn` level (checked in `mapAgent.ts`), which is what A11 asks for | A11 amended. No new EmitCode |
+| 3 | Other skill frontmatter keys pass through unchanged | Accept. They're valid Claude skill keys (S3) and K1–K5 never said to strip them | New row K6 |
+| 4 | `plugin.json` `displayName`/`license` hardcoded (`"AC⚡DC"`, `"MIT"`) | Accept. It matches the §14.5 template, and `package.json` is MIT | None |
+| 5 | Several invokers → a comma-separated list of backticked ids | Accept. Deterministic (`contributes.chatAgents` order), which E27 covers | A6 amended with the example |
+| 6 | E32 (`parseEmittedClaudeAgent`) skipped | Accept. The function is specified in §14.15 and belongs to PR-C | E32 marked "moved to PR-C". §14.10 counts E1–E31 for PR-A |
+| 7 | `package-lock.json` root version 2.6.0 → 2.8.2 from `npm install` | Accept. The lockfile is catching up to `package.json`, like the benign 2.6.0 catch-up recorded in §9 | None |
+
+**For PR-B's Dev:** nothing in 1–7 touches the PR-B contracts (`claudeSettings.ts`, `marketplaceLink.ts`,
+`registration.ts`). Keep the `yaml` confinement: only `frontmatter.ts` may import it (`mapAgent.ts` is
+already `yaml`-free), and `src/extension.ts` must never import `frontmatter.ts` or
+`planPluginSurface.ts`, directly or transitively, so `dist/extension.js` stays `yaml`-free (D48).
+PR-B needs none of the emitter modules.
+Verify availability with `claude plugin details acdc@acdc-vscode` against an isolated
+`CLAUDE_CONFIG_DIR` (the method used for S6/S11 and PR-A), never the maintainer's real
+`~/.claude`. F5 never links (L10), so M1, M5 and M12–M13 need an installed VSIX.
