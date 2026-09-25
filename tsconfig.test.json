@@ -17,6 +17,8 @@
     "src/claudePlugin/toolMap.ts",
     "src/claudePlugin/mapAgent.ts",
     "src/claudePlugin/planPluginSurface.ts",
+    "src/claudePlugin/claudeSettings.ts",
+    "src/claudePlugin/marketplaceLink.ts",
     "test/**/*.ts"
   ]
 }

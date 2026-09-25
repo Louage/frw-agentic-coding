@@ -44,6 +44,7 @@ import { decideOverrideGate } from "./agentOverrideActivation";
 import { showReleaseNotesOnUpdate } from "./update/releaseNotes";
 import { migrateStoredToolIds } from "./tools/toolIdMigration";
 import { registerAlMcpServerProvider } from "./tools/alMcpServerProvider";
+import { registerClaudeCodePlugin, unregisterClaudeCodePlugin } from "./claudePlugin/registration";
 
 export function activate(context: vscode.ExtensionContext): void {
   // Shared output channel — visible via View → Output → "AC⚡DC"
@@ -260,6 +261,34 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // 3g. Commands: explicit Claude Code plugin registration (WI-5a, D30/D31/D43).
+  //     Register runs with force: true, which bypasses the autoRegister
+  //     kill-switch and decideMarketplaceLink's keep rules 6–7 (so it can
+  //     re-link over a foreign or newer-looking target). Unregister isn't
+  //     gated by autoRegister at all — removal is safe by construction
+  //     (ownership-checked in registration.ts). Neither command, nor force,
+  //     ever bypasses the Development/Test-mode gate, the real-directory
+  //     refusal or the missing-Claude-config-dir rule — see
+  //     src/claudePlugin/registration.ts.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.claudeCode.register", async () => {
+      output.show(true);
+      await registerClaudeCodePlugin(context, output, { force: true });
+      vscode.window.showInformationMessage(
+        "AC⚡DC: Claude Code plugin registration attempted. See the AC⚡DC output channel for the result."
+      );
+    })
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("acdc.claudeCode.unregister", async () => {
+      output.show(true);
+      await unregisterClaudeCodePlugin(context, output);
+      vscode.window.showInformationMessage(
+        "AC⚡DC: Claude Code plugin unregistered (see the AC⚡DC output channel for details)."
+      );
+    })
+  );
+
   // 3c. Command: pick a workspace folder and store its relative path in
   //     `acdc.plansRoot`. Wired into the setting's markdownDescription
   //     as a clickable "Pick folder…" link.
@@ -376,6 +405,9 @@ export function activate(context: vscode.ExtensionContext): void {
   void migrateStoredToolIds(context, output);
   registerAlMcpServerProvider(context, output);
   showReleaseNotesOnUpdate(context, output);
+  // Not awaited, and registerClaudeCodePlugin never throws into activate()
+  // (WI-5a, D30): it self-catches and logs to the AC⚡DC output channel.
+  void registerClaudeCodePlugin(context, output);
 }
 
 export function deactivate(): void {

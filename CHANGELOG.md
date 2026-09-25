@@ -8,8 +8,18 @@
 - The extension now also emits a Claude Code plugin surface from the same `package.json`
   contributions used for GitHub Copilot: `.claude-plugin/marketplace.json` plus `claude-plugin/`
   (13 agents, 11 prompt-derived commands, 41 skills). The committed output is packaged into the
-  VSIX, so an installed extension folder can be pointed at as a Claude Code plugin marketplace.
-  Registering it automatically is not part of this change yet (issue #55, WI-5a PR-A).
+  VSIX, so an installed extension folder can be pointed at as a Claude Code plugin marketplace
+  (issue #55, WI-5a PR-A).
+- AC⚡DC now registers that Claude Code plugin automatically. If a Claude Code config folder
+  already exists, the extension points a stable path (`~/.acdc/claude-marketplace`, a directory
+  junction on Windows / a symlink on macOS/Linux) at wherever it's currently installed, and
+  registers only that stable path in Claude Code's `settings.json` — so an update re-points the
+  link instead of touching your settings again, and Claude Code needs only a new session or
+  `/reload-plugins` to pick up the change. New setting `acdc.claudeCode.autoRegister` (on by
+  default) turns this off; new commands *AC⚡DC: Register Claude Code Plugin* and *AC⚡DC:
+  Unregister Claude Code Plugin* do it by hand. Registration never runs in the Extension
+  Development Host and never touches an existing real directory or another AC⚡DC install's own
+  link (issue #55, WI-5a PR-B, D30/D31/D40/D41/D43/D54).
 
 ### Fixed
 

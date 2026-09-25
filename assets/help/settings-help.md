@@ -22,6 +22,36 @@ releases of this extension. Used by the in-editor update check.
 
 ---
 
+## Claude Code
+
+### `acdc.claudeCode.autoRegister`
+
+When a Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR` if set) exists, point
+`~/.acdc/claude-marketplace` — a directory junction on Windows, a symlink on macOS/Linux — at this
+extension's install folder, and register that one stable path as the `acdc-vscode` plugin
+marketplace in Claude Code's `settings.json`, enabling the `acdc` plugin. Runs on every startup;
+only ever writes when something is actually missing or out of date, and only ever registers the
+stable path, never a version-specific one, so an update re-points the link instead of writing
+settings again. Never runs in the Extension Development Host, and never creates `~/.claude` if it
+doesn't already exist. Turn this off to manage the Claude Code registration yourself.
+
+After AC⚡DC updates, start a new Claude Code session or run `/reload-plugins` in an open one so it
+re-reads the (unchanged) marketplace path. `claude plugin details acdc@acdc-vscode` shows what's
+currently loaded — `claude plugin list` doesn't, for this kind of settings-enabled directory
+plugin.
+
+### Commands
+
+- `AC⚡DC: Register Claude Code Plugin` — registers immediately, bypassing the kill-switch above.
+  It still won't run in the Extension Development Host, won't create `~/.claude`, and won't
+  replace a real directory found at the stable link path.
+- `AC⚡DC: Unregister Claude Code Plugin` — removes the `acdc-vscode` marketplace entry and the
+  `acdc@acdc-vscode` key from `settings.json`, and removes the stable link, but only when it's
+  still this install's own link (or already dangling) — a link left serving another installed
+  copy of AC⚡DC (for example Insiders) is untouched.
+
+---
+
 ## AL Base Code / ISV Code
 
 ### `acdc.alBaseCode.repositories`

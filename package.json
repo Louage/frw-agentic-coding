@@ -1392,6 +1392,16 @@
         "category": "AC/DC"
       },
       {
+        "command": "acdc.claudeCode.register",
+        "title": "Register Claude Code Plugin",
+        "category": "AC/DC"
+      },
+      {
+        "command": "acdc.claudeCode.unregister",
+        "title": "Unregister Claude Code Plugin",
+        "category": "AC/DC"
+      },
+      {
         "command": "acdc.pickSddPlansRoot",
         "title": "Pick SDD Plans Root Folder…",
         "category": "AC/DC"
@@ -1468,6 +1478,13 @@
             "default": "minor",
             "order": 1,
             "markdownDescription": "What to surface after AC⚡DC has been updated. A fresh install always opens the README once. A downgrade, an identical version or an unrecognised version number never opens anything."
+          },
+          "acdc.claudeCode.autoRegister": {
+            "type": "boolean",
+            "default": true,
+            "scope": "application",
+            "order": 2,
+            "markdownDescription": "When the Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR`) exists, point `~/.acdc/claude-marketplace` at this extension's folder and register it as the `acdc-vscode` plugin marketplace in its user `settings.json` on startup and enable the `acdc` plugin. Turn off to manage it yourself. [More](command:acdc.showSettingsHelp)"
           }
         }
       },

@@ -304,11 +304,36 @@ The plugin surface (`.claude-plugin/marketplace.json` + `claude-plugin/`) is gen
 check:claude-plugin` fails the build if it ever drifts from its sources. `npx vsce ls` shows it's
 part of the packaged VSIX.
 
-**Registering the plugin with Claude Code is not automatic yet.** Point Claude Code at your
-installed extension folder yourself, for example with `claude plugin marketplace add
-<path-to-extension-folder>` (Windows: `%USERPROFILE%\.vscode\extensions\theframework.acdc-<version>`),
-then enable `acdc@acdc-vscode`. Automatic registration and update-following are planned for a
-follow-up release.
+**Registration is automatic.** If a Claude Code config folder (`~/.claude`, or `CLAUDE_CONFIG_DIR`)
+already exists, AC⚡DC points a stable path — `~/.acdc/claude-marketplace`, a directory junction on
+Windows or a symlink on macOS/Linux — at wherever it's currently installed, and registers *that*
+stable path once in Claude Code's `settings.json`, enabling `acdc@acdc-vscode`. Because only the
+stable path is ever registered, an update re-points the link instead of touching your settings
+again, and Stable/Insiders/multiple profiles never fight over it (the newer installed version wins
+the link; a tie keeps whichever linked first). On a remote window (WSL/SSH) this uses the remote
+home, matching where Claude Code itself runs.
+
+**After an update**, start a new Claude Code session, or run `/reload-plugins` in one that's
+already open, so it picks up the new agents/commands/skills — Claude Code has nothing to
+re-download or re-cache, it just needs to re-read the (unchanged) marketplace path. Check what's
+loaded with `claude plugin details acdc@acdc-vscode` (not `claude plugin list`, which stays empty
+for a settings-enabled directory plugin like this one).
+
+Turn registration off with `acdc.claudeCode.autoRegister` (on by default). *AC⚡DC: Register Claude
+Code Plugin* and *AC⚡DC: Unregister Claude Code Plugin* register or remove it by hand — Register
+also bypasses the kill-switch. Neither command, nor the automatic registration on startup, ever
+runs in the Extension Development Host (`F5`), and neither ever creates `~/.claude` if it doesn't
+already exist.
+
+AC⚡DC doesn't yet clean up automatically when the extension itself is uninstalled (planned for a
+follow-up release) — run *AC⚡DC: Unregister Claude Code Plugin* first, or afterwards remove the
+`acdc-vscode` entry and the `acdc@acdc-vscode` key from `~/.claude/settings.json` and delete
+`~/.acdc/claude-marketplace` by hand.
+
+If the older, standalone `aldc@aldc-marketplace` (ALDC) plugin is also enabled, a one-time notice
+suggests disabling it — the two use different namespaces (`aldc:` vs `acdc:`), so nothing breaks,
+but Claude Code will otherwise show two similar copies of most agents. AC⚡DC never disables it for
+you.
 
 ---
 
