@@ -284,6 +284,10 @@ jobs:
         if: steps.resolve.outputs.mode != 'skip'
         run: npm run validate:contribution-paths
 
+      - name: Check Claude Code plugin surface is not stale (drift gate, D33)
+        if: steps.resolve.outputs.mode != 'skip'
+        run: npm run check:claude-plugin
+
       - name: Package VSIX
         if: steps.resolve.outputs.mode != 'skip'
         run: npx @vscode/vsce package --no-dependencies -o acdc-${{ steps.version.outputs.tag }}.vsix

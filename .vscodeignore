@@ -3,6 +3,7 @@
 src/**
 test/**
 out-test/**
+out-tools/**
 .gitignore
 .github/**
 **/tsconfig.json
@@ -22,3 +23,9 @@ AGENTS.md
 PROJECT_BRIEF.md
 .claude/**
 CLAUDE.md
+
+# .claude-plugin/ (marketplace.json) and claude-plugin/ (the Claude Code plugin:
+# agents/commands/skills + its own .claude-plugin/plugin.json) are committed,
+# emitted output (WI-5a, D33) and are deliberately NOT excluded here: vsce
+# packages them into the VSIX as-is (confirmed by the §14.3 S9 spike), so the
+# installed extension folder can double as a Claude Code plugin marketplace.

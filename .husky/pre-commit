@@ -1,18 +1,28 @@
-# Regenerate agent greetings if the source-of-truth or any .agent.md is staged.
-# Skips fast when the commit doesn't touch agent content.
+# Regenerate agent greetings + re-emit the Claude Code plugin surface when
+# staged content could affect either (WI-5a §14.7). Skips fast when the
+# commit doesn't touch any of them.
 
 CHANGED=$(git diff --cached --name-only --diff-filter=ACMR)
-echo "$CHANGED" | grep -E '^(assets/greetings\.json|(\.github/agents|assets/generated/aldc-community/agents|automation/overlays/aldc-community/agents)/.*\.agent\.md)$' >/dev/null || exit 0
+echo "$CHANGED" | grep -E '^(assets/greetings\.json|package\.json|(\.github/agents|assets/generated|automation/overlays|src/claudePlugin)/)' >/dev/null || exit 0
 
-echo "[husky] Agent content staged; running regenerate:agents..."
+echo "[husky] Agent/plugin content staged; running regenerate:agents..."
 npm run regenerate:agents --silent || {
   echo "[husky] regenerate:agents failed. Fix the error and commit again." >&2
   exit 1
 }
 
-# Re-stage anything the regenerator touched so the commit reflects the truth.
+echo "[husky] Re-emitting the Claude Code plugin surface..."
+npm run emit:claude-plugin --silent || {
+  echo "[husky] emit:claude-plugin failed. Fix the error and commit again." >&2
+  exit 1
+}
+
+# Re-stage anything the regenerator and the emitter touched so the commit
+# reflects the truth.
 git add \
   assets/greetings.json \
   .github/agents \
   assets/generated/aldc-community/agents \
-  automation/overlays/aldc-community/agents 2>/dev/null || true
+  automation/overlays/aldc-community/agents \
+  .claude-plugin \
+  claude-plugin 2>/dev/null || true

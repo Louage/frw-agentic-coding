@@ -70,6 +70,9 @@ jobs:
         run: |
           ./automation/scripts/Apply-ContributionManifest.ps1
 
+      - name: Emit Claude Code plugin surface
+        run: npm run emit:claude-plugin
+
       - name: Validate generated contribution paths
         run: npm run validate:contribution-paths
 

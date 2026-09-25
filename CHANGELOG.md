@@ -5,7 +5,11 @@
 
 ### Added
 
-_None yet._
+- The extension now also emits a Claude Code plugin surface from the same `package.json`
+  contributions used for GitHub Copilot: `.claude-plugin/marketplace.json` plus `claude-plugin/`
+  (13 agents, 11 prompt-derived commands, 41 skills). The committed output is packaged into the
+  VSIX, so an installed extension folder can be pointed at as a Claude Code plugin marketplace.
+  Registering it automatically is not part of this change yet (issue #55, WI-5a PR-A).
 
 ### Fixed
 
