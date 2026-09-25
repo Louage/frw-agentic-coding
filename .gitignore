@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 out-test/
+out-tools/
 *.vsix
 .vscode-test/
 *.log

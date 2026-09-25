@@ -38,11 +38,32 @@ async function main() {
     logLevel: "silent",
     plugins: [esbuildProblemMatcherPlugin],
   });
+
+  // Second entry: the vscode-free Claude Code plugin emitter CLI (D32). Never
+  // bundled into dist/extension.js, never shipped in the VSIX (.vscodeignore
+  // excludes out-tools/**), build-time only — this is where the `yaml`
+  // devDependency is allowed to end up (D42/D48).
+  const toolsCtx = await esbuild.context({
+    entryPoints: ["src/claudePlugin/emitCli.ts"],
+    bundle: true,
+    format: "cjs",
+    minify: production,
+    sourcemap: !production,
+    sourcesContent: false,
+    platform: "node",
+    outfile: "out-tools/emit-claude-plugin.cjs",
+    logLevel: "silent",
+    plugins: [esbuildProblemMatcherPlugin],
+  });
+
   if (watch) {
     await ctx.watch();
+    await toolsCtx.watch();
   } else {
     await ctx.rebuild();
     await ctx.dispose();
+    await toolsCtx.rebuild();
+    await toolsCtx.dispose();
   }
 }
 

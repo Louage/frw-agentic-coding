@@ -1832,7 +1832,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run regenerate:agents && npm run package",
+    "vscode:prepublish": "npm run regenerate:agents && npm run emit:claude-plugin && npm run package",
     "prepare": "husky",
     "compile": "node esbuild.js",
     "watch": "node esbuild.js --watch",
@@ -1861,10 +1861,12 @@
     "generate:contributions": "pwsh -File automation/scripts/Generate-ContributionManifest.ps1",
     "apply:contributions": "pwsh -File automation/scripts/Apply-ContributionManifest.ps1",
     "rename:personas": "pwsh -File automation/scripts/Rename-AgentsToPersonas.ps1",
-    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:agents:source && npm run normalize:agents:overlay && npm run normalize:em-dash && npm run rename:personas && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions",
+    "pipeline:assets": "npm run sync:sources && npm run normalize:agents && npm run normalize:agents:source && npm run normalize:agents:overlay && npm run normalize:em-dash && npm run rename:personas && npm run inject:avatar-greeting && npm run generate:contributions && npm run apply:contributions && npm run emit:claude-plugin",
     "pipeline:mcp": "npm run sync:mcp-sources",
     "changelog:update": "pwsh -File automation/scripts/Update-Changelog.ps1",
-    "release:cut": "pwsh -File automation/scripts/Cut-Release.ps1"
+    "release:cut": "pwsh -File automation/scripts/Cut-Release.ps1",
+    "emit:claude-plugin": "node esbuild.js && node out-tools/emit-claude-plugin.cjs",
+    "check:claude-plugin": "node esbuild.js && node out-tools/emit-claude-plugin.cjs --check"
   },
   "devDependencies": {
     "@types/node": "^20.x",
@@ -1877,6 +1879,7 @@
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
     "husky": "^9.1.7",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "yaml": "^2.6.0"
   }
 }

@@ -12,6 +12,11 @@
     "src/tools/toolIdentity.ts",
     "src/tools/toolPickerModel.ts",
     "src/update/releaseNotesDecision.ts",
+    "src/claudePlugin/types.ts",
+    "src/claudePlugin/frontmatter.ts",
+    "src/claudePlugin/toolMap.ts",
+    "src/claudePlugin/mapAgent.ts",
+    "src/claudePlugin/planPluginSurface.ts",
     "test/**/*.ts"
   ]
 }

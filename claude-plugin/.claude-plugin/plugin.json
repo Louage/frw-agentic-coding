@@ -1,0 +1,15 @@
+{
+  "name": "acdc",
+  "displayName": "AC⚡DC",
+  "description": "Internal company extension that provides AI agent skills (executable tools + knowledge) and rules (custom instructions) for Business Central (AL) development in VS Code chat/agent mode.",
+  "author": {
+    "name": "theframework"
+  },
+  "repository": "https://github.com/Louage/frw-agentic-coding.git",
+  "license": "MIT",
+  "keywords": [
+    "AL",
+    "Business Central",
+    "Dynamics 365"
+  ]
+}
