@@ -13,7 +13,7 @@ Source: microsoft/skills/review/al-upgrade-review.md
 
 Reviews AL source changes against the `upgrade` knowledge domain in BCQuality and emits a findings report. This is a leaf action skill: it invokes no sub-skills. It is one of the skills composed by `al-code-review`.
 
-An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. Upgrade findings are narrow by design, they apply when the review scope contains upgrade codeunits, install codeunits, table schema, enums, or objects under migration namespaces. The skill returns `not-applicable` when none of those apply.
+An orchestrator invokes this skill with a `pr-diff`, `file-path`, or `folder-path`. Upgrade findings are narrow by design, they apply when the review scope contains upgrade codeunits, install codeunits, `Feature Data Update` implementations, table schema, enums, or objects under migration namespaces. The skill returns `not-applicable` when none of those apply.
 
 ## Source
 
@@ -34,14 +34,16 @@ Discard files that are not applicable. Retain conditionally applicable files (an
 
 Narrow the relevant files to the subset that applies to the changes under review. For each relevant file, compute overlap against:
 
-- The changed AL object names and types, especially codeunits with `Subtype = Upgrade` or `Subtype = Install`, tables and tableextensions adding or changing fields, enums and enumextensions, and objects under `Hybrid*`/`Migration`/`Upgrade` namespaces.
-- The changed triggers and procedures, weighted toward `OnCheckPreconditionsPerCompany`/`PerDatabase`, `OnUpgradePerCompany`/`PerDatabase`, `OnValidateUpgradePerCompany`/`PerDatabase`, `OnInstallAppPerCompany`/`PerDatabase`, the `OnGetPerCompanyUpgradeTags`/`OnGetPerDatabaseUpgradeTags` subscribers, and helper procedures transitively reachable from those entry points.
-- Tokens extracted from the diff that relate to upgrade concerns (`Subtype = Upgrade`, `Subtype = Install`, `Upgrade Tag`, `HasUpgradeTag`, `SetUpgradeTag`, `OnCheckPreconditions`, `OnUpgrade`, `OnValidateUpgrade`, `OnInstallApp`, `DataTransfer`, `CopyFields`, `Insert`, `Modify`, `Delete`, `Rename`, `InitValue`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `ModuleInfo`, `AppVersion`, `DataVersion`, `NavApp.GetCurrentModuleInfo`, `ExecutionContext`, `PrimaryKey`, `key(`, `field(`, `value(`, `enum`, `enumextension`, `HybridSL`, `HybridGP`, `HybridBC`, `HybridBaseDeployment`).
+- The changed AL object names and types, especially codeunits with `Subtype = Upgrade` or `Subtype = Install`, codeunits implementing `Feature Data Update`, tables and tableextensions adding or changing fields, enums and enumextensions, and objects under `Hybrid*`/`Migration`/`Upgrade` namespaces.
+- The changed triggers and procedures, weighted toward `OnCheckPreconditionsPerCompany`/`PerDatabase`, `OnUpgradePerCompany`/`PerDatabase`, `OnValidateUpgradePerCompany`/`PerDatabase`, `OnInstallAppPerCompany`/`PerDatabase`, the `OnGetPerCompanyUpgradeTags`/`OnGetPerDatabaseUpgradeTags` subscribers, the `UpdateData`/`AfterUpdate` methods of `Feature Data Update` implementations, and helper procedures transitively reachable from those entry points.
+- Tokens extracted from the diff that relate to upgrade concerns (`Subtype = Upgrade`, `Subtype = Install`, `Upgrade Tag`, `HasUpgradeTag`, `SetUpgradeTag`, `OnCheckPreconditions`, `OnUpgrade`, `OnValidateUpgrade`, `OnInstallApp`, `DataTransfer`, `CopyFields`, `Insert`, `Modify`, `Delete`, `Rename`, `InitValue`, `ObsoleteState`, `ObsoleteReason`, `ObsoleteTag`, `ModuleInfo`, `AppVersion`, `DataVersion`, `NavApp.GetCurrentModuleInfo`, `ExecutionContext`, `ChangeCompany`, `Feature Data Update`, `UpdateData`, `PrimaryKey`, `key(`, `field(`, `value(`, `enum`, `enumextension`, `HybridSL`, `HybridGP`, `HybridBC`, `HybridBaseDeployment`).
 - For each `OnCheckPreconditions...` and `OnValidateUpgrade...` trigger, build the best available call graph from surrounding unchanged source as well as changed hunks, tracing resolved calls through reachable local or internal helpers. Worklist the check-only rule when a database write occurs either directly in the trigger or in any helper procedure reachable from it. Writes include `Insert`, `Modify`, `ModifyAll`, `Delete`, `DeleteAll`, `Rename`, and `DataTransfer`. Also perform the reverse check when a PR changes a writing helper body: worklist the rule when that helper is invoked directly or transitively by an unchanged check or validation trigger.
 - Treat a direct write or a fully resolved call chain as high-confidence evidence. When cross-object dispatch, unavailable declarations, or an incomplete call graph prevents proving the complete chain, cap confidence at `medium`, name the unresolved edge in the finding, and do not claim a violation without a resolved path from a check or validation trigger to a write.
 - Worklist the install-versus-upgrade rule when migration helpers are reachable only from an install codeunit.
 - Worklist `install-and-upgrade-codeunits-have-no-order.md` when a change adds multiple install or upgrade codeunits whose same-phase triggers share state or depend on one another.
+- Worklist `no-changecompany-in-upgrade.md` when `ChangeCompany` with a company-name argument appears in an upgrade codeunit, in a helper reachable from its upgrade triggers, or in the `UpdateData` or `AfterUpdate` method of a `Feature Data Update` implementation or a helper reachable from them. Trace that reachability with the same call-graph and confidence rules as the check-only rule. Do not worklist it for `ChangeCompany` reachable only from `IsDataUpdateRequired` or `ReviewData`; that read-only preflight is permitted.
 - Worklist `appversion-meaning-depends-on-execution-context.md` when install or upgrade code branches on `ModuleInfo.AppVersion()` or confuses it with `DataVersion()`.
+- An upgrade tag's existence check (`HasUpgradeTag`) is nested inside another tag's guarded body, or one tagged procedure performs two or more functionally unrelated migrations (different tables, fields, or concerns) under a single tag, or one procedure mixes the gated logic for more than one distinct upgrade tag, `upgrade-tag-logic-must-not-nest-deeply.md`. Do not flag record loops or business-data safety guards (corruption checks, redundant-write checks, or other conditions) that serve the single migration the tag represents, however many `if` levels they take, that is the compliant shape the article explicitly permits.
 
 A file enters the candidate worklist when its `keywords` intersect the extracted tokens or its topic (derived from the index entry's `path`, `title`, and `description`) matches a changed object type. Read an article's full file, its `## Best Practice` / `## Anti Pattern` bodies, only after it makes the worklist; candidate selection uses the index alone. When the diff contains no upgrade-related changes by any of the above signals, return `outcome: "not-applicable"` without evaluating files.
 
@@ -73,7 +75,7 @@ Outcome selection:
 
 - `completed`, the skill evaluated every worklist item.
 - `no-knowledge`, no applicable upgrade knowledge survived filtering.
-- `not-applicable`, the diff touches no upgrade, install, schema, or enum surface.
+- `not-applicable`, the diff touches no upgrade, install, feature data update, schema, or enum surface.
 - `partial`, a budget was hit before the worklist was exhausted.
 - `failed`, an unrecoverable error occurred.
 
