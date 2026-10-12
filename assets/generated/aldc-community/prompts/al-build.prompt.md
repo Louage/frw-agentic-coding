@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 5.5 (copilot)
 description: 'Build, package, and deploy AL extensions to Business Central environments.'
 tools: [vscode, execute, read, agent, edit, search, web, ms-dynamics-smb.al/al_build, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_publish, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_get_diagnostics, ms-dynamics-smb.al/al_symbolrelations, todo]
 

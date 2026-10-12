@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 5.5 (copilot)
 description: "Generate or update context.md file documenting project structure, architecture, and key patterns for AI assistants and developers"
 tools: [vscode/memory, read/readFile, edit, search, todo]
 ---

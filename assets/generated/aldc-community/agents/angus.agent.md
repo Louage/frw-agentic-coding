@@ -2,7 +2,7 @@
 name: "Angus, AL Architect"
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development. Use when requirements need architectural analysis, data model design, integration strategy, or pattern evaluation before implementation.'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput]
-model: Claude Sonnet 4.6 (copilot)
+model: Claude Sonnet 5.5 (copilot)
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
 handoffs:
   - label: Specify approved architecture
@@ -230,7 +230,9 @@ Load relevant domain skills based on requirements:
 
 Read [the BCQuality design guidance](../docs/templates/bcquality-design-guidance.md)
 and follow its selection procedure for stage `design`: house rules first, then
-these domains by Step 2 area, Object Model → `data-modeling`, `interfaces` ·
+these domains by Step 2 area, Object Model → `data-modeling`, `interfaces`
+(plus `ui` when it adds pages, wizard, role center, cues, and `error-handling`
+when it defines validations or user-facing errors) ·
 Integration → `events`, `web-services` · Data → `data-modeling`, `upgrade`,
 `breaking-changes` · Security → `security`, `privacy` · Performance →
 `performance` (keys, FlowFields, batch, not loop-level rules).

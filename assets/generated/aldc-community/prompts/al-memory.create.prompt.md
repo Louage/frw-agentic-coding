@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 5.5 (copilot)
 description: "Generate or update memory.md file tracking decisions, changes, and learnings throughout project development for continuity across sessions"
 tools: [read/problems, edit, search/changes, 'markitdown/*', todo]
 ---

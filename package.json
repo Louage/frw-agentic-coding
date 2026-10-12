@@ -530,6 +530,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/choose-static-vs-manual-subscribers-deliberately.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/database-trigger-setup-flags-may-only-be-set-to-true.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/declare-event-publishers-local-or-internal.instructions.md"
       },
       {
@@ -656,6 +659,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/error-handling/collect-validation-errors-with-errorbehavior.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/error-handling/declined-confirm-must-abort-not-partially-apply.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/error-handling/defensive-vs-offensive-code-must-match-blast-radius.instructions.md"
       },
       {
@@ -731,7 +737,13 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/layout-table-with-captions-is-valid.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/list-page-document-routing-uses-page-management.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/no-nested-grids.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/notification-recall-needs-known-id.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/on-drill-down-on-non-editable-fields-renders-as-link.instructions.md"
@@ -866,10 +878,16 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/register-integration-in-privacy-notice-registrations.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/register-owned-log-tables-for-retention-policies.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/resolve-tobeclassified-before-release.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/session-logmessage-requires-dataclassification.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/ship-a-default-retention-policy-setup.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/privacy/table-level-data-classification-cascades.instructions.md"
@@ -933,6 +951,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/labels-declared-at-object-scope.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/mutating-procedure-for-a-page-caller-takes-var-record.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/named-invocations-not-object-ids.instructions.md"
@@ -1125,6 +1146,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/permission-tests-must-lower-the-execution-context.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/recordref-open-temp-parameter-defeats-real-table-checks.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/testing/reset-per-test-state-before-the-isinitialized-guard.instructions.md"
@@ -1478,6 +1502,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-get-instead-of-findfirst-on-full-primary-key.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-grouped-query-for-distinct-values-and-duplicates.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/use-isempty-for-existence-check.instructions.md"
       },
       {
@@ -1511,6 +1538,9 @@
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/custom-document-dispatch-must-not-bypass-report-selections.instructions.md"
       },
       {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/delete-master-data-with-trigger.instructions.md"
+      },
+      {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/dimension-management-wiring.instructions.md"
       },
       {
@@ -1539,6 +1569,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/item-ledger-entry-document-no-follows-last-shipping-no.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/master-data-must-be-inserted-with-trigger.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/master-table-no-from-number-series-in-oninsert.instructions.md"
@@ -1572,6 +1605,9 @@
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/table-relation-extensions-are-additive-and-top-down.instructions.md"
+      },
+      {
+        "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/tablerelation-field-length-must-match-related-field.instructions.md"
       },
       {
         "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/testfield-required-setup-field.instructions.md"
