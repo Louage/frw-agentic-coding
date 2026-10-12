@@ -1,6 +1,6 @@
 ---
 agent: agent
-model: Claude Sonnet 4.5
+model: Claude Sonnet 5.5 (copilot)
 description: 'Initialize AL development environment and workspace for Business Central.'
 tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'github/*', 'github/*', al/al_addproject, al/al_symbolsearch, al/al_getdiagnostics, al/al_getpackagedependencies, ms-dynamics-smb.al/al_downloadsymbols, ms-dynamics-smb.al/al_symbolsearch, ms-dynamics-smb.al/al_symbolrelations, todo]
 ---

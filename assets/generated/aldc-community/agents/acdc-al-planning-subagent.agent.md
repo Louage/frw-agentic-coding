@@ -5,7 +5,7 @@ user-invocable: false
 disable-model-invocation: true
 argument-hint: 'Research goal or problem statement for AL development'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, vscode/resolveMemoryFileUri, search, web/githubTextSearch]
-model: Claude Sonnet 4.6 (copilot)
+model: Claude Sonnet 5.5 (copilot)
 handoffs:
   - label: Return to Conductor
     agent: Malcolm, AL Conductor
