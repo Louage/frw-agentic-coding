@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [2.8.6] - 2026-10-19
+
+### Added
+
+_None yet._
+
+### Fixed
+
+_None yet._
+
+### Changed
+
+- Bundled external AI assets refreshed from upstream (weekly external-resource sync) (`1ba0d8b`)
+
+
 ## [2.8.5] - 2026-10-12
 
 ### Added
