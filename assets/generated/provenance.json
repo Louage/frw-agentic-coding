@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-12T05:24:38.7801213+00:00",
+  "generatedAt": "2026-10-19T05:17:39.1423079+00:00",
   "sources": [
     {
       "id": "aldc-community",
       "owner": "javiarmesto",
       "repo": "ALDC-AL-Development-Collection",
       "branch": "main",
-      "commit": "0751352b917dc02f31b7411164a0bc48d0dc3a1e",
+      "commit": "f0196aeaaab58c167a7731a858249c70d2ef53a6",
       "priority": 20,
       "sourceKind": "extension-assets",
       "declarationMode": "adapter"
