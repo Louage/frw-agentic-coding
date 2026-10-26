@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T05:17:59.8296621+00:00",
+  "generatedAt": "2026-10-26T05:19:18.6795057+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-testing/SKILL.md"
@@ -80,6 +80,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-security-review-microsoft-skills-review-al-security-review-md/SKILL.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-copilot-review-community-skills-review-al-copilot-review-md/SKILL.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-interfaces-review-microsoft-skills-review-al-interfaces-review-md/SKILL.md"
     },
     {
@@ -119,6 +122,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-upgrade-review-microsoft-skills-review-al-upgrade-review-md/SKILL.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/skills/al-development-plan-microsoft-skills-development-al-development-plan-md/SKILL.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/skills/al-appsource-review-microsoft-skills-review-al-appsource-review-md/SKILL.md"
     },
     {
@@ -152,6 +158,9 @@
     },
     {
       "path": "./assets/generated/aldc-community/instructions/al-performance.instructions.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/instructions/al-security.instructions.md"
     },
     {
       "path": "./assets/generated/aldc-community/instructions/al-testing.instructions.md"
@@ -274,6 +283,12 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/expose-process-context-via-manually-bound-flag.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/isolated-event-rollback-does-not-undo-var-parameters.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/isolated-events-are-isolated-only-outside-a-write-transaction.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/events/name-event-parameters-without-abbreviations.instructions.md"
     },
     {
@@ -337,10 +352,19 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-skip-does-not-stop-trigger-code.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/declare-report-layouts-in-the-rendering-section.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/do-not-rename-or-remove-shipped-report-dataset-columns.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/report-output-in-a-loop-needs-one-client-download.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/reportextension-dataitem-trigger-order-is-explicit.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/reportextension-layouts-are-not-selected-automatically.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/reportextension-report-triggers-run-after-base-triggers.instructions.md"
@@ -643,6 +667,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/binary-choice-must-be-boolean.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/build-client-links-with-geturl.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/style/caption-required-on-page-fields.instructions.md"
     },
     {
@@ -763,6 +790,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/nondebuggable-required-when-unwrapping-secrettext.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/page-scope-filters-must-not-be-in-filtergroup-zero.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/permission-set-avoid-wildcard-grants.instructions.md"
     },
     {
@@ -773,6 +803,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/recordref-open-with-caller-table-must-not-be-public.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/restore-the-filtergroup-after-setting-hidden-filters.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/security/secrets-isolated-storage.instructions.md"
@@ -997,6 +1030,12 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/dataitemtablefilter-cannot-be-overwritten-at-runtime.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/every-non-aggregated-query-column-is-a-group-key.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/query-dataitems-default-to-left-outer-join.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/query/reopening-query-resets-cursor-but-keeps-filters.instructions.md"
     },
     {
@@ -1081,6 +1120,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/codeunit-run-requires-prior-commit-inside-transaction.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/compute-role-center-headlines-in-the-background.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/dataaccessintent-readonly-on-analytical-objects.instructions.md"
     },
     {
@@ -1133,6 +1175,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/job-queue-on-hold-does-not-stop-running-work.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/justify-low-selectivity-fields-in-key-columns.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/load-common-fields-before-branching-on-case.instructions.md"
@@ -1249,6 +1294,12 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/activate-new-price-calculation-handler-via-onfindsupportedsetup.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/business-state-must-have-a-domain-owner.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/calcfields-blob-before-reading-its-stream.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/check-blocked-in-referencing-code-not-in-master.instructions.md"
     },
     {
@@ -1310,6 +1361,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/report-barcodes-must-use-barcode-module-and-production-font-name.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/round-calculated-unit-prices-to-unit-amount-precision.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/data-modeling/round-direction-symbols-use-magnitude.instructions.md"
@@ -1390,6 +1444,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/set-required-api-page-properties.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/set-text-encoding-on-streams-exchanged-externally.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/stored-derived-fields-must-not-be-exposed-directly.instructions.md"
     },
     {
@@ -1397,6 +1454,21 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/webhook-eligibility-and-validationtoken-renewal.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/copilot/call-azure-openai-through-the-ai-module.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/copilot/check-aoai-operation-response-before-using-output.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/copilot/keep-user-input-out-of-the-system-message.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/copilot/register-copilot-capability-on-install-and-upgrade.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/copilot/save-promptdialog-proposals-only-when-the-user-keeps-them.instructions.md"
     }
   ],
   "chatPromptFiles": [
