@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-26T05:18:58.9223845+00:00",
+  "generatedAt": "2026-11-02T05:12:46.8950471+00:00",
   "sources": [
     {
       "id": "aldc-community",
       "owner": "javiarmesto",
       "repo": "ALDC-AL-Development-Collection",
       "branch": "main",
-      "commit": "bc8a6b4268a7f59f3c5d03319388271dc07eadb8",
+      "commit": "ff840327164eb3997a3acdcf97da007d6e5c6781",
       "priority": 20,
       "sourceKind": "extension-assets",
       "declarationMode": "adapter"
@@ -16,7 +16,7 @@
       "owner": "microsoft",
       "repo": "BCQuality",
       "branch": "main",
-      "commit": "a4593a1b1585a0fa663efbf39ff02c60f846d851",
+      "commit": "a56b272c6b950c2a423bbeda190585cd53beca2a",
       "priority": 30,
       "sourceKind": "extension-assets",
       "declarationMode": "adapter"
