@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T05:13:05.5104268+00:00",
+  "generatedAt": "2026-11-09T05:12:54.3024294+00:00",
   "chatSkills": [
     {
       "path": "./assets/generated/aldc-community/skills/skill-agent-task-patterns/SKILL.md"
@@ -322,6 +322,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/promoted-action-groups.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/reset-per-row-page-variables-in-onaftergetrecord.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/ui/rolecenter-permission-gating-must-use-accessbypermission.instructions.md"
     },
     {
@@ -445,7 +448,7 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-quit-rolls-back-and-skips-onpostreport.instructions.md"
     },
     {
-      "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-skip-does-not-stop-trigger-code.instructions.md"
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/currreport-skip-current-trigger-and-later-triggers.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/reporting/declare-report-layouts-in-the-rendering-section.instructions.md"
@@ -850,6 +853,9 @@
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/check-json-null-before-converting-values.instructions.md"
     },
     {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/describe-api-pages-for-mcp-with-abouttext.instructions.md"
+    },
+    {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/disable-write-operations-on-read-only-api-pages.instructions.md"
     },
     {
@@ -884,6 +890,9 @@
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/web-services/webhook-eligibility-and-validationtoken-renewal.instructions.md"
+    },
+    {
+      "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/addloadfields-for-trigger-only-fields-on-api-pages.instructions.md"
     },
     {
       "path": "./assets/generated/microsoft-bcquality-assets/instructions/performance/addloadfields-in-report-onpredataitem.instructions.md"
@@ -1521,6 +1530,9 @@
     },
     {
       "path": "./assets/generated/aldc-community/agents/al-developer-reviewer.agent.md"
+    },
+    {
+      "path": "./assets/generated/aldc-community/agents/al-knowledge-consultant.agent.md"
     },
     {
       "path": "./assets/generated/aldc-community/agents/al-spec-agent.agent.md"

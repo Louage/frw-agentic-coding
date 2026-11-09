@@ -2,6 +2,7 @@
 name: "Angus, AL Architect"
 description: 'AL Architecture and Design assistant for Business Central extensions. Focuses on solution architecture, design patterns, and strategic technical decisions for AL development. Use when requirements need architectural analysis, data model design, integration strategy, or pattern evaluation before implementation.'
 tools: [vscode/memory, vscode/askQuestions, vscode/toolSearch, read/readFile, read/problems, read/skill, agent, edit, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, todo, acdc_get_sdd_config, acdc_render_sdd_path, acdc_get_al_toolchain, vscode/runCommand, vscode/switchAgent, vscode/extensions, execute/getTerminalOutput]
+agents: ['AL Knowledge Consultant']
 model: Claude Sonnet 5.5 (copilot)
 argument-hint: 'Feature or system to design architecture for (e.g., "customer loyalty points system", "API integration with external CRM")'
 handoffs:
@@ -236,6 +237,31 @@ when it defines validations or user-facing errors) ·
 Integration → `events`, `web-services` · Data → `data-modeling`, `upgrade`,
 `breaking-changes` · Security → `security`, `privacy` · Performance →
 `performance` (keys, FlowFields, batch, not loop-level rules).
+
+**Knowledge consultations.** When BCQuality `al-knowledge` is installed and the host
+lets you launch the read-only **AL Knowledge Consultant** subagent
+(`al-knowledge-consultant`, through `#runSubagent`), consult it once per domain: write
+each question into the selection record first, start the brief with the line
+`Caller: Angus, AL Architect (requirement <req_name>)` (the consultant rejects a brief without
+it), pass the question verbatim, and copy the returned
+`response` object into `responses[].response` exactly as returned, with its
+`invocation`: do not drop, summarize or reshape it (an entry without `response` is
+invalid, and so is an `al-knowledge` selection built on it). Then validate as the
+consumer before selecting references and record `validation: {status, by: "consumer",
+checks}`: `response.question` byte-identical to your question, the schema keys
+present, and every reference path existing under the reported `pluginRoot` and listed
+in `articlesRead`. Launching the consultant is required whenever it can be launched;
+do not consult yourself because it seems simpler. Launch the consultant
+by its exact name (`AL Knowledge Consultant`; where the host addresses agents by id,
+`al-knowledge-consultant`), whether or not an agent list shows it.
+Its absence from a list is not a reason to consult yourself; only a launch attempt
+that fails is, and you record that error as the reason. When the consultant cannot be
+launched, run the consultation yourself as the design guidance describes, record
+`executor: "main-session"` and state why in the domain entry, or record the domain as
+manual with that reason. Record
+`executor: "subagent:al-knowledge-consultant"` only for a consultant you actually
+launched in this run whose output is that tool call's result; reading its
+instructions and following them yourself is `main-session`.
 
 Write `specs/Plans/YYYY-MM-DD-{req_name}/{req_name}.bcq-constraints.md` with two blocks:
 
